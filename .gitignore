@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Env and secrets (commit .env.example only)
+.env
+.env.*
+!.env.example
+
+# Azure Developer CLI local state
+.azure/
+
+# OS / editor
+.DS_Store
+.idea/
