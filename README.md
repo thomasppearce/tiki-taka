@@ -12,7 +12,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/) and Node.js 24+.
 
 ```bash
 make install        # backend (uv) + frontend (npm) dependencies
-make dev-backend    # API on http://localhost:8000
+make dev-backend    # API on http://localhost:8001
 make dev-frontend   # control room on http://localhost:3000 (second terminal)
 ```
 

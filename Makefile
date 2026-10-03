@@ -27,8 +27,8 @@ format: ## Auto-format both halves
 	cd backend && uv run ruff check --fix . && uv run black .
 	cd frontend && npm run format
 
-dev-backend: ## Run the API on :8000 with reload
-	cd backend && uv run uvicorn app.main:app --reload --port 8000
+dev-backend: ## Run the API on :8001 with reload
+	cd backend && uv run uvicorn app.main:app --reload --port 8001
 
 dev-frontend: ## Run the control room on :3000
 	cd frontend && npm run dev

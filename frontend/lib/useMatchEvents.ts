@@ -6,7 +6,7 @@ export type StreamStatus = "connecting" | "live" | "reconnecting";
 
 // Must be referenced literally so Next.js can inline it at build time.
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
 const MAX_EVENTS = 50;
 
