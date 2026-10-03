@@ -1,0 +1,868 @@
+{
+  "$defs": {
+    "AudienceBody": {
+      "additionalProperties": false,
+      "description": "The same insight written for each audience.",
+      "properties": {
+        "analyst": {
+          "$ref": "#/$defs/LocalizedText"
+        },
+        "casual": {
+          "$ref": "#/$defs/LocalizedText"
+        }
+      },
+      "required": [
+        "analyst",
+        "casual"
+      ],
+      "title": "AudienceBody",
+      "type": "object"
+    },
+    "AuditRecord": {
+      "additionalProperties": false,
+      "description": "A state change, who made it, and what it changed.",
+      "properties": {
+        "audit_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "created",
+            "approved",
+            "edited",
+            "rejected",
+            "expired",
+            "agent_failure",
+            "retry"
+          ],
+          "type": "string"
+        },
+        "actor_type": {
+          "enum": [
+            "agent",
+            "human",
+            "system"
+          ],
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "before": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "after": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "audit_id",
+        "timestamp",
+        "action",
+        "actor_type",
+        "actor",
+        "proposal_id",
+        "before",
+        "after",
+        "detail"
+      ],
+      "title": "AuditRecord",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "description": "A factual statement made by a proposal. Every claim cites the events that support it.",
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "evidence_event_ids"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "EventAttributes": {
+      "additionalProperties": false,
+      "description": "Measurements attached to an event. Which ones are set depends on the event type.",
+      "properties": {
+        "pass_distance_m": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pass_difficulty": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ball_speed_kmh": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Ball speed; on shots this is the shot speed."
+        },
+        "pressure_level": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "player_speed_kmh": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The acting player's speed at the moment of the event."
+        },
+        "distance_covered_m": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The acting player's cumulative distance this match."
+        },
+        "top_speed_kmh": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "sprint_distance_m": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "pass_distance_m",
+        "pass_difficulty",
+        "ball_speed_kmh",
+        "pressure_level",
+        "player_speed_kmh",
+        "distance_covered_m",
+        "top_speed_kmh",
+        "sprint_distance_m"
+      ],
+      "title": "EventAttributes",
+      "type": "object"
+    },
+    "LocalizedText": {
+      "additionalProperties": false,
+      "description": "One piece of copy per supported language. English is always present.",
+      "properties": {
+        "en": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "es": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "en",
+        "es"
+      ],
+      "title": "LocalizedText",
+      "type": "object"
+    },
+    "MatchEvent": {
+      "additionalProperties": false,
+      "description": "A single timed event in a synthetic match.",
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "match_id": {
+          "type": "string"
+        },
+        "minute": {
+          "maximum": 130,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "type": {
+          "enum": [
+            "pass",
+            "shot",
+            "tackle",
+            "possession_change",
+            "pressure",
+            "foul",
+            "card",
+            "substitution",
+            "goal",
+            "save",
+            "sprint",
+            "kickoff",
+            "half_end"
+          ],
+          "type": "string"
+        },
+        "team_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "player_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "target_player_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PitchPoint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "end_location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PitchPoint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "success",
+                "fail",
+                "blocked",
+                "saved",
+                "off_target",
+                "goal"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "attributes": {
+          "$ref": "#/$defs/EventAttributes"
+        }
+      },
+      "required": [
+        "event_id",
+        "match_id",
+        "minute",
+        "second",
+        "match_clock_ms",
+        "type",
+        "team_id",
+        "player_id",
+        "target_player_id",
+        "location",
+        "end_location",
+        "outcome",
+        "attributes"
+      ],
+      "title": "MatchEvent",
+      "type": "object"
+    },
+    "Moment": {
+      "additionalProperties": false,
+      "description": "Something worth surfacing, grounded in the events that triggered it.",
+      "properties": {
+        "moment_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "momentum_shift",
+            "pressure_spike",
+            "milestone",
+            "tactical_change",
+            "key_chance",
+            "control_vs_chaos",
+            "player_threshold"
+          ],
+          "type": "string"
+        },
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "summary": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "metrics": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "evidence_event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "moment_id",
+        "kind",
+        "match_clock_ms",
+        "summary",
+        "metrics",
+        "evidence_event_ids"
+      ],
+      "title": "Moment",
+      "type": "object"
+    },
+    "OverlayCommand": {
+      "additionalProperties": false,
+      "description": "Rendered for one output feed: `profile_id` names the ViewerProfile it was made for.",
+      "properties": {
+        "overlay_id": {
+          "type": "string"
+        },
+        "proposal_id": {
+          "type": "string"
+        },
+        "profile_id": {
+          "type": "string"
+        },
+        "template": {
+          "enum": [
+            "lower_third",
+            "stat_bar",
+            "player_tag",
+            "momentum_graph",
+            "scorebug_update"
+          ],
+          "type": "string"
+        },
+        "start_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "audience": {
+          "enum": [
+            "analyst",
+            "casual"
+          ],
+          "type": "string"
+        },
+        "language": {
+          "enum": [
+            "en",
+            "es"
+          ],
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/OverlayPayload"
+        },
+        "style": {
+          "$ref": "#/$defs/OverlayStyle"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "overlay_id",
+        "proposal_id",
+        "profile_id",
+        "template",
+        "start_clock_ms",
+        "duration_ms",
+        "audience",
+        "language",
+        "payload",
+        "style",
+        "approved_by",
+        "approved_at"
+      ],
+      "title": "OverlayCommand",
+      "type": "object"
+    },
+    "OverlayPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stats": {
+          "items": {
+            "$ref": "#/$defs/OverlayStat"
+          },
+          "type": "array"
+        },
+        "player_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "spotlight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OverlayStat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The feed's spotlight metric (ViewerProfile.spotlight_metric)."
+        }
+      },
+      "required": [
+        "headline",
+        "body",
+        "stats",
+        "player_id",
+        "spotlight"
+      ],
+      "title": "OverlayPayload",
+      "type": "object"
+    },
+    "OverlayStat": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "OverlayStat",
+      "type": "object"
+    },
+    "OverlayStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "theme": {
+          "default": "default",
+          "type": "string"
+        },
+        "animation_in": {
+          "default": "slide_up",
+          "enum": [
+            "slide_up",
+            "fade",
+            "wipe"
+          ],
+          "type": "string"
+        },
+        "animation_out": {
+          "default": "fade",
+          "enum": [
+            "fade",
+            "slide_down",
+            "wipe"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "theme",
+        "animation_in",
+        "animation_out"
+      ],
+      "title": "OverlayStyle",
+      "type": "object"
+    },
+    "PitchPoint": {
+      "additionalProperties": false,
+      "description": "Normalized pitch coordinates (0-100 on both axes). x runs in the home attacking direction.",
+      "properties": {
+        "x": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        "y": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "PitchPoint",
+      "type": "object"
+    },
+    "Proposal": {
+      "additionalProperties": false,
+      "description": "A proposal must make at least one cited claim: no narration without receipts.",
+      "properties": {
+        "proposal_id": {
+          "type": "string"
+        },
+        "moment_id": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "stat_graphic",
+            "narrative_line",
+            "tactical_insight",
+            "player_tag",
+            "recap_beat"
+          ],
+          "type": "string"
+        },
+        "priority": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "expires_at_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "headline": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "body": {
+          "$ref": "#/$defs/AudienceBody"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "approved",
+            "edited",
+            "rejected",
+            "expired"
+          ],
+          "type": "string"
+        },
+        "produced_by": {
+          "items": {
+            "enum": [
+              "interpreter",
+              "explainer",
+              "producer",
+              "localizer",
+              "renderer",
+              "orchestrator"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "trace_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "proposal_id",
+        "moment_id",
+        "type",
+        "priority",
+        "confidence",
+        "expires_at_clock_ms",
+        "headline",
+        "body",
+        "claims",
+        "status",
+        "produced_by",
+        "trace_id"
+      ],
+      "title": "Proposal",
+      "type": "object"
+    },
+    "ViewerProfile": {
+      "additionalProperties": false,
+      "description": "Setting `focus_player_id` turns on player-focus mode for the feed.",
+      "properties": {
+        "profile_id": {
+          "type": "string"
+        },
+        "audience": {
+          "enum": [
+            "analyst",
+            "casual"
+          ],
+          "type": "string"
+        },
+        "language": {
+          "default": "en",
+          "enum": [
+            "en",
+            "es"
+          ],
+          "type": "string"
+        },
+        "favorite_club_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "favorite_player_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "focus_player_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "spotlight_metric": {
+          "anyOf": [
+            {
+              "enum": [
+                "pass_accuracy",
+                "pass_difficulty",
+                "distance_covered",
+                "top_speed",
+                "shot_speed",
+                "pressures"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The single performance metric this viewer cares about."
+        }
+      },
+      "required": [
+        "profile_id",
+        "audience",
+        "language",
+        "favorite_club_id",
+        "favorite_player_ids",
+        "focus_player_id",
+        "spotlight_metric"
+      ],
+      "title": "ViewerProfile",
+      "type": "object"
+    }
+  },
+  "title": "MatchDeskContracts"
+}

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Placeholder dark palette; the design-system pass replaces these tokens. */
+:root {
+  --background: #0b0d10;
+  --foreground: #e6e8eb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
