@@ -1,0 +1,33 @@
+[project]
+name = "match-desk-backend"
+version = "0.1.0"
+description = "Match Desk backend: synthetic match engine, state aggregator, and agent pipeline."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.142.2",
+    "uvicorn==0.54.0",
+    "pydantic==2.13.5",
+]
+
+[dependency-groups]
+dev = [
+    "black==26.5.1",
+    "httpx2==2.13.1",
+    "pytest==9.1.1",
+    "ruff==0.16.10",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
