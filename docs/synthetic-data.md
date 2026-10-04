@@ -55,3 +55,12 @@ Run it with `cd backend && uv run python -m app.generator.validation`.
 **Result:** across five matchdays (60 matches, 1,200 checks), about 99% of checks pass, and the rare failures are near misses (for example 36 tackles against a ceiling of 32), the normal variance of a stochastic simulation. The tests require the demo matchday to pass at least 98% of its checks with every miss within 20% of its range, so a drift in realism fails CI.
 
 Tuning went through several rounds against this report; each round fixed a modelling problem rather than a number. Examples: ball carriers dribbled through defences (they now only carry into space), teams recycled the ball near the box forever (passes into the final third are now harder), and "dominance" showed up as frantic pressing instead of possession (the dominant side now keeps the ball better and the dominated side presses less).
+
+## Importance: expected threat (xT)
+
+Every action stays in the data, but the screens and agents work from **importance**, computed by the aggregator (`backend/app/state/`).
+
+- **The xT grid** (`xt.py`) gives each of 16 x 12 pitch zones the probability that possession there leads to a goal. It is learned from our own simulated matches (24 unscripted matches, about 32,000 passes and shots) with the standard value-iteration method: per zone, how often the team shoots, scores, and moves the ball to each other zone. The grid is mirrored left-right (football is symmetric) and smoothed where data is thin. Regenerate it with `uv run python -m app.state.xt`.
+- **Each action's impact** (`aggregator.py`): a completed pass adds the threat difference between where it ended and started (forward passes matter; safe passes backwards barely do); a misplaced pass loses the threat the team had; a shot is worth its location xG; a tackle is worth the swing of winning the ball there.
+- **Momentum** is each side's share of the threat created over the last few minutes (exponentially smoothed), from -1 (away on top) to 1 (home on top).
+- **Key moments** are the defining plays: goals (with the shot as evidence), big chances (xG 0.15+), saves of good chances, red cards, decisive forward passes, balls won high up, and momentum shifts (the curve swinging to one side and staying there for three minutes). Each carries the event IDs that justify it.

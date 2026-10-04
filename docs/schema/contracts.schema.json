@@ -271,6 +271,106 @@
       "title": "EventAttributes",
       "type": "object"
     },
+    "EventImpact": {
+      "additionalProperties": false,
+      "description": "How much one action changed the game for the acting team.",
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "team_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "threat": {
+          "description": "Expected threat added (negative when possession is lost).",
+          "type": "number"
+        },
+        "importance": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "event_id",
+        "team_id",
+        "threat",
+        "importance"
+      ],
+      "title": "EventImpact",
+      "type": "object"
+    },
+    "KeyMoment": {
+      "additionalProperties": false,
+      "description": "A defining play, ranked by importance, with the events that make it up.",
+      "properties": {
+        "moment_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "goal",
+            "big_chance",
+            "save",
+            "red_card",
+            "decisive_pass",
+            "ball_won",
+            "momentum_shift"
+          ],
+          "type": "string"
+        },
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "team_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "description": "Short English label, e.g. 'Goal: Kallo'.",
+          "type": "string"
+        },
+        "importance": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "evidence_event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "moment_id",
+        "kind",
+        "match_clock_ms",
+        "team_id",
+        "label",
+        "importance",
+        "evidence_event_ids"
+      ],
+      "title": "KeyMoment",
+      "type": "object"
+    },
     "LocalizedText": {
       "additionalProperties": false,
       "description": "One piece of copy per supported language. English is always present.",
@@ -849,6 +949,83 @@
         "player_id"
       ],
       "title": "Proposal",
+      "type": "object"
+    },
+    "TeamStats": {
+      "additionalProperties": false,
+      "properties": {
+        "team_id": {
+          "type": "string"
+        },
+        "goals": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "shots": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "shots_on_target": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "xg": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "passes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pass_accuracy": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "possession_pct": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        "field_tilt_pct": {
+          "description": "Share of both teams' final-third passes made by this team.",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        "tackles": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "fouls": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "yellow_cards": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "red_cards": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "team_id",
+        "goals",
+        "shots",
+        "shots_on_target",
+        "xg",
+        "passes",
+        "pass_accuracy",
+        "possession_pct",
+        "field_tilt_pct",
+        "tackles",
+        "fouls",
+        "yellow_cards",
+        "red_cards"
+      ],
+      "title": "TeamStats",
       "type": "object"
     },
     "TrackingFrame": {

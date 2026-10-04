@@ -84,6 +84,42 @@ export interface EventAttributes {
   card_color: ("yellow" | "red") | null;
 }
 /**
+ * How much one action changed the game for the acting team.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "EventImpact".
+ */
+export interface EventImpact {
+  event_id: string;
+  team_id: string | null;
+  /**
+   * Expected threat added (negative when possession is lost).
+   */
+  threat: number;
+  importance: number;
+}
+/**
+ * A defining play, ranked by importance, with the events that make it up.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "KeyMoment".
+ */
+export interface KeyMoment {
+  moment_id: string;
+  kind: "goal" | "big_chance" | "save" | "red_card" | "decisive_pass" | "ball_won" | "momentum_shift";
+  match_clock_ms: number;
+  team_id: string | null;
+  /**
+   * Short English label, e.g. 'Goal: Kallo'.
+   */
+  label: string;
+  importance: number;
+  /**
+   * @minItems 1
+   */
+  evidence_event_ids: [string, ...string[]];
+}
+/**
  * A single timed event in a synthetic match.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -244,6 +280,28 @@ export interface Proposal {
    * The player this is about; drives player tags and player focus.
    */
   player_id: string | null;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TeamStats".
+ */
+export interface TeamStats {
+  team_id: string;
+  goals: number;
+  shots: number;
+  shots_on_target: number;
+  xg: number;
+  passes: number;
+  pass_accuracy: number;
+  possession_pct: number;
+  /**
+   * Share of both teams' final-third passes made by this team.
+   */
+  field_tilt_pct: number;
+  tackles: number;
+  fouls: number;
+  yellow_cards: number;
+  red_cards: number;
 }
 /**
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so
