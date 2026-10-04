@@ -85,7 +85,7 @@ export function ProposalCard({
         </ul>
       )}
 
-      <footer className="mt-3 flex items-center justify-between gap-3">
+      <footer className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <span className="text-xs text-ink-3">
           <span className="font-mono text-ink-2 tabular-nums">
             {Math.round(proposal.confidence * 100)}%

@@ -38,9 +38,11 @@ const STATUS_META: Record<
 export function AgentActivity({
   agents,
   log,
+  className = "",
 }: {
   agents: AgentState[];
   log: AuditLine[];
+  className?: string;
 }) {
   const retrying = agents.filter((a) => a.status === "retrying").length;
 
@@ -48,13 +50,16 @@ export function AgentActivity({
     <Panel
       title="Agents"
       aside={<Health retrying={retrying} />}
-      className="min-h-0"
+      className={`min-h-0 ${className}`}
     >
-      <ol className="flex items-stretch gap-1 border-b border-line p-2.5">
+      <ol className="grid grid-cols-1 gap-2 border-b border-line p-2.5 sm:grid-cols-2 lg:flex lg:items-stretch lg:gap-1">
         {agents.map((state, i) => (
           <Fragment key={state.agent}>
             {i > 0 && (
-              <li aria-hidden className="flex items-center text-line-strong">
+              <li
+                aria-hidden
+                className="hidden items-center text-line-strong lg:flex"
+              >
                 <CaretRight size={14} />
               </li>
             )}
@@ -104,12 +109,14 @@ function AgentStep({ state }: { state: AgentState }) {
         state.status === "retrying" ? "border-serious/50" : "border-line"
       }`}
     >
-      <span className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-label font-medium text-ink">
+      <span className="flex items-center justify-between gap-x-2 gap-y-0.5 lg:flex-col lg:items-start">
+        <span className="flex items-center gap-1.5 text-label font-medium whitespace-nowrap text-ink">
           <meta.Icon size={14} className="text-ink-3" />
           {meta.label}
         </span>
-        <span className={`flex items-center gap-1 text-xs ${status.tone}`}>
+        <span
+          className={`flex items-center gap-1 text-xs whitespace-nowrap ${status.tone}`}
+        >
           <status.Icon size={12} weight="bold" />
           {status.label}
         </span>

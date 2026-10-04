@@ -8,10 +8,12 @@ export function ProposalQueue({
   proposals,
   selectedId,
   clockMs,
+  className,
 }: {
   proposals: Proposal[];
   selectedId: string | null;
   clockMs: number;
+  className?: string;
 }) {
   const pending = [...proposals]
     .filter((p) => p.status === "pending")
@@ -25,9 +27,9 @@ export function ProposalQueue({
           {pending.length} pending
         </span>
       }
-      className="h-full"
+      className={className}
     >
-      <p className="flex items-center gap-3 border-b border-line px-3 py-2 text-xs text-ink-3">
+      <p className="hidden flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-3 py-2 text-xs text-ink-3 lg:flex">
         <span className="flex items-center gap-1">
           <Kbd>J</Kbd>
           <Kbd>K</Kbd> move

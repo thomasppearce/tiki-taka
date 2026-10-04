@@ -5,9 +5,15 @@ import { Panel } from "@/components/ui/Panel";
 import { MATCH, ON_AIR } from "@/lib/mock";
 
 /** The program output: synthetic camera feed plus whatever graphics are on air. */
-export function ProgramMonitor({ clock }: { clock: string }) {
+export function ProgramMonitor({
+  clock,
+  className,
+}: {
+  clock: string;
+  className?: string;
+}) {
   return (
-    <Panel title="Program" aside={<Tally />}>
+    <Panel title="Program" aside={<Tally />} className={className}>
       <div className="p-3">
         <div className="@container relative isolate aspect-video overflow-hidden rounded-md bg-page">
           <SyntheticFeed />

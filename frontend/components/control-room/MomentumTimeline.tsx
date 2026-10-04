@@ -26,10 +26,12 @@ export function MomentumTimeline({
   momentum,
   markers,
   nowMinute,
+  className,
 }: {
   momentum: number[];
   markers: TimelineMarker[];
   nowMinute: number;
+  className?: string;
 }) {
   const shape = (sign: 1 | -1) => {
     const y = (v: number) => MID - Math.max(sign * v, 0) * sign * AMPLITUDE;
@@ -55,7 +57,7 @@ export function MomentumTimeline({
   const away = shape(-1);
 
   return (
-    <Panel title="Momentum" aside={<Legend />}>
+    <Panel title="Momentum" aside={<Legend />} className={className}>
       <div className="px-4 pt-2 pb-3">
         <div className="relative h-5" aria-hidden>
           {markers.map((marker) => (
@@ -172,14 +174,14 @@ function MarkerIcon({ marker }: { marker: TimelineMarker }) {
 
 function Legend() {
   return (
-    <ul className="flex items-center gap-3 text-xs text-ink-3">
+    <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-3">
       <li className="flex items-center gap-1.5">
         <span className="h-2 w-3 bg-home" aria-hidden />
-        {CLUBS.t_home.name} on top
+        {CLUBS.t_home.short} on top
       </li>
       <li className="flex items-center gap-1.5">
         <span className="h-2 w-3 bg-away" aria-hidden />
-        {CLUBS.t_away.name} on top
+        {CLUBS.t_away.short} on top
       </li>
       <li className="flex items-center gap-1.5">
         <Diamond size={10} weight="fill" className="text-air" aria-hidden />

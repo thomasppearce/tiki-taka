@@ -12,14 +12,16 @@ import { PITCH_VIEWBOX } from "@/lib/pitch";
 export function TacticalPitch({
   events,
   citedEventIds,
+  className,
 }: {
   events: MatchEvent[];
   citedEventIds: ReadonlySet<string>;
+  className?: string;
 }) {
   const hasSelection = citedEventIds.size > 0;
 
   return (
-    <Panel title="Tactical view" aside={<Legend />}>
+    <Panel title="Tactical view" aside={<Legend />} className={className}>
       <div className="flex flex-1 items-center p-3">
         <svg
           viewBox={PITCH_VIEWBOX}
