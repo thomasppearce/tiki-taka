@@ -37,7 +37,8 @@ class Claim(Contract):
 
 
 class Proposal(Contract):
-    """A proposal must make at least one cited claim: no narration without receipts."""
+    """A candidate graphic or line. It must make at least one cited claim: no narration without
+    receipts. `headline` and `body` are both written per audience and language."""
 
     proposal_id: str
     moment_id: str
@@ -45,9 +46,12 @@ class Proposal(Contract):
     priority: UnitInterval
     confidence: UnitInterval
     expires_at_clock_ms: int = Field(ge=0)
-    headline: str = Field(min_length=1)
+    headline: AudienceBody
     body: AudienceBody
     claims: list[Claim] = Field(min_length=1)
     status: ProposalStatus = "pending"
     produced_by: list[AgentName] = Field(default_factory=list)
     trace_id: str | None = None
+    player_id: str | None = Field(
+        default=None, description="The player this is about; drives player tags and player focus."
+    )

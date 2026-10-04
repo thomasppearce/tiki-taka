@@ -680,7 +680,7 @@
     },
     "Proposal": {
       "additionalProperties": false,
-      "description": "A proposal must make at least one cited claim: no narration without receipts.",
+      "description": "A candidate graphic or line. It must make at least one cited claim: no narration without\nreceipts. `headline` and `body` are both written per audience and language.",
       "properties": {
         "proposal_id": {
           "type": "string"
@@ -713,8 +713,7 @@
           "type": "integer"
         },
         "headline": {
-          "minLength": 1,
-          "type": "string"
+          "$ref": "#/$defs/AudienceBody"
         },
         "body": {
           "$ref": "#/$defs/AudienceBody"
@@ -761,6 +760,18 @@
             }
           ],
           "default": null
+        },
+        "player_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The player this is about; drives player tags and player focus."
         }
       },
       "required": [
@@ -775,7 +786,8 @@
         "claims",
         "status",
         "produced_by",
-        "trace_id"
+        "trace_id",
+        "player_id"
       ],
       "title": "Proposal",
       "type": "object"

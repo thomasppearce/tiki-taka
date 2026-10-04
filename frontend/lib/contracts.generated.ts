@@ -204,7 +204,8 @@ export interface OverlayStyle {
   animation_out: "fade" | "slide_down" | "wipe";
 }
 /**
- * A proposal must make at least one cited claim: no narration without receipts.
+ * A candidate graphic or line. It must make at least one cited claim: no narration without
+ * receipts. `headline` and `body` are both written per audience and language.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "Proposal".
@@ -216,7 +217,7 @@ export interface Proposal {
   priority: number;
   confidence: number;
   expires_at_clock_ms: number;
-  headline: string;
+  headline: AudienceBody;
   body: AudienceBody;
   /**
    * @minItems 1
@@ -225,6 +226,10 @@ export interface Proposal {
   status: "pending" | "approved" | "edited" | "rejected" | "expired";
   produced_by: ("interpreter" | "explainer" | "producer" | "localizer" | "renderer" | "orchestrator")[];
   trace_id: string | null;
+  /**
+   * The player this is about; drives player tags and player focus.
+   */
+  player_id: string | null;
 }
 /**
  * Setting `focus_player_id` turns on player-focus mode for the feed.

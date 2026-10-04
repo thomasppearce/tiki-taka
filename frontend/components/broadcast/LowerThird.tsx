@@ -1,8 +1,15 @@
+"use client";
+
+import { motion } from "motion/react";
+
+import { SwapText } from "@/components/ui/SwapText";
 import { CLUBS, type TeamId } from "@/lib/mock";
+import { DURATION, EASE } from "@/lib/motion";
 
 /**
- * On-air lower third with an optional two-team split bar (e.g. possession).
- * Team colors appear only in the bar segments; all text stays in ink.
+ * On-air lower third. Wipes in left to right behind the on-air spine like a broadcast graphic,
+ * the headline rises in after the plate, and it fades out. Team colors appear only in the split
+ * bar; text stays in ink.
  */
 export function LowerThird({
   label,
@@ -16,16 +23,37 @@ export function LowerThird({
   splitLabel?: string;
 }) {
   return (
-    <div className="absolute bottom-[4.5cqw] left-[3.5cqw] w-[64cqw] font-broadcast text-ink uppercase">
+    <motion.div
+      className="absolute bottom-[4.5cqw] left-[3.5cqw] w-max max-w-[86cqw] min-w-[48cqw] font-broadcast text-ink uppercase"
+      initial={{ clipPath: "inset(0 100% 0 0)" }}
+      animate={{ clipPath: "inset(0 0% 0 0)" }}
+      exit={{
+        opacity: 0,
+        transition: { duration: DURATION.medium, ease: EASE.inOut },
+      }}
+      transition={{ duration: DURATION.verySlow, ease: EASE.smoothOut }}
+    >
       <div className="flex">
         <div className="w-[0.7cqw] shrink-0 bg-air" />
         <div className="flex-1 bg-page/95 px-[2.2cqw] pt-[1.5cqw] pb-[1.6cqw]">
           <p className="text-[1.9cqw] leading-none font-semibold tracking-wider text-ink-3">
             {label}
           </p>
-          <p className="mt-[0.7cqw] text-[4.4cqw] leading-none font-bold">
-            {headline}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: DURATION.slow,
+              ease: EASE.smoothOut,
+              delay: DURATION.quick,
+            }}
+          >
+            <SwapText
+              as="p"
+              text={headline}
+              className="mt-[0.7cqw] text-[4.4cqw] leading-none font-bold"
+            />
+          </motion.div>
         </div>
       </div>
       {split && (
@@ -43,6 +71,6 @@ export function LowerThird({
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

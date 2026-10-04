@@ -1,12 +1,9 @@
 import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 
 import { ClubCrest } from "@/components/ClubCrest";
+import { FeedTabs } from "@/components/control-room/FeedTabs";
+import type { FeedId } from "@/lib/controlRoom";
 import { CLUBS, MATCH, type TeamId } from "@/lib/mock";
-
-const FEEDS = [
-  { id: "feed_analyst_en", audience: "Analyst", language: "EN" },
-  { id: "feed_casual_es", audience: "Casual", language: "ES" },
-];
 
 /**
  * Match context, feed profiles, and stream status. Wraps to a second row on narrow screens;
@@ -14,10 +11,12 @@ const FEEDS = [
  */
 export function TopBar({
   clock,
-  activeFeed,
+  feed,
+  onFeedChange,
 }: {
   clock: string;
-  activeFeed: string;
+  feed: FeedId;
+  onFeedChange: (feed: FeedId) => void;
 }) {
   return (
     <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-b border-line bg-panel px-4 py-2">
@@ -46,31 +45,7 @@ export function TopBar({
       </span>
 
       <div className="flex items-center gap-4 sm:ml-auto">
-        <div
-          role="tablist"
-          aria-label="Output feed"
-          className="flex rounded-md border border-line p-0.5"
-        >
-          {FEEDS.map((feed) => {
-            const active = feed.id === activeFeed;
-            return (
-              <button
-                key={feed.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                className={`flex h-7 items-center gap-1.5 rounded-[4px] px-2.5 text-label whitespace-nowrap transition-[background-color,color] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-air ${
-                  active ? "bg-raised text-ink" : "text-ink-3 hover:text-ink-2"
-                }`}
-              >
-                {feed.audience}
-                <span className="font-mono text-xs text-ink-3">
-                  {feed.language}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <FeedTabs active={feed} onChange={onFeedChange} />
         <p className="flex items-center gap-2 text-xs whitespace-nowrap text-ink-2">
           <span className="size-2 rounded-full bg-good" aria-hidden />
           Live

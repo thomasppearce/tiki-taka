@@ -6,7 +6,8 @@ import {
 import { area, curveMonotoneX, line } from "d3-shape";
 
 import { Panel } from "@/components/ui/Panel";
-import { CLUBS, type TimelineMarker } from "@/lib/mock";
+import type { TimelineMarker } from "@/lib/controlRoom";
+import { CLUBS } from "@/lib/mock";
 
 const FULL_TIME = 90;
 const VIEW_W = 900;
@@ -60,9 +61,9 @@ export function MomentumTimeline({
     <Panel title="Momentum" aside={<Legend />} className={className}>
       <div className="px-4 pt-2 pb-3">
         <div className="relative h-5" aria-hidden>
-          {markers.map((marker) => (
+          {markers.map((marker, i) => (
             <MarkerIcon
-              key={`${marker.kind}-${marker.minute}`}
+              key={`${marker.kind}-${marker.minute}-${i}`}
               marker={marker}
             />
           ))}

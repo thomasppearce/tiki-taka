@@ -28,7 +28,7 @@ PROPOSAL = {
     "priority": 0.82,
     "confidence": 0.9,
     "expires_at_clock_ms": 4334000,
-    "headline": "Home side pinning them in",
+    "headline": {"analyst": {"en": "Home side pinning them in"}, "casual": {"en": "All one-way"}},
     "body": {"analyst": {"en": "Field tilt 71%."}, "casual": {"en": "All one-way traffic."}},
     "claims": [{"text": "Field tilt rose to 71%", "evidence_event_ids": ["evt_000412"]}],
 }
@@ -72,6 +72,11 @@ def test_unit_interval_attributes_are_bounded() -> None:
 
 def test_proposal_defaults_to_pending() -> None:
     assert Proposal.model_validate(PROPOSAL).status == "pending"
+
+
+def test_proposal_headline_is_localized_per_audience() -> None:
+    with pytest.raises(ValidationError):
+        Proposal.model_validate({**PROPOSAL, "headline": "Home side pinning them in"})
 
 
 def test_proposal_without_claims_is_rejected() -> None:

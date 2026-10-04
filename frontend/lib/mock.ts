@@ -5,6 +5,13 @@
  */
 
 import type { MatchEvent, Proposal } from "@/lib/contracts.generated";
+import type {
+  AgentState,
+  AuditLine,
+  IncomingTemplate,
+  OnAirGraphic,
+  TimelineMarker,
+} from "@/lib/controlRoom";
 
 export type TeamId = "t_home" | "t_away";
 
@@ -133,6 +140,13 @@ export const RECENT_EVENTS: MatchEvent[] = [
 
 const now = MATCH.clockMs;
 
+const PIPELINE_AGENTS: Proposal["produced_by"] = [
+  "interpreter",
+  "explainer",
+  "producer",
+  "localizer",
+];
+
 export const PROPOSALS: Proposal[] = [
   {
     proposal_id: "prop_0141",
@@ -141,7 +155,16 @@ export const PROPOSALS: Proposal[] = [
     priority: 0.86,
     confidence: 0.91,
     expires_at_clock_ms: now + 42_000,
-    headline: "Westmere are pinning Northgate back",
+    headline: {
+      analyst: {
+        en: "Westmere are pinning Northgate back",
+        es: "Westmere encierra al Northgate en su campo",
+      },
+      casual: {
+        en: "Westmere are all over Northgate",
+        es: "Westmere no deja respirar al Northgate",
+      },
+    },
     body: {
       analyst: {
         en: "Field tilt has swung from 41% to 68% for Westmere since the 55th minute, and each of their last 8 passes ended in the final third.",
@@ -177,8 +200,9 @@ export const PROPOSALS: Proposal[] = [
       },
     ],
     status: "pending",
-    produced_by: ["interpreter", "explainer", "producer", "localizer"],
+    produced_by: PIPELINE_AGENTS,
     trace_id: "trc_5e0a91c2",
+    player_id: null,
   },
   {
     proposal_id: "prop_0142",
@@ -187,7 +211,16 @@ export const PROPOSALS: Proposal[] = [
     priority: 0.74,
     confidence: 0.97,
     expires_at_clock_ms: now + 18_000,
-    headline: "Kallo hits 34.2 km/h on the break",
+    headline: {
+      analyst: {
+        en: "Kallo hits 34.2 km/h on the break",
+        es: "Kallo alcanza 34,2 km/h en la contra",
+      },
+      casual: {
+        en: "Kallo is flying: 34.2 km/h",
+        es: "Kallo vuela: 34,2 km/h",
+      },
+    },
     body: {
       analyst: {
         en: "Fastest sprint of the match: 38.5 m at a peak of 34.2 km/h, his third run above 32 km/h.",
@@ -205,8 +238,9 @@ export const PROPOSALS: Proposal[] = [
       },
     ],
     status: "pending",
-    produced_by: ["interpreter", "explainer", "producer", "localizer"],
+    produced_by: PIPELINE_AGENTS,
     trace_id: "trc_7b14d0e9",
+    player_id: "p_home_09",
   },
   {
     proposal_id: "prop_0143",
@@ -215,7 +249,16 @@ export const PROPOSALS: Proposal[] = [
     priority: 0.52,
     confidence: 0.95,
     expires_at_clock_ms: now + 75_000,
-    headline: "Marlow keeps Northgate ticking under pressure",
+    headline: {
+      analyst: {
+        en: "Marlow keeps Northgate ticking under pressure",
+        es: "Marlow sostiene al Northgate bajo presión",
+      },
+      casual: {
+        en: "Marlow stays calm in the storm",
+        es: "Marlow mantiene la calma en plena tormenta",
+      },
+    },
     body: {
       analyst: {
         en: "Theo Marlow has completed 19 of 21 passes while pressed this half, the most of any midfielder.",
@@ -233,8 +276,137 @@ export const PROPOSALS: Proposal[] = [
       },
     ],
     status: "pending",
-    produced_by: ["interpreter", "explainer", "producer", "localizer"],
+    produced_by: PIPELINE_AGENTS,
     trace_id: "trc_c3d2a7f0",
+    player_id: "p_home_10",
+  },
+];
+
+/**
+ * Proposals the simulated agents produce during the session, in order. Every claim is backed by
+ * events in RECENT_EVENTS, and the copy says nothing those events do not support.
+ */
+export const INCOMING_TEMPLATES: IncomingTemplate[] = [
+  {
+    ttlMs: 45_000,
+    localizerFails: false,
+    proposal: {
+      type: "stat_graphic",
+      priority: 0.79,
+      confidence: 0.98,
+      headline: {
+        analyst: {
+          en: "Desai's strike clocked at 96.4 km/h",
+          es: "El disparo de Desai, a 96,4 km/h",
+        },
+        casual: {
+          en: "Desai nearly breaks the net",
+          es: "Desai casi rompe la red",
+        },
+      },
+      body: {
+        analyst: {
+          en: "Hardest shot of the match so far, struck from 14 m.",
+          es: "El disparo más potente del partido hasta ahora, desde 14 m.",
+        },
+        casual: {
+          en: "Marco Desai hit that one at 96 km/h. Westmere are getting closer.",
+          es: "Marco Desai le pegó a 96 km/h. Westmere se acerca.",
+        },
+      },
+      claims: [
+        {
+          text: "Shot speed 96.4 km/h, the fastest this match",
+          evidence_event_ids: ["evt_000611"],
+        },
+      ],
+      status: "pending",
+      produced_by: PIPELINE_AGENTS,
+      trace_id: "trc_19ac44b0",
+      player_id: "p_away_09",
+    },
+  },
+  {
+    ttlMs: 50_000,
+    localizerFails: true,
+    proposal: {
+      type: "tactical_insight",
+      priority: 0.83,
+      confidence: 0.88,
+      headline: {
+        analyst: {
+          en: "Northgate drop into a low block",
+          es: "El Northgate se repliega en bloque bajo",
+        },
+        casual: {
+          en: "Northgate are parking the bus",
+          es: "El Northgate aparca el autobús",
+        },
+      },
+      body: {
+        analyst: {
+          en: "Their last three defensive actions all came within 33 m of their own goal, the deepest at 16 m.",
+          es: "Sus tres últimas acciones defensivas fueron a menos de 33 m de su portería, la más profunda a 16 m.",
+        },
+        casual: {
+          en: "Northgate have pulled everyone back to protect the lead.",
+          es: "El Northgate ha metido a todos atrás para proteger la ventaja.",
+        },
+      },
+      claims: [
+        {
+          text: "Last 3 defensive actions all within 33 m of their own goal",
+          evidence_event_ids: ["evt_000599", "evt_000606", "evt_000616"],
+        },
+      ],
+      status: "pending",
+      produced_by: PIPELINE_AGENTS,
+      trace_id: "trc_8d02f5e1",
+      player_id: null,
+    },
+  },
+  {
+    ttlMs: 55_000,
+    localizerFails: false,
+    proposal: {
+      type: "narrative_line",
+      priority: 0.68,
+      confidence: 0.9,
+      headline: {
+        analyst: {
+          en: "Lindqvist is running this spell",
+          es: "Lindqvist dirige este dominio",
+        },
+        casual: {
+          en: "Lindqvist is pulling the strings",
+          es: "Lindqvist mueve los hilos",
+        },
+      },
+      body: {
+        analyst: {
+          en: "Played 3 of Westmere's last 8 final-third passes, including two of the three hardest (difficulty 71 and 66).",
+          es: "Ha dado 3 de los últimos 8 pases de Westmere en el último tercio, incluidos dos de los tres más difíciles (dificultad 71 y 66).",
+        },
+        casual: {
+          en: "Yusuf Lindqvist keeps getting on the ball in dangerous areas.",
+          es: "Yusuf Lindqvist no para de aparecer en zonas peligrosas.",
+        },
+      },
+      claims: [
+        {
+          text: "3 of Westmere's last 8 final-third passes",
+          evidence_event_ids: ["evt_000601", "evt_000605", "evt_000618"],
+        },
+        {
+          text: "Pass difficulty 71 and 66, two of the three hardest",
+          evidence_event_ids: ["evt_000605", "evt_000601"],
+        },
+      ],
+      status: "pending",
+      produced_by: PIPELINE_AGENTS,
+      trace_id: "trc_5b7e2c3a",
+      player_id: "p_away_10",
+    },
   },
 ];
 
@@ -242,54 +414,55 @@ export const PROPOSALS: Proposal[] = [
 export const FEED_SNAPSHOT = {
   ball: { x: 19, y: 52 },
   players: [
-    { team: "t_home", x: 4, y: 50 },
-    { team: "t_home", x: 13, y: 26 },
-    { team: "t_home", x: 12, y: 42 },
-    { team: "t_home", x: 13, y: 58 },
-    { team: "t_home", x: 16, y: 74 },
-    { team: "t_home", x: 23, y: 44 },
-    { team: "t_home", x: 24, y: 61 },
-    { team: "t_home", x: 30, y: 22 },
-    { team: "t_home", x: 31, y: 80 },
-    { team: "t_home", x: 39, y: 47 },
-    { team: "t_home", x: 45, y: 63 },
-    { team: "t_away", x: 93, y: 50 },
-    { team: "t_away", x: 52, y: 30 },
-    { team: "t_away", x: 50, y: 50 },
-    { team: "t_away", x: 53, y: 70 },
-    { team: "t_away", x: 35, y: 35 },
-    { team: "t_away", x: 30, y: 55 },
-    { team: "t_away", x: 38, y: 76 },
-    { team: "t_away", x: 20, y: 39 },
-    { team: "t_away", x: 17, y: 60 },
-    { team: "t_away", x: 26, y: 18 },
-    { team: "t_away", x: 24, y: 86 },
-  ] satisfies { team: TeamId; x: number; y: number }[],
+    { id: "p_home_01", team: "t_home", x: 4, y: 50 },
+    { id: null, team: "t_home", x: 13, y: 26 },
+    { id: "p_home_04", team: "t_home", x: 12, y: 42 },
+    { id: null, team: "t_home", x: 13, y: 58 },
+    { id: null, team: "t_home", x: 16, y: 74 },
+    { id: "p_home_06", team: "t_home", x: 23, y: 44 },
+    { id: "p_home_08", team: "t_home", x: 24, y: 61 },
+    { id: null, team: "t_home", x: 30, y: 22 },
+    { id: null, team: "t_home", x: 31, y: 80 },
+    { id: "p_home_10", team: "t_home", x: 39, y: 47 },
+    { id: "p_home_09", team: "t_home", x: 36, y: 62 },
+    { id: "p_away_01", team: "t_away", x: 93, y: 50 },
+    { id: null, team: "t_away", x: 52, y: 30 },
+    { id: null, team: "t_away", x: 50, y: 50 },
+    { id: null, team: "t_away", x: 53, y: 70 },
+    { id: "p_away_06", team: "t_away", x: 35, y: 35 },
+    { id: "p_away_10", team: "t_away", x: 28, y: 53 },
+    { id: "p_away_08", team: "t_away", x: 38, y: 76 },
+    { id: "p_away_09", team: "t_away", x: 20, y: 39 },
+    { id: "p_away_07", team: "t_away", x: 17, y: 60 },
+    { id: null, team: "t_away", x: 26, y: 18 },
+    { id: null, team: "t_away", x: 24, y: 86 },
+  ] satisfies { id: string | null; team: TeamId; x: number; y: number }[],
 };
 
-/** The overlay currently on air in the program monitor. */
-export const ON_AIR = {
-  label: "Second half",
-  headline: "Westmere have the ball",
+/** The graphic already on air when the session opens (approved before 63:00). */
+export const INITIAL_ON_AIR: OnAirGraphic = {
+  id: "ovl_0139",
+  template: "lower_third",
+  label: { en: "Second half", es: "Segunda parte" },
+  headline: {
+    analyst: { en: "Westmere have the ball", es: "Westmere tiene el balón" },
+    casual: { en: "It's all Westmere", es: "Todo es de Westmere" },
+  },
   split: { t_away: 58, t_home: 42 },
-  splitLabel: "Possession",
+  splitLabel: { en: "Possession", es: "Posesión" },
+  startedAtMs: now - 2_000,
+  durationMs: 9_000,
 };
 
-/** Momentum per minute, -1 (Westmere on top) to 1 (Northgate on top). */
-export const MOMENTUM: number[] = Array.from({ length: 64 }, (_, minute) => {
+/** Momentum for a minute, -1 (Westmere on top) to 1 (Northgate on top). */
+export function momentumAt(minute: number): number {
   const wave =
     0.32 * Math.sin(minute / 6.5) + 0.18 * Math.sin(minute / 2.7 + 1.3);
   const homeSpell = minute > 14 && minute < 32 ? 0.35 : 0;
-  const awaySurge = minute > 54 ? -0.12 * (minute - 54) : 0;
+  const awaySurge =
+    minute > 54 ? -0.75 * (1 - Math.exp(-(minute - 54) / 5)) : 0;
   return Math.max(-0.95, Math.min(0.95, wave + homeSpell + awaySurge));
-});
-
-export type TimelineMarker = {
-  minute: number;
-  kind: "goal" | "moment" | "aired";
-  team?: TeamId;
-  label: string;
-};
+}
 
 export const TIMELINE_MARKERS: TimelineMarker[] = [
   { minute: 23, kind: "goal", team: "t_home", label: "Goal: Kallo" },
@@ -303,15 +476,8 @@ export const TIMELINE_MARKERS: TimelineMarker[] = [
   { minute: 62, kind: "moment", label: "Kallo sprint threshold" },
 ];
 
-export type AgentName = Proposal["produced_by"][number];
-
-export type AgentState = {
-  agent: AgentName;
-  status: "done" | "working" | "retrying" | "idle";
-  detail: string;
-};
-
-export const AGENT_STATES: AgentState[] = [
+/** Agent states for prop_0141, shown until the orchestrator starts its first job. */
+export const INITIAL_AGENT_STATES: AgentState[] = [
   {
     agent: "interpreter",
     status: "done",
@@ -329,33 +495,34 @@ export const AGENT_STATES: AgentState[] = [
   },
   {
     agent: "localizer",
-    status: "retrying",
-    detail: "Spanish variant failed schema, retry 1 of 3",
+    status: "done",
+    detail: "4 variants written after 1 retry",
   },
-  { agent: "renderer", status: "idle", detail: "Waiting for approval" },
 ];
 
-export type AuditLine = { clock: string; actor: string; text: string };
-
-export const AUDIT_LOG: AuditLine[] = [
+export const INITIAL_AUDIT_LOG: AuditLine[] = [
   {
+    id: "a4",
     clock: "63:11",
     actor: "localizer",
-    text: "Retrying prop_0141: es body failed validation",
+    text: "Retried prop_0141: es body now passes validation",
   },
   {
+    id: "a3",
     clock: "63:09",
     actor: "producer",
     text: "Queued prop_0141 at priority 0.86",
   },
   {
+    id: "a2",
     clock: "62:47",
     actor: "you",
-    text: "Approved prop_0139 (stat graphic) for Analyst EN",
+    text: "Approved prop_0139 (possession) for Analyst EN",
   },
   {
+    id: "a1",
     clock: "62:30",
     actor: "producer",
-    text: "Expired prop_0137 after 60s without a decision",
+    text: "Expired prop_0137 without a decision",
   },
 ];

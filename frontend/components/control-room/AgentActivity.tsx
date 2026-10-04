@@ -14,7 +14,8 @@ import type { Icon } from "@phosphor-icons/react";
 import { Fragment } from "react";
 
 import { Panel } from "@/components/ui/Panel";
-import type { AgentName, AgentState, AuditLine } from "@/lib/mock";
+import { SwapText } from "@/components/ui/SwapText";
+import type { AgentName, AgentState, AuditLine } from "@/lib/controlRoom";
 
 const AGENT_META: Partial<Record<AgentName, { label: string; Icon: Icon }>> = {
   interpreter: { label: "Interpreter", Icon: MagnifyingGlass },
@@ -71,7 +72,7 @@ export function AgentActivity({
         <h3 className="sr-only">Decision log</h3>
         <ol className="grid grid-cols-[auto_6rem_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs">
           {log.map((line) => (
-            <li key={`${line.clock}-${line.text}`} className="contents">
+            <li key={line.id} className="contents">
               <span className="font-mono text-ink-3 tabular-nums">
                 {line.clock}
               </span>
@@ -117,11 +118,25 @@ function AgentStep({ state }: { state: AgentState }) {
         <span
           className={`flex items-center gap-1 text-xs whitespace-nowrap ${status.tone}`}
         >
-          <status.Icon size={12} weight="bold" />
-          {status.label}
+          <status.Icon
+            size={12}
+            weight="bold"
+            className={
+              state.status === "working"
+                ? "animate-spin motion-reduce:animate-none"
+                : undefined
+            }
+          />
+          {state.status === "working" ? (
+            <span className="t-think-text" data-text={status.label}>
+              {status.label}
+            </span>
+          ) : (
+            status.label
+          )}
         </span>
       </span>
-      <span className="text-xs text-ink-3">{state.detail}</span>
+      <SwapText text={state.detail} className="block text-xs text-ink-3" />
     </li>
   );
 }

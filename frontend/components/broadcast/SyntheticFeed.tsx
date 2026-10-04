@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import {
   arcPoints,
   project,
@@ -69,7 +71,8 @@ const LINES: { points: Point[]; close?: boolean }[] = [
  * The program monitor's camera. Real footage is off-limits, so this renders the synthetic match
  * through a broadcast camera model: pitch and stripes in true perspective, upright players.
  */
-export function SyntheticFeed() {
+// Memoized: the camera frame is static, so it never needs to re-render with the clock.
+export const SyntheticFeed = memo(function SyntheticFeed() {
   const players = [...FEED_SNAPSHOT.players]
     .map((p) => ({ ...p, at: toPitch(p) }))
     .sort((a, b) => a.at.y - b.at.y); // far players first so near players overlap them
@@ -118,7 +121,7 @@ export function SyntheticFeed() {
       <BallMarker at={ball} />
     </svg>
   );
-}
+});
 
 function PlayerFigure({ at, team }: { at: Point; team: "t_home" | "t_away" }) {
   const foot = project(CAMERA, at);
@@ -167,4 +170,19 @@ function BallMarker({ at }: { at: Point }) {
       />
     </g>
   );
+}
+
+/**
+ * Where a player's head sits in the program frame, as percentages of the frame. Used to anchor
+ * on-air player tags to the player. Null if the player is not in the camera snapshot.
+ */
+export function playerHeadPosition(
+  playerId: string,
+): { x: number; y: number } | null {
+  const player = FEED_SNAPSHOT.players.find((p) => p.id === playerId);
+  if (!player) return null;
+  const at = toPitch(player);
+  const foot = project(CAMERA, at);
+  const head = foot.y - 1.85 * scaleAt(CAMERA, at);
+  return { x: (foot.x / W) * 100, y: (head / H) * 100 };
 }

@@ -164,7 +164,10 @@ Attribute keys (all optional; which ones appear depends on `type`):
   "priority": 0.82,
   "confidence": 0.9,
   "expires_at_clock_ms": 4334000,
-  "headline": "Home side pinning them in",
+  "headline": {
+    "analyst": { "en": "Home side pinning them in", "es": "..." },
+    "casual":  { "en": "...", "es": "..." }
+  },
   "body": {
     "analyst": { "en": "...", "es": "..." },
     "casual":  { "en": "...", "es": "..." }
@@ -174,7 +177,8 @@ Attribute keys (all optional; which ones appear depends on `type`):
   ],
   "status": "pending | approved | edited | rejected | expired",
   "produced_by": ["interpreter", "explainer", "producer", "localizer"],
-  "trace_id": "..."
+  "trace_id": "...",
+  "player_id": "p_home_09"
 }
 ```
 

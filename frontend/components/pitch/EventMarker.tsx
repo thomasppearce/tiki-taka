@@ -1,6 +1,8 @@
 import type { MatchEvent } from "@/lib/contracts.generated";
 import { toPitch } from "@/lib/pitch";
 
+const FADE = "opacity var(--duration-fast) var(--ease-smooth-out)";
+
 /**
  * One event on the pitch, in meters. Shape carries team identity alongside color (home circle,
  * away diamond) so the encoding never relies on color alone. A 2px surface ring separates
@@ -23,7 +25,7 @@ export function EventMarker({
   const teamStroke = isHome ? "stroke-home" : "stroke-away";
 
   return (
-    <g opacity={dimmed ? 0.3 : 1}>
+    <g style={{ opacity: dimmed ? 0.3 : 1, transition: FADE }}>
       {end && (
         <>
           <line
@@ -40,17 +42,23 @@ export function EventMarker({
           <circle cx={end.x} cy={end.y} r={0.45} className={teamFill} />
         </>
       )}
-      {cited && (
-        <circle
-          cx={start.x}
-          cy={start.y}
-          r={2.6}
-          fill="none"
-          className="stroke-air"
-          strokeWidth={2}
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
+      {/* Always rendered so the ring can scale in and fade out as the selection changes. */}
+      <circle
+        cx={start.x}
+        cy={start.y}
+        r={2.6}
+        fill="none"
+        className="stroke-air"
+        strokeWidth={2}
+        vectorEffect="non-scaling-stroke"
+        style={{
+          opacity: cited ? 1 : 0,
+          transform: cited ? "scale(1)" : "scale(0.5)",
+          transformBox: "fill-box",
+          transformOrigin: "center",
+          transition: `${FADE}, transform var(--duration-fast) var(--ease-smooth-out)`,
+        }}
+      />
       {isHome ? (
         <circle
           cx={start.x}

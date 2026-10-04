@@ -1,30 +1,66 @@
-import { ProposalCard } from "@/components/control-room/ProposalCard";
+"use client";
+
+import { AnimatePresence, motion } from "motion/react";
+
+import {
+  type CardActions,
+  ProposalCard,
+} from "@/components/control-room/ProposalCard";
 import { Kbd } from "@/components/ui/Kbd";
 import { Panel } from "@/components/ui/Panel";
 import type { Proposal } from "@/lib/contracts.generated";
+import type { FeedId, State } from "@/lib/controlRoom";
+import { DURATION, EASE } from "@/lib/motion";
+
+type Decisions = State["decisions"];
+
+// Each exit says what happened: approved cards head left toward the program monitor, rejected
+// ones shrink away, expired ones just fade.
+const EXIT = {
+  approved: {
+    opacity: 0,
+    x: -32,
+    transition: { duration: DURATION.fast, ease: EASE.smoothOut },
+  },
+  rejected: {
+    opacity: 0,
+    scale: 0.96,
+    transition: { duration: DURATION.quick, ease: EASE.inOut },
+  },
+  expired: {
+    opacity: 0,
+    transition: { duration: DURATION.medium, ease: EASE.inOut },
+  },
+};
 
 /** The producer's queue: pending proposals, highest priority first. */
 export function ProposalQueue({
   proposals,
   selectedId,
+  editingId,
   clockMs,
+  feed,
+  decisions,
+  counts,
+  actions,
   className,
 }: {
   proposals: Proposal[];
   selectedId: string | null;
+  editingId: string | null;
   clockMs: number;
+  feed: FeedId;
+  decisions: Decisions;
+  counts: State["counts"];
+  actions: CardActions;
   className?: string;
 }) {
-  const pending = [...proposals]
-    .filter((p) => p.status === "pending")
-    .sort((a, b) => b.priority - a.priority);
-
   return (
     <Panel
       title="Proposals"
       aside={
         <span className="text-xs text-ink-3 tabular-nums">
-          {pending.length} pending
+          {proposals.length} pending
         </span>
       }
       className={className}
@@ -45,25 +81,57 @@ export function ProposalQueue({
         </span>
       </p>
       <ol className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-        {pending.map((proposal) => (
-          <li key={proposal.proposal_id}>
-            <ProposalCard
-              proposal={proposal}
-              clockMs={clockMs}
-              selected={proposal.proposal_id === selectedId}
-            />
+        <AnimatePresence initial={false} custom={decisions}>
+          {proposals.map((proposal) => {
+            const id = proposal.proposal_id;
+            return (
+              <motion.li
+                key={id}
+                layout
+                custom={decisions}
+                variants={{
+                  enter: { opacity: 0, y: -12 },
+                  rest: { opacity: 1, y: 0, x: 0, scale: 1 },
+                  exit: (d: Decisions) => EXIT[d[id] ?? "expired"],
+                }}
+                initial="enter"
+                animate="rest"
+                exit="exit"
+                transition={{
+                  duration: DURATION.fast,
+                  ease: EASE.smoothOut,
+                  layout: { duration: DURATION.fast, ease: EASE.smoothOut },
+                }}
+              >
+                <ProposalCard
+                  proposal={proposal}
+                  clockMs={clockMs}
+                  feed={feed}
+                  selected={id === selectedId}
+                  editing={id === editingId}
+                  actions={actions}
+                />
+              </motion.li>
+            );
+          })}
+        </AnimatePresence>
+        {proposals.length === 0 && (
+          <li className="flex flex-1 items-center justify-center p-6 text-center text-sm text-ink-3">
+            Queue clear. The agents will propose the next moment as it happens.
           </li>
-        ))}
+        )}
       </ol>
       <footer className="flex shrink-0 gap-4 border-t border-line px-3 py-2.5 text-xs text-ink-3">
         <span>
-          <span className="text-ink-2 tabular-nums">11</span> aired
+          <span className="text-ink-2 tabular-nums">{counts.aired}</span> aired
         </span>
         <span>
-          <span className="text-ink-2 tabular-nums">4</span> rejected
+          <span className="text-ink-2 tabular-nums">{counts.rejected}</span>{" "}
+          rejected
         </span>
         <span>
-          <span className="text-ink-2 tabular-nums">2</span> expired
+          <span className="text-ink-2 tabular-nums">{counts.expired}</span>{" "}
+          expired
         </span>
       </footer>
     </Panel>
