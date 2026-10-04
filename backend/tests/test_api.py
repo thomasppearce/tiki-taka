@@ -1,30 +1,18 @@
 """The match centre, match detail, and live stream endpoints."""
 
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.live.clock import FULL_TIME_HOLD_MS, MatchdayClock
-from app.main import app
-from app.models import LiveEvent, Matchday, MatchDetail, TrackingFrame
+from app.models import Desk, LiveEvent, Matchday, MatchDetail, TrackingFrame
+
+Pin = Callable[..., None]
 
 
-@pytest.fixture(scope="module")
-def client() -> Iterator[TestClient]:
-    with TestClient(app) as c:
-        yield c
-
-
-def at_minute(client: TestClient, minute: float, speed: float = 0) -> None:
-    """Pin the matchday clock to a minute (speed 0 freezes it)."""
-    service = client.app.state.matchday  # type: ignore[attr-defined]
-    service.clock = MatchdayClock(service.clock.cycle_ms, start_minute=minute, speed=speed)
-
-
-def test_matchday_lists_three_leagues_of_four(client: TestClient) -> None:
-    at_minute(client, 63)
+def test_matchday_lists_three_leagues_of_four(client: TestClient, at_minute: Pin) -> None:
+    at_minute(63)
     day = Matchday.model_validate(client.get("/api/matchday").json())
     assert [len(league.matches) for league in day.leagues] == [4, 4, 4]
     featured = [m for league in day.leagues for m in league.matches if m.featured]
@@ -36,8 +24,8 @@ def test_matchday_lists_three_leagues_of_four(client: TestClient) -> None:
     assert card.top_moment is not None
 
 
-def test_match_detail_shows_only_what_has_happened(client: TestClient) -> None:
-    at_minute(client, 63)
+def test_match_detail_shows_only_what_has_happened(client: TestClient, at_minute: Pin) -> None:
+    at_minute(63)
     detail = MatchDetail.model_validate(client.get("/api/matches/m_l1_1").json())
     assert detail.home_stats.goals == 1 and detail.away_stats.goals == 0
     assert len(detail.players) == 32
@@ -46,8 +34,8 @@ def test_match_detail_shows_only_what_has_happened(client: TestClient) -> None:
     assert [i.event_id for i in detail.impacts] == [e.event_id for e in detail.recent_events]
 
 
-def test_finished_matches_hold_the_final_score(client: TestClient) -> None:
-    at_minute(client, 97)
+def test_finished_matches_hold_the_final_score(client: TestClient, at_minute: Pin) -> None:
+    at_minute(97)
     detail = MatchDetail.model_validate(client.get("/api/matches/m_l1_1").json())
     assert detail.card.status == "full_time"
     assert (detail.card.score_home, detail.card.score_away) == (1, 2)
@@ -57,14 +45,15 @@ def test_unknown_match_is_404(client: TestClient) -> None:
     assert client.get("/api/matches/m_nope").status_code == 404
 
 
-def test_stream_sends_frames_cards_and_events(client: TestClient) -> None:
-    at_minute(client, 63, speed=40)  # 10 s of match time per frame, so events arrive
+def test_stream_sends_frames_cards_events_and_the_desk(client: TestClient, at_minute: Pin) -> None:
+    at_minute(63, speed=40)  # 10 s of match time per frame, so events arrive
     with client.stream("GET", "/api/matches/m_l1_1/stream", params={"frames": 4}) as response:
         assert response.status_code == 200
         messages = _sse(response.iter_lines())
     kinds = [m["event"] for m in messages]
     assert kinds.count("frame") == 4
-    assert "card" in kinds and "match_event" in kinds
+    assert "card" in kinds and "match_event" in kinds and "desk" in kinds
+    Desk.model_validate_json(next(m for m in messages if m["event"] == "desk")["data"])
     frame = TrackingFrame.model_validate_json(
         next(m for m in messages if m["event"] == "frame")["data"]
     )
@@ -101,6 +90,6 @@ def _sse(lines: Iterator[str]) -> list[dict[str, str]]:
     return messages
 
 
-def test_payloads_are_plain_json(client: TestClient) -> None:
-    at_minute(client, 63)
+def test_payloads_are_plain_json(client: TestClient, at_minute: Pin) -> None:
+    at_minute(63)
     json.dumps(client.get("/api/matchday").json())

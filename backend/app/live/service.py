@@ -9,6 +9,9 @@ from functools import lru_cache
 from app.generator.matchday import ScheduledMatch, build_matchday
 from app.generator.world import Club
 from app.live.clock import MatchdayClock
+from app.live.copy import CopyContext
+from app.live.desk import ProposalDesk
+from app.models.desk import Desk
 from app.models.insight import EventImpact, KeyMoment
 from app.models.matchday import (
     ClubRef,
@@ -39,6 +42,17 @@ class MatchdayService:
                     self.surnames[p.player_id] = p.name.split(" ", 1)[-1]
         cycle = max(m.result.full_time_ms for m in self.matches)
         self.clock = clock or MatchdayClock(cycle)
+        # The featured match has a human producer; every other match airs on autopilot.
+        self.desks = {m.match_id: self._build_desk(m) for m in self.matches}
+
+    def surname(self, player_id: str | None) -> str:
+        return self.surnames.get(player_id or "", "?")
+
+    def short(self, team_id: str | None) -> str:
+        return self.clubs[team_id].short if team_id in self.clubs else "?"
+
+    def club(self, team_id: str | None) -> Club:
+        return self.clubs[team_id or ""]
 
     def now(self, match: ScheduledMatch) -> int:
         """This match's clock: the matchday clock, held at full time once the match ends."""
@@ -101,6 +115,25 @@ class MatchdayService:
             impacts=[impacts[e.event_id] for e in recent],
         )
 
+    def desk(self, match_id: str) -> Desk:
+        return self.desks[match_id].snapshot(self.now(self.by_id[match_id]))
+
+    def _build_desk(self, m: ScheduledMatch) -> ProposalDesk:
+        impacts = self.impacts[m.match_id]
+        events = m.result.events
+        moments = key_moments(
+            events, impacts, m.home.club_id, m.result.full_time_ms, self.surname, self.short
+        )
+        ctx = CopyContext(
+            events={e.event_id: e for e in events},
+            impacts=impacts,
+            home_id=m.home.club_id,
+            surname=self.surname,
+            club=self.club,
+            score_at=m.result.score_at,
+        )
+        return ProposalDesk(m, moments, ctx, autopilot=not m.featured)
+
     # Cached per match and per second of match time: views are recomputed at most once a second.
 
     @lru_cache(maxsize=256)  # noqa: B019 - one service per process; the cache dies with it
@@ -111,8 +144,8 @@ class MatchdayService:
             self.impacts[match_id],
             m.home.club_id,
             second * 1000,
-            lambda pid: self.surnames.get(pid or "", "?"),
-            lambda tid: self.clubs[tid].short if tid in self.clubs else "?",
+            self.surname,
+            self.short,
         )
 
     @lru_cache(maxsize=256)  # noqa: B019

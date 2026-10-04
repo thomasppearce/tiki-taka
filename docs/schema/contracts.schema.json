@@ -1,5 +1,44 @@
 {
   "$defs": {
+    "ApproveRequest": {
+      "additionalProperties": false,
+      "description": "Approve a proposal, optionally editing its copy for one feed's audience and language.",
+      "properties": {
+        "profile_id": {
+          "default": "feed_analyst_en",
+          "type": "string"
+        },
+        "headline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "profile_id",
+        "headline",
+        "body"
+      ],
+      "title": "ApproveRequest",
+      "type": "object"
+    },
     "AudienceBody": {
       "additionalProperties": false,
       "description": "The same insight written for each audience.",
@@ -29,8 +68,21 @@
           "format": "date-time",
           "type": "string"
         },
+        "match_clock_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "action": {
           "enum": [
+            "handoff",
             "created",
             "approved",
             "edited",
@@ -102,6 +154,7 @@
       "required": [
         "audit_id",
         "timestamp",
+        "match_clock_ms",
         "action",
         "actor_type",
         "actor",
@@ -159,6 +212,70 @@
         "color"
       ],
       "title": "ClubRef",
+      "type": "object"
+    },
+    "Desk": {
+      "additionalProperties": false,
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "version": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "proposals": {
+          "items": {
+            "$ref": "#/$defs/Proposal"
+          },
+          "type": "array"
+        },
+        "on_air": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OnAir"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "audit": {
+          "items": {
+            "$ref": "#/$defs/AuditRecord"
+          },
+          "type": "array"
+        },
+        "aired": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rejected": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "expired": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "match_id",
+        "version",
+        "clock_ms",
+        "proposals",
+        "on_air",
+        "audit",
+        "aired",
+        "rejected",
+        "expired"
+      ],
+      "title": "Desk",
       "type": "object"
     },
     "EventAttributes": {
@@ -800,6 +917,45 @@
         "evidence_event_ids"
       ],
       "title": "Moment",
+      "type": "object"
+    },
+    "OnAir": {
+      "additionalProperties": false,
+      "description": "An approved graphic on air. Each viewer renders it for their own feed profile.",
+      "properties": {
+        "proposal": {
+          "$ref": "#/$defs/Proposal"
+        },
+        "template": {
+          "enum": [
+            "lower_third",
+            "stat_bar",
+            "player_tag",
+            "momentum_graph",
+            "scorebug_update"
+          ],
+          "type": "string"
+        },
+        "start_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "approved_by": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposal",
+        "template",
+        "start_clock_ms",
+        "duration_ms",
+        "approved_by"
+      ],
+      "title": "OnAir",
       "type": "object"
     },
     "OverlayCommand": {

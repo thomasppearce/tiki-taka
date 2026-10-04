@@ -4,6 +4,17 @@ export interface MatchDeskContracts {
   [k: string]: unknown;
 }
 /**
+ * Approve a proposal, optionally editing its copy for one feed's audience and language.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ApproveRequest".
+ */
+export interface ApproveRequest {
+  profile_id: string;
+  headline: string | null;
+  body: string | null;
+}
+/**
  * The same insight written for each audience.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -32,7 +43,8 @@ export interface LocalizedText {
 export interface AuditRecord {
   audit_id: string;
   timestamp: string;
-  action: "created" | "approved" | "edited" | "rejected" | "expired" | "agent_failure" | "retry";
+  match_clock_ms: number | null;
+  action: "handoff" | "created" | "approved" | "edited" | "rejected" | "expired" | "agent_failure" | "retry";
   actor_type: "agent" | "human" | "system";
   actor: string;
   proposal_id: string | null;
@@ -66,6 +78,62 @@ export interface ClubRef {
   name: string;
   short: string;
   color: string;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Desk".
+ */
+export interface Desk {
+  match_id: string;
+  version: number;
+  clock_ms: number;
+  proposals: Proposal[];
+  on_air: OnAir | null;
+  audit: AuditRecord[];
+  aired: number;
+  rejected: number;
+  expired: number;
+}
+/**
+ * A candidate graphic or line. It must make at least one cited claim: no narration without
+ * receipts. `headline` and `body` are both written per audience and language.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Proposal".
+ */
+export interface Proposal {
+  proposal_id: string;
+  moment_id: string;
+  type: "stat_graphic" | "narrative_line" | "tactical_insight" | "player_tag" | "recap_beat";
+  priority: number;
+  confidence: number;
+  expires_at_clock_ms: number;
+  headline: AudienceBody;
+  body: AudienceBody;
+  /**
+   * @minItems 1
+   */
+  claims: [Claim, ...Claim[]];
+  status: "pending" | "approved" | "edited" | "rejected" | "expired";
+  produced_by: ("interpreter" | "explainer" | "producer" | "localizer" | "renderer" | "orchestrator")[];
+  trace_id: string | null;
+  /**
+   * The player this is about; drives player tags and player focus.
+   */
+  player_id: string | null;
+}
+/**
+ * An approved graphic on air. Each viewer renders it for their own feed profile.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "OnAir".
+ */
+export interface OnAir {
+  proposal: Proposal;
+  template: "lower_third" | "stat_bar" | "player_tag" | "momentum_graph" | "scorebug_update";
+  start_clock_ms: number;
+  duration_ms: number;
+  approved_by: string;
 }
 /**
  * Measurements attached to an event. Which ones are set depends on the event type.
@@ -357,34 +425,6 @@ export interface PlayerPosition {
   x: number;
   y: number;
   speed_kmh: number | null;
-}
-/**
- * A candidate graphic or line. It must make at least one cited claim: no narration without
- * receipts. `headline` and `body` are both written per audience and language.
- *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
- * via the `definition` "Proposal".
- */
-export interface Proposal {
-  proposal_id: string;
-  moment_id: string;
-  type: "stat_graphic" | "narrative_line" | "tactical_insight" | "player_tag" | "recap_beat";
-  priority: number;
-  confidence: number;
-  expires_at_clock_ms: number;
-  headline: AudienceBody;
-  body: AudienceBody;
-  /**
-   * @minItems 1
-   */
-  claims: [Claim, ...Claim[]];
-  status: "pending" | "approved" | "edited" | "rejected" | "expired";
-  produced_by: ("interpreter" | "explainer" | "producer" | "localizer" | "renderer" | "orchestrator")[];
-  trace_id: string | null;
-  /**
-   * The player this is about; drives player tags and player focus.
-   */
-  player_id: string | null;
 }
 /**
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so

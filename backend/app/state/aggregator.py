@@ -17,6 +17,8 @@ from app.state.xt import XTGrid, load_grid, to_frame
 PASS_THREAT_SCALE = 0.05  # xT added by a pass that counts as a decisive pass
 TACKLE_SWING_SCALE = 0.04  # xT swing of a tackle that wins the ball back somewhere dangerous
 BIG_CHANCE_XG = 0.15
+HIGH_REGAIN_X = 60  # "won it back high": a tackle this far up the pitch (attacking frame)
+REGAIN_GAP_MS = 120_000  # one high regain per player per two minutes
 MOMENTUM_DECAY = 0.7  # per minute, ~2 minute half-life
 MOMENTUM_FLOOR = 0.02  # keeps quiet spells near zero instead of swinging wildly
 
@@ -141,6 +143,7 @@ def key_moments(
         )
 
     previous_shot: MatchEvent | None = None
+    last_regain: dict[str | None, int] = {}
     for e in seen:
         impact = impacts[e.event_id]
         if e.type == "goal":
@@ -175,7 +178,14 @@ def key_moments(
                 impact.importance * 0.8,
                 [e.event_id],
             )
-        elif e.type == "tackle" and impact.importance >= 0.85:
+        elif (
+            e.type == "tackle"
+            and impact.importance >= 0.85
+            and e.location is not None
+            and to_frame((e.location.x, e.location.y), e.team_id == home_id)[0] >= HIGH_REGAIN_X
+            and e.match_clock_ms - last_regain.get(e.player_id, -REGAIN_GAP_MS) >= REGAIN_GAP_MS
+        ):
+            last_regain[e.player_id] = e.match_clock_ms
             add(
                 "ball_won",
                 e,
