@@ -1,19 +1,60 @@
 @import "tailwindcss";
 
-/* Placeholder dark palette; the design-system pass replaces these tokens. */
-:root {
-  --background: #0b0d10;
-  --foreground: #e6e8eb;
+/*
+ * Match Desk design tokens. Dark only, on purpose: broadcast galleries are dark rooms and
+ * operators watch this for 90 minutes.
+ *
+ * Two visual languages share these tokens:
+ * - Console (operator UI): graphite neutrals, hairline borders, panels 8px / inner elements 6px.
+ * - On-air package (graphics inside the program monitor): condensed broadcast type, 0px corners.
+ *
+ * Color roles (team + accent validated as a set with the dataviz validator: CVD dE >= 9.4,
+ * normal-vision dE >= 20.9, >= 3:1 on every surface below):
+ * - air: the single accent. Means "selected" or "going to / on air". Never decorative.
+ * - home / away: club identity in data marks only. Text never wears a team color.
+ * - good / warning / serious / critical: reserved status, always paired with an icon + label.
+ */
+@theme {
+  --color-page: #111110;
+  --color-panel: #1a1a19;
+  --color-raised: #232321;
+  --color-line: #2c2c2a;
+  --color-line-strong: #383835;
+
+  --color-ink: #edece6;
+  --color-ink-2: #c3c2b7;
+  --color-ink-3: #9a988f;
+  --color-ink-on-fill: #141413;
+
+  --color-air: #d95926;
+  --color-air-hover: #e2683a;
+  --color-home: #3987e5;
+  --color-away: #199e70;
+
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #d03b3b;
+
+  --color-pitch: #181817;
+  --color-pitch-stripe: #1c1c1b;
+
+  /* Type scale: 12 / 13 / 14 / 16 / 20 (Tailwind xs, label, sm, base, xl). */
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.125rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-broadcast: var(--font-barlow-condensed);
+}
+
+:root {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-page);
+  color: var(--color-ink);
 }
