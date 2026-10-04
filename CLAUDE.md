@@ -205,6 +205,17 @@ Attribute keys (all optional; which ones appear depends on `type`):
 ### 5.5 AuditRecord
 Every proposal state change (created, approved, edited, rejected, expired, agent failure, retry) is logged with timestamp, actor (agent or human), and before/after. This powers the Enterprise story and a visible audit panel in the UI.
 
+### 5.7 TrackingFrame (synthetic tracking, streamed with events)
+```json
+{
+  "match_id": "m_001",
+  "match_clock_ms": 3792000,
+  "ball": { "x": 18.0, "y": 38.0 },
+  "players": [{ "player_id": "p_home_09", "team_id": "t_home", "x": 36.0, "y": 62.0, "speed_kmh": 21.4 }]
+}
+```
+Where every player and the ball are at one instant (same normalized coordinates as MatchEvent). The generator emits frames at a few Hz alongside events; the control room interpolates them so the program camera and the tactical view show the same formations moving in sync with the actions. Until the generator streams them, `frontend/lib/matchSim.ts` simulates them.
+
 ### 5.6 ViewerProfile (one per output feed)
 ```json
 {
@@ -227,6 +238,7 @@ Every proposal state change (created, approved, edited, rejected, expired, agent
 - Python module producing a full match (two fictional clubs, ~11 players each, subs) as a **timed event stream** that can replay at 1x / 5x / 20x.
 - Realism: possession chains, plausible pass distances and success rates by zone, pressure events, shot quality by location, fouls/cards, set pieces.
 - Physical model: per-player speed and cumulative distance covered, plus `sprint` events, so speed/distance tags have real inputs. Also pass difficulty on every pass and shot speed on every shot.
+- Tracking frames (5.7): team shapes that shift with the ball and compact out of possession, receivers running onto passes. Consistent with the events (the ball is where the events say it is).
 - **Scripted storylines** selectable by seed/config: e.g. `late_collapse`, `second_half_comeback`, `red_card_swing`, `dominant_but_wasteful`. These guarantee interesting moments for the demo.
 - Deterministic by seed (reproducible demos and tests).
 - Include a **validation step** (basic realism checks: pass accuracy range, shots per match, possession sums to 100%, outfield distance covered roughly 9-13 km per 90 min, top sprint speeds roughly 30-36 km/h, plausible shot speeds, etc.) and document it, since "optimized synthetic data creation" is explicitly judged.

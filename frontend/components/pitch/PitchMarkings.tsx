@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { PITCH } from "@/lib/pitch";
 
 const { length: L, width: W } = PITCH;
@@ -11,7 +13,8 @@ const ARC_DY = Math.sqrt(ARC_R ** 2 - (BOX.depth - SPOT) ** 2);
 const STRIPES = 12;
 
 /** Pitch surface and markings as an SVG group, in meters. Strokes stay 1px at any scale. */
-export function PitchMarkings() {
+// Memoized: the markings never change, and the board above them redraws every frame.
+export const PitchMarkings = memo(function PitchMarkings() {
   return (
     <g>
       {Array.from({ length: STRIPES }, (_, i) => (
@@ -87,4 +90,4 @@ export function PitchMarkings() {
       </g>
     </g>
   );
-}
+});

@@ -5,9 +5,18 @@ from app.models.events import EventAttributes, MatchEvent
 from app.models.moments import Moment
 from app.models.overlays import OverlayCommand
 from app.models.proposals import AudienceBody, Claim, LocalizedText, Proposal
+from app.models.tracking import PlayerPosition, TrackingFrame
 from app.models.viewer import ViewerProfile
 
-CONTRACTS = (MatchEvent, Moment, Proposal, OverlayCommand, AuditRecord, ViewerProfile)
+CONTRACTS = (
+    MatchEvent,
+    Moment,
+    Proposal,
+    OverlayCommand,
+    AuditRecord,
+    ViewerProfile,
+    TrackingFrame,
+)
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
 __all__ = [
@@ -20,6 +29,8 @@ __all__ = [
     "MatchEvent",
     "Moment",
     "OverlayCommand",
+    "PlayerPosition",
     "Proposal",
+    "TrackingFrame",
     "ViewerProfile",
 ]

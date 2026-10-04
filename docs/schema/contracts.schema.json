@@ -678,6 +678,49 @@
       "title": "PitchPoint",
       "type": "object"
     },
+    "PlayerPosition": {
+      "additionalProperties": false,
+      "description": "One player's position. Players can stand just off the pitch (throw-ins), hence the margin.",
+      "properties": {
+        "player_id": {
+          "type": "string"
+        },
+        "team_id": {
+          "type": "string"
+        },
+        "x": {
+          "maximum": 105,
+          "minimum": -5,
+          "type": "number"
+        },
+        "y": {
+          "maximum": 105,
+          "minimum": -5,
+          "type": "number"
+        },
+        "speed_kmh": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "player_id",
+        "team_id",
+        "x",
+        "y",
+        "speed_kmh"
+      ],
+      "title": "PlayerPosition",
+      "type": "object"
+    },
     "Proposal": {
       "additionalProperties": false,
       "description": "A candidate graphic or line. It must make at least one cited claim: no narration without\nreceipts. `headline` and `body` are both written per audience and language.",
@@ -790,6 +833,37 @@
         "player_id"
       ],
       "title": "Proposal",
+      "type": "object"
+    },
+    "TrackingFrame": {
+      "additionalProperties": false,
+      "description": "All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so\nthe control room can draw formations moving in sync with the actions.",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ball": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "players": {
+          "items": {
+            "$ref": "#/$defs/PlayerPosition"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "match_id",
+        "match_clock_ms",
+        "ball",
+        "players"
+      ],
+      "title": "TrackingFrame",
       "type": "object"
     },
     "ViewerProfile": {

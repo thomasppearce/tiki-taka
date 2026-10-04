@@ -96,7 +96,7 @@ export type State = {
 };
 
 export type Action =
-  | { type: "tick"; dtMs: number }
+  | { type: "tick"; clockMs: number }
   | { type: "select"; id: string }
   | { type: "move"; delta: 1 | -1 }
   | { type: "approve"; id: string }
@@ -272,7 +272,7 @@ export function pendingSorted(state: State): Proposal[] {
 export function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "tick":
-      return tick(state, action.dtMs);
+      return tick(state, action.clockMs);
     case "select":
       return state.proposals.some((p) => p.proposal_id === action.id)
         ? { ...state, selectedId: action.id, editingId: null }
@@ -413,9 +413,10 @@ function log(state: State, actor: string, text: string): State {
   return { ...state, log: [line, ...state.log].slice(0, MAX_LOG) };
 }
 
-function tick(state: State, dtMs: number): State {
+function tick(state: State, clockMs: number): State {
   const before = state.clockMs;
-  let next: State = { ...state, clockMs: before + dtMs };
+  if (clockMs <= before) return state;
+  let next: State = { ...state, clockMs };
   const now = next.clockMs;
 
   // The orchestrator: log the localizer failure as it happens, then deliver the proposal.

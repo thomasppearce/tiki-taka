@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import MatchEvent, Proposal, ViewerProfile
+from app.models import MatchEvent, Proposal, TrackingFrame, ViewerProfile
 
 PASS_EVENT = {
     "event_id": "evt_000412",
@@ -93,3 +93,17 @@ def test_claim_without_evidence_is_rejected() -> None:
 def test_viewer_profile_rejects_unknown_spotlight_metric() -> None:
     with pytest.raises(ValidationError):
         ViewerProfile(profile_id="feed_1", audience="casual", spotlight_metric="vibes")
+
+
+def test_tracking_frame_needs_players_and_bounds_positions() -> None:
+    frame = {
+        "match_id": "m_001",
+        "match_clock_ms": 3792000,
+        "ball": {"x": 18.0, "y": 38.0},
+        "players": [{"player_id": "p_home_09", "team_id": "t_home", "x": 36.0, "y": 62.0}],
+    }
+    assert TrackingFrame.model_validate(frame).players[0].speed_kmh is None
+    with pytest.raises(ValidationError):
+        TrackingFrame.model_validate({**frame, "players": []})
+    with pytest.raises(ValidationError):
+        TrackingFrame.model_validate({**frame, "players": [{**frame["players"][0], "x": 140}]})

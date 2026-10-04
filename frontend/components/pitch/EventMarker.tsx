@@ -4,18 +4,19 @@ import { toPitch } from "@/lib/pitch";
 const FADE = "opacity var(--duration-fast) var(--ease-smooth-out)";
 
 /**
- * One event on the pitch, in meters. Shape carries team identity alongside color (home circle,
- * away diamond) so the encoding never relies on color alone. A 2px surface ring separates
- * overlapping marks; cited events get an on-air ring.
+ * One event on the pitch, in meters: a small mark where it happened and, for passes and sprints,
+ * a line to where it ended. Shape carries team identity alongside color (home circle, away
+ * diamond) so the encoding never relies on color alone. Kept smaller than the player markers.
+ * `opacity` fades older events; cited events get an on-air ring.
  */
 export function EventMarker({
   event,
   cited,
-  dimmed,
+  opacity,
 }: {
   event: MatchEvent;
   cited: boolean;
-  dimmed: boolean;
+  opacity: number;
 }) {
   if (!event.location) return null;
   const start = toPitch(event.location);
@@ -25,7 +26,7 @@ export function EventMarker({
   const teamStroke = isHome ? "stroke-home" : "stroke-away";
 
   return (
-    <g style={{ opacity: dimmed ? 0.3 : 1, transition: FADE }}>
+    <g style={{ opacity, transition: FADE }}>
       {end && (
         <>
           <line
@@ -46,7 +47,7 @@ export function EventMarker({
       <circle
         cx={start.x}
         cy={start.y}
-        r={2.6}
+        r={2}
         fill="none"
         className="stroke-air"
         strokeWidth={2}
@@ -63,17 +64,17 @@ export function EventMarker({
         <circle
           cx={start.x}
           cy={start.y}
-          r={1.3}
+          r={0.85}
           className={`${teamFill} stroke-panel`}
           strokeWidth={2}
           vectorEffect="non-scaling-stroke"
         />
       ) : (
         <rect
-          x={start.x - 1.15}
-          y={start.y - 1.15}
-          width={2.3}
-          height={2.3}
+          x={start.x - 0.75}
+          y={start.y - 0.75}
+          width={1.5}
+          height={1.5}
           transform={`rotate(45 ${start.x} ${start.y})`}
           className={`${teamFill} stroke-panel`}
           strokeWidth={2}

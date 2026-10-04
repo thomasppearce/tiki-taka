@@ -1,7 +1,14 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
-import { type Dispatch, useEffect, useMemo, useReducer, useRef } from "react";
+import {
+  type Dispatch,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 
 import { AgentActivity } from "@/components/control-room/AgentActivity";
 import { MomentumTimeline } from "@/components/control-room/MomentumTimeline";
@@ -19,7 +26,8 @@ import {
   reducer,
 } from "@/lib/controlRoom";
 import { formatClock } from "@/lib/format";
-import { RECENT_EVENTS, momentumAt } from "@/lib/mock";
+import { eventsUntil } from "@/lib/matchSim";
+import { MATCH, momentumAt } from "@/lib/mock";
 
 const TICK_MS = 250;
 
@@ -32,7 +40,7 @@ const TICK_MS = 250;
  */
 export function ControlRoom() {
   const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
-  useMatchClock(dispatch);
+  const getClockMs = useMatchClock(dispatch);
   useShortcuts(state, dispatch);
 
   const queue = pendingSorted(state);
@@ -48,6 +56,7 @@ export function ControlRoom() {
     [minute],
   );
   const clock = formatClock(state.clockMs);
+  const events = useMemo(() => eventsUntil(state.clockMs), [state.clockMs]);
   const actions = useMemo<CardActions>(
     () => ({
       onSelect: (id) => dispatch({ type: "select", id }),
@@ -74,12 +83,14 @@ export function ControlRoom() {
             <div className="contents xl:grid xl:min-w-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:gap-3">
               <ProgramMonitor
                 clock={clock}
+                getClockMs={getClockMs}
                 feed={state.feed}
                 onAir={state.onAir}
                 className="order-1 lg:order-none"
               />
               <TacticalPitch
-                events={RECENT_EVENTS}
+                events={events}
+                getClockMs={getClockMs}
                 citedEventIds={citedEventIds}
                 className="order-3 lg:order-none"
               />
@@ -113,17 +124,28 @@ export function ControlRoom() {
   );
 }
 
-/** Advance the match clock in real time (1x). */
-function useMatchClock(dispatch: Dispatch<Action>) {
+/**
+ * The match clock, advancing in real time (1x) from the session start. Returns a stable reader:
+ * the reducer ticks from it at 4 Hz for the UI, and the animated views read it every frame, so
+ * the camera, the formation board, and the queue all agree on the time.
+ */
+function useMatchClock(dispatch: Dispatch<Action>): () => number {
+  const startedAt = useRef<number | null>(null);
+  const getClockMs = useCallback(
+    () =>
+      MATCH.clockMs +
+      (startedAt.current === null ? 0 : performance.now() - startedAt.current),
+    [],
+  );
   useEffect(() => {
-    let last = performance.now();
-    const timer = setInterval(() => {
-      const now = performance.now();
-      dispatch({ type: "tick", dtMs: now - last });
-      last = now;
-    }, TICK_MS);
+    startedAt.current = performance.now();
+    const timer = setInterval(
+      () => dispatch({ type: "tick", clockMs: getClockMs() }),
+      TICK_MS,
+    );
     return () => clearInterval(timer);
-  }, [dispatch]);
+  }, [dispatch, getClockMs]);
+  return getClockMs;
 }
 
 /** J/K or arrows to move, A approve, E edit, R reject. Ignored while typing or with modifiers. */

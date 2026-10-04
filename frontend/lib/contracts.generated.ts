@@ -204,6 +204,19 @@ export interface OverlayStyle {
   animation_out: "fade" | "slide_down" | "wipe";
 }
 /**
+ * One player's position. Players can stand just off the pitch (throw-ins), hence the margin.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "PlayerPosition".
+ */
+export interface PlayerPosition {
+  player_id: string;
+  team_id: string;
+  x: number;
+  y: number;
+  speed_kmh: number | null;
+}
+/**
  * A candidate graphic or line. It must make at least one cited claim: no narration without
  * receipts. `headline` and `body` are both written per audience and language.
  *
@@ -230,6 +243,22 @@ export interface Proposal {
    * The player this is about; drives player tags and player focus.
    */
   player_id: string | null;
+}
+/**
+ * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so
+ * the control room can draw formations moving in sync with the actions.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TrackingFrame".
+ */
+export interface TrackingFrame {
+  match_id: string;
+  match_clock_ms: number;
+  ball: PitchPoint;
+  /**
+   * @minItems 1
+   */
+  players: [PlayerPosition, ...PlayerPosition[]];
 }
 /**
  * Setting `focus_player_id` turns on player-focus mode for the feed.

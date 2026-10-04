@@ -2,28 +2,42 @@
 
 import { AnimatePresence } from "motion/react";
 
+import { LiveCamera } from "@/components/broadcast/LiveCamera";
 import { LowerThird } from "@/components/broadcast/LowerThird";
-import { PlayerTag } from "@/components/broadcast/PlayerTag";
 import { Scorebug } from "@/components/broadcast/Scorebug";
-import { SyntheticFeed } from "@/components/broadcast/SyntheticFeed";
 import { Panel } from "@/components/ui/Panel";
 import { FEEDS, type FeedId, type OnAirGraphic } from "@/lib/controlRoom";
 import { forFeed } from "@/lib/i18n";
 import { MATCH } from "@/lib/mock";
+import { useMatchFrame } from "@/lib/useMatchFrame";
 
-/** The program output: synthetic camera feed plus whatever graphic is on air for this feed. */
+/**
+ * The program output: the live camera on the synthetic match plus whatever graphic is on air for
+ * this feed. Reads the same tracking frame as the tactical view, so both show the same instant.
+ */
 export function ProgramMonitor({
   clock,
+  getClockMs,
   feed,
   onAir,
   className,
 }: {
   clock: string;
+  getClockMs: () => number;
   feed: FeedId;
   onAir: OnAirGraphic | null;
   className?: string;
 }) {
   const { audience, lang, label } = FEEDS[feed];
+  const frame = useMatchFrame(getClockMs);
+  const tag =
+    onAir?.template === "player_tag" && onAir.playerId
+      ? {
+          id: onAir.id,
+          playerId: onAir.playerId,
+          line: forFeed(onAir.headline, audience, lang),
+        }
+      : null;
 
   return (
     <Panel
@@ -33,16 +47,10 @@ export function ProgramMonitor({
     >
       <div className="p-3">
         <div className="@container relative isolate aspect-video overflow-hidden rounded-md bg-page">
-          <SyntheticFeed />
+          <LiveCamera frame={frame} tag={tag} />
           <Scorebug score={MATCH.score} clock={clock} />
-          <AnimatePresence mode="wait">
-            {onAir?.template === "player_tag" && onAir.playerId ? (
-              <PlayerTag
-                key={onAir.id}
-                playerId={onAir.playerId}
-                line={forFeed(onAir.headline, audience, lang)}
-              />
-            ) : onAir ? (
+          <AnimatePresence>
+            {onAir?.template === "lower_third" && (
               <LowerThird
                 key={onAir.id}
                 label={onAir.label[lang]}
@@ -50,7 +58,7 @@ export function ProgramMonitor({
                 split={onAir.split}
                 splitLabel={onAir.splitLabel?.[lang]}
               />
-            ) : null}
+            )}
           </AnimatePresence>
         </div>
       </div>

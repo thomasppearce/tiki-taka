@@ -2,34 +2,36 @@
 
 import { motion } from "motion/react";
 
-import { playerHeadPosition } from "@/components/broadcast/SyntheticFeed";
 import { SwapText } from "@/components/ui/SwapText";
 import { PLAYERS } from "@/lib/mock";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
- * On-air player tag, anchored above the player in the synthetic camera frame: name and number on
- * a plate with a team-color edge, a leader line down to the player. The brief's "real-time player
+ * On-air player tag, anchored above the player in the camera frame (`at`, the head position in
+ * frame percentages, updated every frame so the tag follows the player): name and number on a
+ * plate with a team-color edge, a leader line down to the player. The brief's "real-time player
  * name tagging".
  */
 export function PlayerTag({
   playerId,
   line,
+  at,
 }: {
   playerId: string;
   line: string;
+  at: { x: number; y: number };
 }) {
   const player = PLAYERS[playerId];
-  const at = playerHeadPosition(playerId);
-  if (!player || !at) return null;
+  if (!player) return null;
   const surname = player.name.split(" ").slice(1).join(" ");
-  // Keep the plate inside the frame even when the player is near an edge.
-  const left = Math.min(82, Math.max(18, at.x));
+  // Near a frame edge, slide only the plate back inside; the leader line stays on the player.
+  // The frame is the container, so 1% of its width is 1cqw.
+  const plateShift = Math.min(82, Math.max(18, at.x)) - at.x;
 
   return (
     <motion.div
       className="absolute font-broadcast text-ink uppercase"
-      style={{ left: `${left}%`, top: `${at.y}%` }}
+      style={{ left: `${at.x}%`, top: `${at.y}%` }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{
@@ -39,7 +41,10 @@ export function PlayerTag({
       transition={{ duration: DURATION.slow, ease: EASE.smoothOut }}
     >
       <div className="flex -translate-x-1/2 -translate-y-full flex-col items-center">
-        <div className="flex items-stretch">
+        <div
+          className="flex items-stretch"
+          style={{ transform: `translateX(${plateShift}cqw)` }}
+        >
           <span
             className={`w-[0.6cqw] shrink-0 ${player.team === "t_home" ? "bg-home" : "bg-away"}`}
           />

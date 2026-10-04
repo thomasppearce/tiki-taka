@@ -26,17 +26,27 @@ export type Player = { name: string; number: number; team: TeamId };
 
 export const PLAYERS: Record<string, Player> = {
   p_home_01: { name: "Elias Varga", number: 1, team: "t_home" },
+  p_home_02: { name: "Ruben Okoro-Lyle", number: 2, team: "t_home" },
+  p_home_03: { name: "Sam Ferreira-Holt", number: 3, team: "t_home" },
   p_home_04: { name: "Callum Reyes-Booth", number: 4, team: "t_home" },
+  p_home_05: { name: "Dario Pennant", number: 5, team: "t_home" },
   p_home_06: { name: "Mateo Strand", number: 6, team: "t_home" },
+  p_home_07: { name: "Lewis Achterberg", number: 7, team: "t_home" },
   p_home_08: { name: "Rafa Quist", number: 8, team: "t_home" },
   p_home_09: { name: "Idris Kallo", number: 9, team: "t_home" },
   p_home_10: { name: "Theo Marlow", number: 10, team: "t_home" },
+  p_home_11: { name: "Nico Varnaby", number: 11, team: "t_home" },
   p_away_01: { name: "Anders Vik", number: 1, team: "t_away" },
+  p_away_02: { name: "Tobias Wren", number: 2, team: "t_away" },
+  p_away_03: { name: "Emil Gasparyan", number: 3, team: "t_away" },
+  p_away_04: { name: "Callan Dumas-Reid", number: 4, team: "t_away" },
+  p_away_05: { name: "Jonas Mbaye-Ross", number: 5, team: "t_away" },
   p_away_06: { name: "Ollie Kaczmarek", number: 6, team: "t_away" },
   p_away_07: { name: "Kofi Rasmussen", number: 7, team: "t_away" },
   p_away_08: { name: "Benedek Sato", number: 8, team: "t_away" },
   p_away_09: { name: "Marco Desai", number: 9, team: "t_away" },
   p_away_10: { name: "Yusuf Lindqvist", number: 10, team: "t_away" },
+  p_away_11: { name: "Ilya Brannock", number: 11, team: "t_away" },
 };
 
 export const MATCH = {
@@ -57,7 +67,8 @@ const EMPTY_ATTRIBUTES: MatchEvent["attributes"] = {
   sprint_distance_m: null,
 };
 
-function event(
+/** Build a MatchEvent; attributes not given are null. */
+export function makeEvent(
   n: number,
   clock: string,
   type: MatchEvent["type"],
@@ -86,53 +97,53 @@ function event(
 
 /** Recent events, oldest first. Home attacks toward x = 100, so Westmere pressure sits at low x. */
 export const RECENT_EVENTS: MatchEvent[] = [
-  event(596, "61:02", "pass", "p_away_06", [52, 30], [38, 18], {
+  makeEvent(596, "61:02", "pass", "p_away_06", [52, 30], [38, 18], {
     pass_distance_m: 18.6,
     pass_difficulty: 0.31,
   }),
-  event(598, "61:09", "pass", "p_away_08", [38, 18], [27, 33], {
+  makeEvent(598, "61:09", "pass", "p_away_08", [38, 18], [27, 33], {
     pass_distance_m: 14.2,
     pass_difficulty: 0.48,
   }),
-  event(599, "61:14", "pressure", "p_home_06", [29, 35], null, {
+  makeEvent(599, "61:14", "pressure", "p_home_06", [29, 35], null, {
     pressure_level: 0.72,
   }),
-  event(601, "61:18", "pass", "p_away_10", [27, 33], [19, 52], {
+  makeEvent(601, "61:18", "pass", "p_away_10", [27, 33], [19, 52], {
     pass_distance_m: 15.9,
     pass_difficulty: 0.66,
   }),
-  event(603, "61:25", "pass", "p_away_07", [19, 52], [24, 41], {
+  makeEvent(603, "61:25", "pass", "p_away_07", [19, 52], [24, 41], {
     pass_distance_m: 9.4,
     pass_difficulty: 0.42,
   }),
-  event(605, "61:31", "pass", "p_away_10", [24, 41], [14, 30], {
+  makeEvent(605, "61:31", "pass", "p_away_10", [24, 41], [14, 30], {
     pass_distance_m: 11.8,
     pass_difficulty: 0.71,
   }),
-  event(606, "61:36", "tackle", "p_home_04", [15, 29]),
-  event(607, "61:44", "pass", "p_away_06", [33, 22], [21, 14], {
+  makeEvent(606, "61:36", "tackle", "p_home_04", [15, 29]),
+  makeEvent(607, "61:44", "pass", "p_away_06", [33, 22], [21, 14], {
     pass_distance_m: 12.5,
     pass_difficulty: 0.37,
   }),
-  event(609, "61:52", "pass", "p_away_07", [21, 14], [12, 44], {
+  makeEvent(609, "61:52", "pass", "p_away_07", [21, 14], [12, 44], {
     pass_distance_m: 21.3,
     pass_difficulty: 0.83,
   }),
-  event(611, "61:58", "shot", "p_away_09", [13, 45], null, {
+  makeEvent(611, "61:58", "shot", "p_away_09", [13, 45], null, {
     ball_speed_kmh: 96.4,
   }),
-  event(612, "62:20", "sprint", "p_home_09", [41, 60], [78, 52], {
+  makeEvent(612, "62:20", "sprint", "p_home_09", [41, 60], [78, 52], {
     top_speed_kmh: 34.2,
     sprint_distance_m: 38.5,
   }),
-  event(614, "62:41", "pass", "p_away_08", [44, 62], [30, 55], {
+  makeEvent(614, "62:41", "pass", "p_away_08", [44, 62], [30, 55], {
     pass_distance_m: 14.7,
     pass_difficulty: 0.29,
   }),
-  event(616, "62:55", "pressure", "p_home_08", [31, 54], null, {
+  makeEvent(616, "62:55", "pressure", "p_home_08", [31, 54], null, {
     pressure_level: 0.64,
   }),
-  event(618, "63:04", "pass", "p_away_10", [30, 55], [18, 38], {
+  makeEvent(618, "63:04", "pass", "p_away_10", [30, 55], [18, 38], {
     pass_distance_m: 14.8,
     pass_difficulty: 0.58,
   }),
@@ -409,35 +420,6 @@ export const INCOMING_TEMPLATES: IncomingTemplate[] = [
     },
   },
 ];
-
-/** Player positions for the program monitor's synthetic camera frame (normalized 0-100). */
-export const FEED_SNAPSHOT = {
-  ball: { x: 19, y: 52 },
-  players: [
-    { id: "p_home_01", team: "t_home", x: 4, y: 50 },
-    { id: null, team: "t_home", x: 13, y: 26 },
-    { id: "p_home_04", team: "t_home", x: 12, y: 42 },
-    { id: null, team: "t_home", x: 13, y: 58 },
-    { id: null, team: "t_home", x: 16, y: 74 },
-    { id: "p_home_06", team: "t_home", x: 23, y: 44 },
-    { id: "p_home_08", team: "t_home", x: 24, y: 61 },
-    { id: null, team: "t_home", x: 30, y: 22 },
-    { id: null, team: "t_home", x: 31, y: 80 },
-    { id: "p_home_10", team: "t_home", x: 39, y: 47 },
-    { id: "p_home_09", team: "t_home", x: 36, y: 62 },
-    { id: "p_away_01", team: "t_away", x: 93, y: 50 },
-    { id: null, team: "t_away", x: 52, y: 30 },
-    { id: null, team: "t_away", x: 50, y: 50 },
-    { id: null, team: "t_away", x: 53, y: 70 },
-    { id: "p_away_06", team: "t_away", x: 35, y: 35 },
-    { id: "p_away_10", team: "t_away", x: 28, y: 53 },
-    { id: "p_away_08", team: "t_away", x: 38, y: 76 },
-    { id: "p_away_09", team: "t_away", x: 20, y: 39 },
-    { id: "p_away_07", team: "t_away", x: 17, y: 60 },
-    { id: null, team: "t_away", x: 26, y: 18 },
-    { id: null, team: "t_away", x: 24, y: 86 },
-  ] satisfies { id: string | null; team: TeamId; x: number; y: number }[],
-};
 
 /** The graphic already on air when the session opens (approved before 63:00). */
 export const INITIAL_ON_AIR: OnAirGraphic = {
