@@ -7,8 +7,8 @@ import { LowerThird } from "@/components/broadcast/LowerThird";
 import { Scorebug } from "@/components/broadcast/Scorebug";
 import { Panel } from "@/components/ui/Panel";
 import type { TrackingFrame } from "@/lib/contracts.generated";
-import { FEEDS, type FeedId, type OnAirGraphic } from "@/lib/controlRoom";
-import { forFeed } from "@/lib/i18n";
+import type { OnAirGraphic } from "@/lib/controlRoom";
+import { type Audience, type Lang, forFeed } from "@/lib/i18n";
 import type { FrameSource } from "@/lib/live/useLiveMatch";
 import type { Side } from "@/lib/match";
 import { useMatchFrame } from "@/lib/useMatchFrame";
@@ -24,18 +24,21 @@ export function ProgramMonitor({
   clock,
   source,
   score,
-  feed,
+  view,
   onAir,
+  focusPlayerId = null,
   className,
 }: {
   clock: string;
   source: FrameSource;
   score: Record<Side, number>;
-  feed: FeedId;
+  /** Whose feed this is: the graphics are written for this audience and language. */
+  view: { audience: Audience; lang: Lang; label: string };
   onAir: OnAirGraphic | null;
+  focusPlayerId?: string | null;
   className?: string;
 }) {
-  const { audience, lang, label } = FEEDS[feed];
+  const { audience, lang, label } = view;
   const frame = useMatchFrame(source);
   const tag =
     onAir?.template === "player_tag" && onAir.playerId
@@ -59,6 +62,7 @@ export function ProgramMonitor({
               frame={frame}
               aimX={cameraAim(source, frame)}
               tag={tag}
+              focusPlayerId={focusPlayerId}
             />
           ) : (
             <p className="absolute inset-0 grid place-items-center text-sm text-ink-3">

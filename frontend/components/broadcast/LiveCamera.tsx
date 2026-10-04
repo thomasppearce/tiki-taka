@@ -87,10 +87,13 @@ export function LiveCamera({
   frame,
   aimX,
   tag,
+  focusPlayerId = null,
 }: {
   frame: TrackingFrame;
   aimX: number;
   tag: CameraTag | null;
+  /** A player the viewer follows: ringed at their feet. */
+  focusPlayerId?: string | null;
 }) {
   const info = useMatch();
   const centre = clampCentre((aimX / 100) * L);
@@ -147,6 +150,7 @@ export function LiveCamera({
             camera={camera}
             at={player.at}
             home={sideOf(info, player.team_id) === "home"}
+            focused={player.player_id === focusPlayerId}
           />
         ))}
 
@@ -183,10 +187,12 @@ function PlayerFigure({
   camera,
   at,
   home,
+  focused,
 }: {
   camera: Homography;
   at: Point;
   home: boolean;
+  focused: boolean;
 }) {
   const foot = project(camera, at);
   const s = scaleAt(camera, at);
@@ -199,7 +205,8 @@ function PlayerFigure({
         cy={foot.y}
         rx={0.7 * s}
         ry={0.22 * s}
-        className="fill-page/70"
+        className={focused ? "fill-none stroke-air" : "fill-page/70"}
+        strokeWidth={focused ? Math.max(1.5, 0.18 * s) : undefined}
       />
       <rect
         x={foot.x - bodyW / 2}

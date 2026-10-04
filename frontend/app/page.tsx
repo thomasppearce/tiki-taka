@@ -1,6 +1,6 @@
-import { ControlRoom } from "@/components/ControlRoom";
+import { MatchCentre } from "@/components/centre/MatchCentre";
 
-// The producer's control room on the featured match, live from the backend.
+// The match centre: every fixture, live. Each card opens its match page.
 export default function Page() {
-  return <ControlRoom />;
+  return <MatchCentre />;
 }

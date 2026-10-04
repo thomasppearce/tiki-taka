@@ -93,3 +93,17 @@ def _sse(lines: Iterator[str]) -> list[dict[str, str]]:
 def test_payloads_are_plain_json(client: TestClient, at_minute: Pin) -> None:
     at_minute(63)
     json.dumps(client.get("/api/matchday").json())
+
+
+def test_events_by_id_returns_receipts_but_never_the_future(
+    client: TestClient, at_minute: Pin
+) -> None:
+    at_minute(63)
+    detail = MatchDetail.model_validate(client.get("/api/matches/m_l1_1").json())
+    cited = [e for k in detail.key_moments for e in k.evidence_event_ids][:30]
+    response = client.get("/api/matches/m_l1_1/events", params={"ids": ",".join(cited)})
+    assert response.status_code == 200
+    assert sorted(e["event_id"] for e in response.json()) == sorted(set(cited))
+    at_minute(10)
+    later = client.get("/api/matches/m_l1_1/events", params={"ids": ",".join(cited)}).json()
+    assert all(e["match_clock_ms"] <= 10 * 60_000 for e in later)

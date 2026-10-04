@@ -10,7 +10,8 @@ import type { CardActions } from "@/components/control-room/ProposalCard";
 import { ProposalQueue } from "@/components/control-room/ProposalQueue";
 import { TacticalPitch } from "@/components/control-room/TacticalPitch";
 import { TopBar } from "@/components/control-room/TopBar";
-import { API_URL, FEATURED_MATCH_ID, postJson } from "@/lib/api";
+import { FeedState } from "@/components/match/FeedState";
+import { postJson } from "@/lib/api";
 import type { Desk, Proposal } from "@/lib/contracts.generated";
 import {
   type Decisions,
@@ -26,26 +27,28 @@ import {
   timelineMarkers,
 } from "@/lib/controlRoom";
 import { formatClock } from "@/lib/format";
-import {
-  type LiveMatch,
-  type LiveStatus,
-  useLiveMatch,
-} from "@/lib/live/useLiveMatch";
+import { useEvidence } from "@/lib/live/useEvidence";
+import { usePlaybackClock } from "@/lib/live/usePlaybackClock";
+import { type LiveMatch, useLiveMatch } from "@/lib/live/useLiveMatch";
 import { MatchContext, type MatchInfo } from "@/lib/match";
 
-const TICK_MS = 250;
 const HALF_MS = 45 * 60_000;
 
 type Baseline = NonNullable<LiveMatch["baseline"]>;
 
 /**
- * The producer's control room on the featured match, live from the backend: the match plays from
- * the tracking stream, and the queue, the on-air graphic, the agents, and the decision log come
- * from the proposal desk. Approving, editing, and rejecting go to the desk's API.
+ * The producer's control room for one match, live from the backend: the match plays from the
+ * tracking stream, and the queue, the on-air graphic, the agents, and the decision log come from
+ * the proposal desk. Approving, editing, and rejecting go to the desk's API.
  */
-export function ControlRoom() {
-  const live = useLiveMatch(FEATURED_MATCH_ID);
-  if (!live.info || !live.baseline) return <FeedState status={live.status} />;
+export function ControlRoom({ matchId }: { matchId: string }) {
+  const live = useLiveMatch(matchId);
+  if (!live.info || !live.baseline)
+    return (
+      <div className="flex min-h-dvh flex-col bg-page">
+        <FeedState status={live.status} />
+      </div>
+    );
   return (
     <MatchContext value={live.info}>
       <Room live={live} info={live.info} baseline={live.baseline} />
@@ -81,15 +84,18 @@ function Room({
   const selected =
     queue.find((p) => p.proposal_id === chosenId) ?? queue[0] ?? null;
   const selectedId = selected?.proposal_id ?? null;
-  const citedEventIds = useMemo(
-    () => new Set(selected?.claims.flatMap((c) => c.evidence_event_ids) ?? []),
+  const citedIds = useMemo(
+    () => selected?.claims.flatMap((c) => c.evidence_event_ids) ?? [],
     [selected],
   );
+  const citedEventIds = useMemo(() => new Set(citedIds), [citedIds]);
 
   const events = useMemo(
     () => live.events.filter((e) => e.match_clock_ms <= clockMs),
     [live.events, clockMs],
   );
+  const older = useEvidence(info.matchId, citedIds, events);
+  const pitchEvents = useMemo(() => [...older, ...events], [older, events]);
   const score = scoreAt(info, baseline, live.events, clockMs);
   const minute = Math.floor(clockMs / 60_000);
   const momentum = useMemo(
@@ -183,12 +189,12 @@ function Room({
                 clock={clock}
                 source={live.source}
                 score={score}
-                feed={feed}
+                view={FEEDS[feed]}
                 onAir={onAirGraphic(desk)}
                 className="order-1 lg:order-none"
               />
               <TacticalPitch
-                events={events}
+                events={pitchEvents}
                 source={live.source}
                 citedEventIds={citedEventIds}
                 className="order-3 lg:order-none"
@@ -221,16 +227,6 @@ function Room({
       </div>
     </MotionConfig>
   );
-}
-
-/** The playback clock as React state, refreshed at 4 Hz for the clock, queue, and timeline. */
-function usePlaybackClock(getClockMs: () => number): number {
-  const [clockMs, setClockMs] = useState(getClockMs);
-  useEffect(() => {
-    const timer = setInterval(() => setClockMs(getClockMs()), TICK_MS);
-    return () => clearInterval(timer);
-  }, [getClockMs]);
-  return clockMs;
 }
 
 /** J/K or arrows to move, A approve, E edit, R reject. Ignored while typing or with modifiers. */
@@ -270,33 +266,4 @@ function useShortcuts(
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-}
-
-/** Before the match has loaded: connecting, or the backend can't be reached. */
-function FeedState({ status }: { status: LiveStatus }) {
-  const offline = status === "offline";
-  return (
-    <main className="grid min-h-dvh place-items-center bg-page p-6">
-      <div className="max-w-md text-center">
-        <p className="text-sm font-semibold text-ink">
-          {offline
-            ? "Can't reach the match feed"
-            : "Connecting to the match feed"}
-        </p>
-        <p className="mt-2 text-sm text-ink-2">
-          {offline ? (
-            <>
-              Nothing is answering at{" "}
-              <code className="font-mono text-ink">{API_URL}</code>. Start the
-              backend with{" "}
-              <code className="font-mono text-ink">make dev-backend</code>; this
-              page reconnects on its own.
-            </>
-          ) : (
-            "Loading the match, the squads, and the producer's desk."
-          )}
-        </p>
-      </div>
-    </main>
-  );
 }

@@ -27,6 +27,8 @@ export type FrameSource = {
 export type LiveMatch = {
   status: LiveStatus;
   info: MatchInfo | null;
+  /** Key moments and team stats as of the last refresh (every DETAIL_REFRESH_MS). */
+  detail: MatchDetail | null;
   source: FrameSource;
   /** The score when the detail loaded; goals after `clockMs` are counted from `events`. */
   baseline: { clockMs: number; home: number; away: number } | null;
@@ -43,6 +45,7 @@ export type LiveMatch = {
 const MAX_EVENTS = 400;
 const MAX_HISTORY = 600;
 const RESTART_MS = 5_000;
+const DETAIL_REFRESH_MS = 15_000;
 
 /**
  * One match, live from the backend: the match detail (clubs, squads, score, recent events), then
@@ -83,7 +86,7 @@ export function useLiveMatch(matchId: string): LiveMatch {
     [matchId, setDesk],
   );
 
-  // The detail: loaded on mount and again whenever the stream (re)connects or cuts.
+  // The detail: loaded on mount, every 15 s, and whenever the stream reconnects or cuts.
   useEffect(() => {
     let cancelled = false;
     getJson<MatchDetail>(`/api/matches/${matchId}`)
@@ -101,6 +104,14 @@ export function useLiveMatch(matchId: string): LiveMatch {
       cancelled = true;
     };
   }, [matchId, reloads]);
+
+  useEffect(() => {
+    const timer = setInterval(
+      () => setReloads((n) => n + 1),
+      DETAIL_REFRESH_MS,
+    );
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const source = new EventSource(`${API_URL}/api/matches/${matchId}/stream`);
@@ -164,6 +175,7 @@ export function useLiveMatch(matchId: string): LiveMatch {
   return {
     status,
     info,
+    detail,
     source: frameSource,
     baseline,
     card,

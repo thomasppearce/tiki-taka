@@ -1,7 +1,9 @@
 import { Broadcast } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 
 import { ClubCrest } from "@/components/ClubCrest";
 import { FeedTabs } from "@/components/control-room/FeedTabs";
+import { RoleSwitch } from "@/components/RoleSwitch";
 import type { FeedId } from "@/lib/controlRoom";
 import type { LiveStatus } from "@/lib/live/useLiveMatch";
 import { type Side, club, useMatch } from "@/lib/match";
@@ -36,10 +38,13 @@ export function TopBar({
   const { label, dot } = STATUS[status];
   return (
     <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-b border-line bg-panel px-4 py-2">
-      <p className="flex items-center gap-2 text-sm font-semibold whitespace-nowrap text-ink">
+      <Link
+        href="/"
+        className="flex items-center gap-2 rounded-md text-sm font-semibold whitespace-nowrap text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-air"
+      >
         <Broadcast size={18} weight="bold" className="text-ink-2" />
         Match Desk
-      </p>
+      </Link>
 
       <div className="hidden h-5 w-px bg-line sm:block" aria-hidden />
 
@@ -62,6 +67,7 @@ export function TopBar({
 
       <div className="flex items-center gap-4 sm:ml-auto">
         <FeedTabs active={feed} onChange={onFeedChange} />
+        <RoleSwitch />
         <p className="flex items-center gap-2 text-xs whitespace-nowrap text-ink-2">
           <span className={`size-2 rounded-full ${dot}`} aria-hidden />
           {label}

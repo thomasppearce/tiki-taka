@@ -21,11 +21,14 @@ export function TacticalPitch({
   events,
   citedEventIds,
   source,
+  focusPlayerId = null,
   className,
 }: {
   events: MatchEvent[];
   citedEventIds: ReadonlySet<string>;
   source: FrameSource;
+  /** A player the viewer follows: ringed on the board. */
+  focusPlayerId?: string | null;
   className?: string;
 }) {
   const info = useMatch();
@@ -65,7 +68,12 @@ export function TacticalPitch({
             );
           })}
           {frame?.players.map((player) => (
-            <PlayerDot key={player.player_id} player={player} info={info} />
+            <PlayerDot
+              key={player.player_id}
+              player={player}
+              info={info}
+              focused={player.player_id === focusPlayerId}
+            />
           ))}
           {frame && <Ball frame={frame} />}
         </svg>
@@ -77,15 +85,27 @@ export function TacticalPitch({
 function PlayerDot({
   player,
   info,
+  focused,
 }: {
   player: TrackingFrame["players"][number];
   info: MatchInfo;
+  focused: boolean;
 }) {
   const at = toPitch(player);
   const home = sideOf(info, player.team_id) === "home";
   const number = info.players.get(player.player_id)?.number;
   return (
     <g data-player={player.player_id} data-x={at.x} data-y={at.y}>
+      {focused && (
+        <circle
+          cx={at.x}
+          cy={at.y}
+          r={3.4}
+          className="fill-none stroke-air"
+          strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
       {home ? (
         <circle
           cx={at.x}

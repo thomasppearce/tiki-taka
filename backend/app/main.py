@@ -12,13 +12,14 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.generator.matchday import ScheduledMatch
 from app.live.service import MatchdayService
-from app.models import OverlayCommand
+from app.models import MatchEvent, OverlayCommand
 from app.models.desk import ApproveRequest, Desk
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
 
 FRAME_INTERVAL_S = 0.25  # 4 Hz; the browser interpolates between frames
 CARD_EVERY_FRAMES = 8  # score, momentum, and top moment every 2 s
+MAX_EVENT_IDS = 200
 
 
 @asynccontextmanager
@@ -64,6 +65,21 @@ def match_detail(match_id: str, request: Request) -> MatchDetail:
     service = _service(request)
     _match(service, match_id)
     return service.detail(match_id)
+
+
+@app.get("/api/matches/{match_id}/events")
+def match_events(
+    match_id: str,
+    request: Request,
+    ids: str = Query(max_length=8_000, description="Comma-separated event ids, at most 200."),
+) -> list[MatchEvent]:
+    """Specific events by id (the receipts a proposal or key moment cites), never ones that have
+    not happened yet."""
+    service = _service(request)
+    match = _match(service, match_id)
+    wanted = set(ids.split(",")[:MAX_EVENT_IDS])
+    now = service.now(match)
+    return [e for e in match.result.events if e.event_id in wanted and e.match_clock_ms <= now]
 
 
 @app.get("/api/matches/{match_id}/desk")
