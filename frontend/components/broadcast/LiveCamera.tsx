@@ -13,7 +13,7 @@ import {
   solveHomography,
 } from "@/lib/camera";
 import type { TrackingFrame } from "@/lib/contracts.generated";
-import { cameraTargetAt } from "@/lib/matchSim";
+import { sideOf, useMatch } from "@/lib/match";
 import { PITCH, toPitch } from "@/lib/pitch";
 
 const W = 1600;
@@ -79,17 +79,21 @@ export type CameraTag = { id: string; playerId: string; line: string };
 
 /**
  * The program monitor's camera on the synthetic match. Real footage is off-limits, so it renders
- * the tracking frame through a broadcast camera model that pans to follow play. An on-air player
- * tag rides above its player as he moves.
+ * the tracking frame through a broadcast camera model aimed at `aimX` (pitch x, 0-100), which
+ * the caller smooths so the camera follows play rather than every pass. An on-air player tag
+ * rides above its player as they move.
  */
 export function LiveCamera({
   frame,
+  aimX,
   tag,
 }: {
   frame: TrackingFrame;
+  aimX: number;
   tag: CameraTag | null;
 }) {
-  const centre = clampCentre((cameraTargetAt(frame.match_clock_ms) / 100) * L);
+  const info = useMatch();
+  const centre = clampCentre((aimX / 100) * L);
   const camera = cameraAt(centre);
   const players = frame.players
     .map((p) => ({ ...p, at: toPitch(p) }))
@@ -142,7 +146,7 @@ export function LiveCamera({
             key={player.player_id}
             camera={camera}
             at={player.at}
-            home={player.team_id === "t_home"}
+            home={sideOf(info, player.team_id) === "home"}
           />
         ))}
 

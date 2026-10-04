@@ -1,14 +1,7 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
-import {
-  type Dispatch,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AgentActivity } from "@/components/control-room/AgentActivity";
 import { MomentumTimeline } from "@/components/control-room/MomentumTimeline";
@@ -17,104 +10,210 @@ import type { CardActions } from "@/components/control-room/ProposalCard";
 import { ProposalQueue } from "@/components/control-room/ProposalQueue";
 import { TacticalPitch } from "@/components/control-room/TacticalPitch";
 import { TopBar } from "@/components/control-room/TopBar";
+import { API_URL, FEATURED_MATCH_ID, postJson } from "@/lib/api";
+import type { Desk, Proposal } from "@/lib/contracts.generated";
 import {
-  type Action,
-  type State,
+  type Decisions,
+  FEEDS,
+  type FeedId,
   agentStates,
-  createInitialState,
-  pendingSorted,
-  reducer,
+  auditLines,
+  countsFrom,
+  decisionsFrom,
+  onAirGraphic,
+  pendingQueue,
+  scoreAt,
+  timelineMarkers,
 } from "@/lib/controlRoom";
 import { formatClock } from "@/lib/format";
-import { eventsUntil } from "@/lib/matchSim";
-import { MATCH, momentumAt } from "@/lib/mock";
+import {
+  type LiveMatch,
+  type LiveStatus,
+  useLiveMatch,
+} from "@/lib/live/useLiveMatch";
+import { MatchContext, type MatchInfo } from "@/lib/match";
 
 const TICK_MS = 250;
+const HALF_MS = 45 * 60_000;
+
+type Baseline = NonNullable<LiveMatch["baseline"]>;
+
+/**
+ * The producer's control room on the featured match, live from the backend: the match plays from
+ * the tracking stream, and the queue, the on-air graphic, the agents, and the decision log come
+ * from the proposal desk. Approving, editing, and rejecting go to the desk's API.
+ */
+export function ControlRoom() {
+  const live = useLiveMatch(FEATURED_MATCH_ID);
+  if (!live.info || !live.baseline) return <FeedState status={live.status} />;
+  return (
+    <MatchContext value={live.info}>
+      <Room live={live} info={live.info} baseline={live.baseline} />
+    </MatchContext>
+  );
+}
 
 /*
- * The control room. Three layouts, one tree:
+ * Three layouts, one tree:
  * - xl (>= 1280px): fixed single-screen control room; the left column fills the viewport height.
  * - lg (1024-1279px): page scrolls; panels stack on the left, the proposal queue stays pinned right.
  * - below lg: one column. The column wrappers become `display: contents` so their panels join the
  *   page grid directly and can be ordered: program, proposals, pitch, momentum, agents.
  */
-export function ControlRoom() {
-  const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
-  const getClockMs = useMatchClock(dispatch);
-  useShortcuts(state, dispatch);
+function Room({
+  live,
+  info,
+  baseline,
+}: {
+  live: LiveMatch;
+  info: MatchInfo;
+  baseline: Baseline;
+}) {
+  const [feed, setFeed] = useState<FeedId>("feed_analyst_en");
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [inFlight, setInFlight] = useState<Decisions>({});
+  const clockMs = usePlaybackClock(live.source.getClockMs);
+  const { desk, setDesk, refreshDesk } = live;
 
-  const queue = pendingSorted(state);
+  const queue = useMemo(() => pendingQueue(desk, inFlight), [desk, inFlight]);
+  // The producer's pick, or the top of the queue once that one has gone.
   const selected =
-    queue.find((p) => p.proposal_id === state.selectedId) ?? null;
+    queue.find((p) => p.proposal_id === chosenId) ?? queue[0] ?? null;
+  const selectedId = selected?.proposal_id ?? null;
   const citedEventIds = useMemo(
     () => new Set(selected?.claims.flatMap((c) => c.evidence_event_ids) ?? []),
     [selected],
   );
-  const minute = Math.floor(state.clockMs / 60_000);
-  const momentum = useMemo(
-    () => Array.from({ length: minute + 1 }, (_, m) => momentumAt(m)),
-    [minute],
+
+  const events = useMemo(
+    () => live.events.filter((e) => e.match_clock_ms <= clockMs),
+    [live.events, clockMs],
   );
-  const clock = formatClock(state.clockMs);
-  const events = useMemo(() => eventsUntil(state.clockMs), [state.clockMs]);
+  const score = scoreAt(info, baseline, live.events, clockMs);
+  const minute = Math.floor(clockMs / 60_000);
+  const momentum = useMemo(
+    () => (live.card?.momentum ?? []).slice(0, minute + 1),
+    [live.card, minute],
+  );
+  const markers = useMemo(
+    () => timelineMarkers(info, events, live.history),
+    [info, events, live.history],
+  );
+  const decisions = useMemo(
+    () => decisionsFrom(live.history, inFlight),
+    [live.history, inFlight],
+  );
+  const clock = formatClock(clockMs);
+  const period =
+    live.card?.status === "full_time"
+      ? "Full time"
+      : clockMs < HALF_MS
+        ? "1st half"
+        : "2nd half";
+
+  const decide = useCallback(
+    async (
+      id: string,
+      decision: "approved" | "rejected",
+      edit?: { headline: string; body: string },
+    ) => {
+      // The card leaves at once; the desk's answer confirms it, or the card comes back.
+      setInFlight((d) => ({ ...d, [id]: decision }));
+      setEditingId(null);
+      try {
+        const action = decision === "approved" ? "approve" : "reject";
+        const body =
+          decision === "approved" ? { profile_id: feed, ...edit } : {};
+        setDesk(
+          await postJson<Desk>(
+            `/api/matches/${info.matchId}/proposals/${id}/${action}`,
+            body,
+          ),
+        );
+      } catch {
+        // Expired or already decided on the server: show the desk as it now is.
+        await refreshDesk();
+      } finally {
+        setInFlight((d) => {
+          const rest = { ...d };
+          delete rest[id];
+          return rest;
+        });
+      }
+    },
+    [feed, info.matchId, setDesk, refreshDesk],
+  );
+
   const actions = useMemo<CardActions>(
     () => ({
-      onSelect: (id) => dispatch({ type: "select", id }),
-      onApprove: (id) => dispatch({ type: "approve", id }),
-      onReject: (id) => dispatch({ type: "reject", id }),
-      onEdit: (id) => dispatch({ type: "startEdit", id }),
-      onCancelEdit: () => dispatch({ type: "cancelEdit" }),
+      onSelect: (id) => {
+        setChosenId(id);
+        setEditingId(null);
+      },
+      onApprove: (id) => void decide(id, "approved"),
+      onReject: (id) => void decide(id, "rejected"),
+      onEdit: (id) => {
+        setChosenId(id);
+        setEditingId(id);
+      },
+      onCancelEdit: () => setEditingId(null),
       onSaveEdit: (id, headline, body) =>
-        dispatch({ type: "saveEdit", id, headline, body }),
+        void decide(id, "approved", { headline, body }),
     }),
-    [],
+    [decide],
   );
+  useShortcuts(queue, selectedId, actions);
 
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col bg-page xl:h-dvh xl:min-h-[760px]">
         <TopBar
           clock={clock}
-          feed={state.feed}
-          onFeedChange={(feed) => dispatch({ type: "setFeed", feed })}
+          period={period}
+          score={score}
+          status={live.status}
+          feed={feed}
+          onFeedChange={setFeed}
         />
         <main className="grid flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-stretch 2xl:grid-cols-[minmax(0,1fr)_400px]">
           <div className="contents lg:grid lg:min-w-0 lg:gap-3 xl:min-h-0 xl:grid-rows-[auto_auto_minmax(0,1fr)]">
             <div className="contents xl:grid xl:min-w-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:gap-3">
               <ProgramMonitor
                 clock={clock}
-                getClockMs={getClockMs}
-                feed={state.feed}
-                onAir={state.onAir}
+                source={live.source}
+                score={score}
+                feed={feed}
+                onAir={onAirGraphic(desk)}
                 className="order-1 lg:order-none"
               />
               <TacticalPitch
                 events={events}
-                getClockMs={getClockMs}
+                source={live.source}
                 citedEventIds={citedEventIds}
                 className="order-3 lg:order-none"
               />
             </div>
             <MomentumTimeline
               momentum={momentum}
-              markers={state.markers}
+              markers={markers}
               nowMinute={minute}
               className="order-4 lg:order-none"
             />
             <AgentActivity
-              agents={agentStates(state)}
-              log={state.log}
+              agents={agentStates(desk, FEEDS[feed].label)}
+              log={auditLines(desk)}
               className="order-5 lg:order-none"
             />
           </div>
           <ProposalQueue
             proposals={queue}
-            selectedId={state.selectedId}
-            editingId={state.editingId}
-            clockMs={state.clockMs}
-            feed={state.feed}
-            decisions={state.decisions}
-            counts={state.counts}
+            selectedId={selectedId}
+            editingId={editingId}
+            clockMs={clockMs}
+            feed={feed}
+            decisions={decisions}
+            counts={countsFrom(desk)}
             actions={actions}
             className="order-2 lg:sticky lg:top-3 lg:order-none lg:max-h-[calc(100dvh-1.5rem)] xl:static xl:max-h-none"
           />
@@ -124,35 +223,25 @@ export function ControlRoom() {
   );
 }
 
-/**
- * The match clock, advancing in real time (1x) from the session start. Returns a stable reader:
- * the reducer ticks from it at 4 Hz for the UI, and the animated views read it every frame, so
- * the camera, the formation board, and the queue all agree on the time.
- */
-function useMatchClock(dispatch: Dispatch<Action>): () => number {
-  const startedAt = useRef<number | null>(null);
-  const getClockMs = useCallback(
-    () =>
-      MATCH.clockMs +
-      (startedAt.current === null ? 0 : performance.now() - startedAt.current),
-    [],
-  );
+/** The playback clock as React state, refreshed at 4 Hz for the clock, queue, and timeline. */
+function usePlaybackClock(getClockMs: () => number): number {
+  const [clockMs, setClockMs] = useState(getClockMs);
   useEffect(() => {
-    startedAt.current = performance.now();
-    const timer = setInterval(
-      () => dispatch({ type: "tick", clockMs: getClockMs() }),
-      TICK_MS,
-    );
+    const timer = setInterval(() => setClockMs(getClockMs()), TICK_MS);
     return () => clearInterval(timer);
-  }, [dispatch, getClockMs]);
-  return getClockMs;
+  }, [getClockMs]);
+  return clockMs;
 }
 
 /** J/K or arrows to move, A approve, E edit, R reject. Ignored while typing or with modifiers. */
-function useShortcuts(state: State, dispatch: Dispatch<Action>) {
-  const latest = useRef(state);
+function useShortcuts(
+  queue: Proposal[],
+  selectedId: string | null,
+  actions: CardActions,
+) {
+  const latest = useRef({ queue, selectedId, actions });
   useEffect(() => {
-    latest.current = state;
+    latest.current = { queue, selectedId, actions };
   });
 
   useEffect(() => {
@@ -161,20 +250,53 @@ function useShortcuts(state: State, dispatch: Dispatch<Action>) {
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable='true']"))
         return;
-      const id = latest.current.selectedId;
+      const { queue, selectedId: id, actions } = latest.current;
       const key = e.key.toLowerCase();
+      const move = (delta: 1 | -1) => {
+        if (!queue.length) return;
+        const at = queue.findIndex((p) => p.proposal_id === id);
+        const next = Math.min(queue.length - 1, Math.max(0, at + delta));
+        actions.onSelect(queue[next].proposal_id);
+      };
 
-      if (key === "j" || key === "arrowdown")
-        dispatch({ type: "move", delta: 1 });
-      else if (key === "k" || key === "arrowup")
-        dispatch({ type: "move", delta: -1 });
-      else if (key === "a" && id) dispatch({ type: "approve", id });
-      else if (key === "r" && id) dispatch({ type: "reject", id });
-      else if (key === "e" && id) dispatch({ type: "startEdit", id });
+      if (key === "j" || key === "arrowdown") move(1);
+      else if (key === "k" || key === "arrowup") move(-1);
+      else if (key === "a" && id) actions.onApprove(id);
+      else if (key === "r" && id) actions.onReject(id);
+      else if (key === "e" && id) actions.onEdit(id);
       else return;
       e.preventDefault();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dispatch]);
+  }, []);
+}
+
+/** Before the match has loaded: connecting, or the backend can't be reached. */
+function FeedState({ status }: { status: LiveStatus }) {
+  const offline = status === "offline";
+  return (
+    <main className="grid min-h-dvh place-items-center bg-page p-6">
+      <div className="max-w-md text-center">
+        <p className="text-sm font-semibold text-ink">
+          {offline
+            ? "Can't reach the match feed"
+            : "Connecting to the match feed"}
+        </p>
+        <p className="mt-2 text-sm text-ink-2">
+          {offline ? (
+            <>
+              Nothing is answering at{" "}
+              <code className="font-mono text-ink">{API_URL}</code>. Start the
+              backend with{" "}
+              <code className="font-mono text-ink">make dev-backend</code>; this
+              page reconnects on its own.
+            </>
+          ) : (
+            "Loading the match, the squads, and the producer's desk."
+          )}
+        </p>
+      </div>
+    </main>
+  );
 }

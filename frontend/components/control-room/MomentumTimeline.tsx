@@ -7,7 +7,7 @@ import { area, curveMonotoneX, line } from "d3-shape";
 
 import { Panel } from "@/components/ui/Panel";
 import type { TimelineMarker } from "@/lib/controlRoom";
-import { CLUBS } from "@/lib/mock";
+import { useMatch } from "@/lib/match";
 
 const FULL_TIME = 90;
 const VIEW_W = 900;
@@ -154,7 +154,7 @@ function MarkerIcon({ marker }: { marker: TimelineMarker }) {
       >
         <SoccerBall size={14} className="text-ink-2" />
         <span
-          className={`size-1.5 rounded-full ${marker.team === "t_away" ? "bg-away" : "bg-home"}`}
+          className={`size-1.5 rounded-full ${marker.team === "away" ? "bg-away" : "bg-home"}`}
         />
       </span>
     );
@@ -174,15 +174,16 @@ function MarkerIcon({ marker }: { marker: TimelineMarker }) {
 }
 
 function Legend() {
+  const { home, away } = useMatch();
   return (
     <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-3">
       <li className="flex items-center gap-1.5">
         <span className="h-2 w-3 bg-home" aria-hidden />
-        {CLUBS.t_home.short} on top
+        {home.short} on top
       </li>
       <li className="flex items-center gap-1.5">
         <span className="h-2 w-3 bg-away" aria-hidden />
-        {CLUBS.t_away.short} on top
+        {away.short} on top
       </li>
       <li className="flex items-center gap-1.5">
         <Diamond size={10} weight="fill" className="text-air" aria-hidden />

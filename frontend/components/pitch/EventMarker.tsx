@@ -1,4 +1,5 @@
 import type { MatchEvent } from "@/lib/contracts.generated";
+import { sideOf, useMatch } from "@/lib/match";
 import { toPitch } from "@/lib/pitch";
 
 const FADE = "opacity var(--duration-fast) var(--ease-smooth-out)";
@@ -18,10 +19,11 @@ export function EventMarker({
   cited: boolean;
   opacity: number;
 }) {
+  const info = useMatch();
   if (!event.location) return null;
   const start = toPitch(event.location);
   const end = event.end_location ? toPitch(event.end_location) : null;
-  const isHome = event.team_id === "t_home";
+  const isHome = sideOf(info, event.team_id) === "home";
   const teamFill = isHome ? "fill-home" : "fill-away";
   const teamStroke = isHome ? "stroke-home" : "stroke-away";
 

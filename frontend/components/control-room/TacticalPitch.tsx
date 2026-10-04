@@ -4,7 +4,8 @@ import { EventMarker } from "@/components/pitch/EventMarker";
 import { PitchMarkings } from "@/components/pitch/PitchMarkings";
 import { Panel } from "@/components/ui/Panel";
 import type { MatchEvent, TrackingFrame } from "@/lib/contracts.generated";
-import { CLUBS, PLAYERS } from "@/lib/mock";
+import type { FrameSource } from "@/lib/live/useLiveMatch";
+import { type MatchInfo, sideOf, useMatch } from "@/lib/match";
 import { PITCH_VIEWBOX, toPitch } from "@/lib/pitch";
 import { useMatchFrame } from "@/lib/useMatchFrame";
 
@@ -19,15 +20,19 @@ const TRAIL = 12;
 export function TacticalPitch({
   events,
   citedEventIds,
-  getClockMs,
+  source,
   className,
 }: {
   events: MatchEvent[];
   citedEventIds: ReadonlySet<string>;
-  getClockMs: () => number;
+  source: FrameSource;
   className?: string;
 }) {
-  const frame = useMatchFrame(getClockMs);
+  const info = useMatch();
+  const frame = useMatchFrame(source);
+  const minute = frame
+    ? `${Math.floor(frame.match_clock_ms / 60_000)}'`
+    : "kickoff";
   const hasSelection = citedEventIds.size > 0;
   const trail = events.slice(-TRAIL);
   const olderCited = events
@@ -41,7 +46,7 @@ export function TacticalPitch({
           viewBox={PITCH_VIEWBOX}
           className="w-full"
           role="img"
-          aria-label={`Formations at ${Math.floor(frame.match_clock_ms / 60_000)}', the last ${trail.length} actions, and ${citedEventIds.size} events cited by the selected proposal`}
+          aria-label={`Formations at ${minute}, the last ${trail.length} actions, and ${citedEventIds.size} events cited by the selected proposal`}
         >
           <PitchMarkings />
           {[...olderCited, ...trail].map((event) => {
@@ -59,22 +64,28 @@ export function TacticalPitch({
               />
             );
           })}
-          {frame.players.map((player) => (
-            <PlayerDot key={player.player_id} player={player} />
+          {frame?.players.map((player) => (
+            <PlayerDot key={player.player_id} player={player} info={info} />
           ))}
-          <Ball frame={frame} />
+          {frame && <Ball frame={frame} />}
         </svg>
       </div>
     </Panel>
   );
 }
 
-function PlayerDot({ player }: { player: TrackingFrame["players"][number] }) {
+function PlayerDot({
+  player,
+  info,
+}: {
+  player: TrackingFrame["players"][number];
+  info: MatchInfo;
+}) {
   const at = toPitch(player);
-  const home = player.team_id === "t_home";
-  const number = PLAYERS[player.player_id]?.number;
+  const home = sideOf(info, player.team_id) === "home";
+  const number = info.players.get(player.player_id)?.number;
   return (
-    <g>
+    <g data-player={player.player_id} data-x={at.x} data-y={at.y}>
       {home ? (
         <circle
           cx={at.x}
@@ -126,15 +137,16 @@ function Ball({ frame }: { frame: TrackingFrame }) {
 }
 
 function Legend() {
+  const { home, away } = useMatch();
   return (
     <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-3">
       <li className="flex items-center gap-1.5">
         <span className="size-2 rounded-full bg-home" aria-hidden />
-        {CLUBS.t_home.short}
+        {home.short}
       </li>
       <li className="flex items-center gap-1.5">
         <span className="size-2 rotate-45 bg-away" aria-hidden />
-        {CLUBS.t_away.short}
+        {away.short}
       </li>
       <li className="flex items-center gap-1.5">
         <span className="size-1.5 rounded-full bg-ink" aria-hidden />

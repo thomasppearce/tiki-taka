@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 
 import { SwapText } from "@/components/ui/SwapText";
-import { CLUBS, type TeamId } from "@/lib/mock";
+import { type Side, useMatch } from "@/lib/match";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
@@ -19,9 +19,10 @@ export function LowerThird({
 }: {
   label: string;
   headline: string;
-  split?: Record<TeamId, number>;
+  split?: Record<Side, number>;
   splitLabel?: string;
 }) {
+  const { home, away } = useMatch();
   return (
     <motion.div
       className="absolute bottom-[4.5cqw] left-[3.5cqw] w-max max-w-[86cqw] min-w-[48cqw] font-broadcast text-ink uppercase"
@@ -60,14 +61,14 @@ export function LowerThird({
         <div className="ml-[0.7cqw] flex items-center gap-[1.4cqw] bg-raised/95 px-[2.2cqw] py-[1.2cqw] text-[2cqw] leading-none font-semibold tabular-nums">
           <span className="tracking-wider text-ink-3">{splitLabel}</span>
           <span>
-            {CLUBS.t_away.short} {split.t_away}%
+            {away.short} {split.away}%
           </span>
           <div className="flex h-[0.9cqw] flex-1 gap-[0.25cqw]">
-            <div className="bg-away" style={{ width: `${split.t_away}%` }} />
+            <div className="bg-away" style={{ width: `${split.away}%` }} />
             <div className="flex-1 bg-home" />
           </div>
           <span>
-            {split.t_home}% {CLUBS.t_home.short}
+            {split.home}% {home.short}
           </span>
         </div>
       )}

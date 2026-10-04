@@ -3,19 +3,19 @@
 import { useEffect, useState } from "react";
 
 import type { TrackingFrame } from "@/lib/contracts.generated";
-import { frameAt } from "@/lib/matchSim";
-import { MATCH } from "@/lib/mock";
+import type { FrameSource } from "@/lib/live/useLiveMatch";
 
 const FRAME_MS = 1000 / 30;
 const REDUCED_FRAME_MS = 250;
 
 /**
- * The tracking frame at the current match clock, refreshed on animation frames (~30 fps, or 4 fps
- * when the viewer prefers reduced motion). Every view that calls this with the same clock shows
- * the same instant, which is what keeps the program camera and tactical view in sync.
+ * The tracking frame at the playback clock, refreshed on animation frames (~30 fps, or 4 fps
+ * when the viewer prefers reduced motion). Every view that reads the same source shows the same
+ * instant, which is what keeps the program camera and the tactical view in sync. Null until the
+ * first frame arrives.
  */
-export function useMatchFrame(getClockMs: () => number): TrackingFrame {
-  const [frame, setFrame] = useState(() => frameAt(MATCH.clockMs));
+export function useMatchFrame(source: FrameSource): TrackingFrame | null {
+  const [frame, setFrame] = useState(() => source.frameAt(source.getClockMs()));
 
   useEffect(() => {
     const reduced = window.matchMedia(
@@ -27,13 +27,13 @@ export function useMatchFrame(getClockMs: () => number): TrackingFrame {
     const loop = (now: number) => {
       if (now - lastDraw >= interval) {
         lastDraw = now;
-        setFrame(frameAt(getClockMs()));
+        setFrame(source.frameAt(source.getClockMs()));
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [getClockMs]);
+  }, [source]);
 
   return frame;
 }

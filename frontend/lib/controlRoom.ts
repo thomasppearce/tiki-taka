@@ -1,30 +1,20 @@
 /**
- * Control-room state: the clock, the proposal queue, what is on air, and the decision log.
- *
- * Until the real agents stream proposals over SSE, a simulated orchestrator produces them on a
- * schedule (`IncomingJob`), stepping each one through the agent pipeline so the activity panel
- * has real state to show. Every state change is a reducer action, so the backend can later drive
- * the same transitions.
+ * The control room's reading of the proposal desk. The backend owns the queue, what is on air,
+ * and the audit log (GET/POST /api/matches/{id}/desk, and `desk` on the live stream); these
+ * helpers turn a Desk snapshot into what each panel draws. The page keeps only the producer's
+ * own state: the selection, an edit in progress, the feed, and decisions still in flight.
  */
 
-import type { AudienceBody, Proposal } from "@/lib/contracts.generated";
+import type {
+  AudienceBody,
+  AuditRecord,
+  Desk,
+  MatchEvent,
+  Proposal,
+} from "@/lib/contracts.generated";
 import { formatClock } from "@/lib/format";
-import {
-  type Audience,
-  type Lang,
-  ON_AIR_TYPE_LABEL,
-  forFeed,
-} from "@/lib/i18n";
-import {
-  INCOMING_TEMPLATES,
-  INITIAL_AGENT_STATES,
-  INITIAL_AUDIT_LOG,
-  INITIAL_ON_AIR,
-  MATCH,
-  PROPOSALS,
-  TIMELINE_MARKERS,
-  type TeamId,
-} from "@/lib/mock";
+import { type Audience, type Lang, ON_AIR_TYPE_LABEL } from "@/lib/i18n";
+import { type MatchInfo, type Side, sideOf, surname } from "@/lib/match";
 
 export type FeedId = "feed_analyst_en" | "feed_casual_es";
 
@@ -54,7 +44,7 @@ export type AuditLine = {
 export type TimelineMarker = {
   minute: number;
   kind: "goal" | "moment" | "aired";
-  team?: TeamId;
+  team?: Side;
   label: string;
 };
 
@@ -63,403 +53,208 @@ export type OnAirGraphic = {
   template: "lower_third" | "player_tag";
   label: Record<Lang, string>;
   headline: AudienceBody;
-  split?: Record<TeamId, number>;
+  split?: Record<Side, number>;
   splitLabel?: Record<Lang, string>;
   playerId?: string | null;
   startedAtMs: number;
   durationMs: number;
 };
 
-export type IncomingTemplate = {
-  proposal: Omit<Proposal, "proposal_id" | "moment_id" | "expires_at_clock_ms">;
-  ttlMs: number;
-  localizerFails: boolean;
-};
+export type Decision = "approved" | "rejected" | "expired";
+export type Decisions = Record<string, Decision>;
+export type Counts = { aired: number; rejected: number; expired: number };
 
-type Decision = "approved" | "rejected" | "expired";
-
-export type State = {
-  clockMs: number;
-  /** Pending proposals only; decided ones leave the queue. */
-  proposals: Proposal[];
-  selectedId: string | null;
-  editingId: string | null;
-  feed: FeedId;
-  onAir: OnAirGraphic | null;
-  log: AuditLine[];
-  markers: TimelineMarker[];
-  counts: { aired: number; rejected: number; expired: number };
-  /** Why each proposal left the queue, so its exit animation can match. */
-  decisions: Record<string, Decision>;
-  /** Index of the next simulated proposal the orchestrator will produce. */
-  nextJob: number;
-};
-
-export type Action =
-  | { type: "tick"; clockMs: number }
-  | { type: "select"; id: string }
-  | { type: "move"; delta: 1 | -1 }
-  | { type: "approve"; id: string }
-  | { type: "reject"; id: string }
-  | { type: "startEdit"; id: string }
-  | { type: "cancelEdit" }
-  | { type: "saveEdit"; id: string; headline: string; body: string }
-  | { type: "setFeed"; feed: FeedId };
-
-const ON_AIR_MS = 7_000;
-const FIRST_ARRIVAL_MS = 12_000;
-const ARRIVAL_EVERY_MS = 30_000;
-const STAGE_MS = {
-  interpreter: 1_200,
-  explainer: 1_800,
-  producer: 800,
-  localizer: 1_600,
-};
-const PIPELINE: (keyof typeof STAGE_MS)[] = [
+const PIPELINE: AgentName[] = [
   "interpreter",
   "explainer",
   "producer",
   "localizer",
 ];
-const MAX_LOG = 40;
 
-export function createInitialState(): State {
-  return {
-    clockMs: MATCH.clockMs,
-    proposals: PROPOSALS,
-    selectedId: PROPOSALS[0].proposal_id,
-    editingId: null,
-    feed: "feed_analyst_en",
-    onAir: INITIAL_ON_AIR,
-    log: INITIAL_AUDIT_LOG,
-    markers: TIMELINE_MARKERS,
-    counts: { aired: 11, rejected: 4, expired: 2 },
-    decisions: {},
-    nextJob: 0,
-  };
-}
-
-// --- Simulated orchestrator ------------------------------------------------------------------
-
-type Job = {
-  index: number;
-  arriveAtMs: number;
-  startAtMs: number;
-  template: IncomingTemplate;
+const WORKING: Partial<Record<AgentName, string>> = {
+  interpreter: "Scanning the match state",
+  explainer: "Grounding claims in events and knowledge",
+  producer: "Ranking against the queue",
+  localizer: "Writing audience and language variants",
 };
 
-function job(index: number): Job {
-  const template = INCOMING_TEMPLATES[index % INCOMING_TEMPLATES.length];
-  const arriveAtMs =
-    MATCH.clockMs + FIRST_ARRIVAL_MS + index * ARRIVAL_EVERY_MS;
+/** Pending proposals, highest priority first, minus any the producer just decided. */
+export function pendingQueue(
+  desk: Desk | null,
+  inFlight: Decisions,
+): Proposal[] {
+  return (desk?.proposals ?? [])
+    .filter((p) => !inFlight[p.proposal_id])
+    .sort((a, b) => b.priority - a.priority);
+}
+
+/** Why each proposal left the queue, so its exit animation can say so. */
+export function decisionsFrom(
+  history: AuditRecord[],
+  inFlight: Decisions,
+): Decisions {
+  const decisions: Decisions = {};
+  for (const r of history) {
+    if (
+      r.proposal_id &&
+      (r.action === "approved" ||
+        r.action === "rejected" ||
+        r.action === "expired")
+    )
+      decisions[r.proposal_id] ??= r.action;
+  }
+  return { ...decisions, ...inFlight };
+}
+
+export function countsFrom(desk: Desk | null): Counts {
   return {
-    index,
-    arriveAtMs,
-    startAtMs: arriveAtMs - pipelineMs(template),
-    template,
+    aired: desk?.aired ?? 0,
+    rejected: desk?.rejected ?? 0,
+    expired: desk?.expired ?? 0,
   };
 }
 
-function pipelineMs(template: IncomingTemplate): number {
-  const total = PIPELINE.reduce((sum, stage) => sum + STAGE_MS[stage], 0);
-  return total + (template.localizerFails ? STAGE_MS.localizer : 0);
-}
-
-function proposalFromJob(j: Job): Proposal {
-  const n = 144 + j.index;
+export function onAirGraphic(desk: Desk | null): OnAirGraphic | null {
+  const air = desk?.on_air;
+  if (!air) return null;
+  const proposal = air.proposal;
   return {
-    ...j.template.proposal,
-    proposal_id: `prop_${String(n).padStart(4, "0")}`,
-    moment_id: `mom_${String(n - 54).padStart(4, "0")}`,
-    expires_at_clock_ms: j.arriveAtMs + j.template.ttlMs,
+    id: `ovl_${proposal.proposal_id.slice(5)}`,
+    template: air.template === "player_tag" ? "player_tag" : "lower_third",
+    label: ON_AIR_TYPE_LABEL[proposal.type],
+    headline: proposal.headline,
+    playerId: proposal.player_id,
+    startedAtMs: air.start_clock_ms,
+    durationMs: air.duration_ms,
   };
 }
 
-const STAGE_COPY: Record<
-  keyof typeof STAGE_MS,
-  { working: string; done: string }
-> = {
-  interpreter: {
-    working: "Scanning aggregated match state",
-    done: "Moment detected",
-  },
-  explainer: {
-    working: "Grounding claims in events and knowledge",
-    done: "Claims grounded in cited events",
-  },
-  producer: {
-    working: "Ranking against the queue",
-    done: "Ranked and given an expiry",
-  },
-  localizer: {
-    working: "Writing audience and language variants",
-    done: "4 variants written",
-  },
-};
-
-/** What each agent is doing right now, derived from the clock and the orchestrator schedule. */
-export function agentStates(state: State): AgentState[] {
-  const active = job(state.nextJob);
-  const renderer: AgentState = state.onAir
+/**
+ * Where the agent pipeline is for the newest moment: every agent that has reported since the
+ * Interpreter last picked something up is done (or retrying, after a failure); the next one is
+ * working; the rest are waiting. The Renderer is working while a graphic is on air.
+ */
+export function agentStates(
+  desk: Desk | null,
+  feedLabel: string,
+): AgentState[] {
+  const renderer: AgentState = desk?.on_air
     ? {
         agent: "renderer",
         status: "working",
-        detail: `On air for ${FEEDS[state.feed].label}`,
+        detail: `On air for ${feedLabel}`,
       }
     : {
         agent: "renderer",
         status: "idle",
-        detail: state.proposals.length
+        detail: desk?.proposals.length
           ? "Waiting for approval"
           : "Nothing to render",
       };
-
-  if (state.clockMs < active.startAtMs) {
-    if (state.nextJob === 0)
-      return [...INITIAL_AGENT_STATES.slice(0, 4), renderer];
-    return PIPELINE.map(
-      (agent) =>
-        ({
-          agent,
-          status: "done",
-          detail: STAGE_COPY[agent].done,
-        }) as AgentState,
-    ).concat(renderer);
-  }
-
-  let t = state.clockMs - active.startAtMs;
-  const states = PIPELINE.map((agent): AgentState => {
-    const stageMs = STAGE_MS[agent];
-    if (agent === "localizer" && active.template.localizerFails) {
-      if (t < 0) return { agent, status: "idle", detail: "Waiting" };
-      if (t < stageMs)
-        return {
-          agent,
-          status: "working",
-          detail: STAGE_COPY.localizer.working,
-        };
-      if (t < stageMs * 2) {
-        return {
-          agent,
-          status: "retrying",
-          detail: "Spanish variant failed schema, retry 1 of 3",
-        };
-      }
-      return {
+  const audit = desk?.audit ?? [];
+  const start = audit.findIndex(
+    (r) => r.actor === "interpreter" && r.action === "handoff",
+  );
+  if (start < 0) {
+    return [
+      ...PIPELINE.map((agent): AgentState => ({
         agent,
-        status: "done",
-        detail: "4 variants written after 1 retry",
-      };
+        status: "idle",
+        detail: "Watching the match",
+      })),
+      renderer,
+    ];
+  }
+  const run = audit.slice(0, start + 1);
+  const finished = run.some(
+    (r) =>
+      r.action === "created" ||
+      (r.actor === "producer" && r.detail?.startsWith("Held back")),
+  );
+  let next = true;
+  const states = PIPELINE.map((agent): AgentState => {
+    const latest = run.find((r) => r.actor === agent);
+    if (latest?.action === "agent_failure")
+      return { agent, status: "retrying", detail: latest.detail ?? "Retrying" };
+    if (latest || finished)
+      return { agent, status: "done", detail: latest?.detail ?? "Done" };
+    if (next) {
+      next = false;
+      return { agent, status: "working", detail: WORKING[agent] ?? "Working" };
     }
-    const result: AgentState =
-      t < 0
-        ? { agent, status: "idle", detail: "Waiting" }
-        : t < stageMs
-          ? { agent, status: "working", detail: STAGE_COPY[agent].working }
-          : { agent, status: "done", detail: STAGE_COPY[agent].done };
-    t -= stageMs;
-    return result;
+    return { agent, status: "idle", detail: "Waiting" };
   });
   return [...states, renderer];
 }
 
-// --- Reducer ---------------------------------------------------------------------------------
-
-export function pendingSorted(state: State): Proposal[] {
-  return [...state.proposals].sort((a, b) => b.priority - a.priority);
+/** The decision log as the panel prints it, newest first. */
+export function auditLines(desk: Desk | null): AuditLine[] {
+  return (desk?.audit ?? []).map((r) => ({
+    id: r.audit_id,
+    clock: formatClock(r.match_clock_ms ?? desk?.clock_ms ?? 0),
+    actor: r.actor_type === "human" ? "you" : r.actor,
+    text: describe(r),
+  }));
 }
 
-export function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case "tick":
-      return tick(state, action.clockMs);
-    case "select":
-      return state.proposals.some((p) => p.proposal_id === action.id)
-        ? { ...state, selectedId: action.id, editingId: null }
-        : state;
-    case "move": {
-      const ordered = pendingSorted(state);
-      if (!ordered.length) return state;
-      const at = ordered.findIndex((p) => p.proposal_id === state.selectedId);
-      const next = Math.min(ordered.length - 1, Math.max(0, at + action.delta));
-      return {
-        ...state,
-        selectedId: ordered[next].proposal_id,
-        editingId: null,
-      };
-    }
-    case "approve":
-      return decide(state, action.id, "approved");
-    case "reject":
-      return decide(state, action.id, "rejected");
-    case "startEdit":
-      return { ...state, selectedId: action.id, editingId: action.id };
-    case "cancelEdit":
-      return { ...state, editingId: null };
-    case "saveEdit": {
-      const { audience, lang } = FEEDS[state.feed];
-      const edited = state.proposals.map((p) =>
-        p.proposal_id === action.id
-          ? {
-              ...p,
-              status: "edited" as const,
-              headline: withCopy(p.headline, audience, lang, action.headline),
-              body: withCopy(p.body, audience, lang, action.body),
-            }
-          : p,
-      );
-      return decide(
-        { ...state, proposals: edited },
-        action.id,
-        "approved",
-        true,
-      );
-    }
-    case "setFeed":
-      return { ...state, feed: action.feed };
+function describe(r: AuditRecord): string {
+  const id = r.proposal_id ?? "";
+  const detail = r.detail ?? "";
+  switch (r.action) {
+    case "created":
+      return `Queued ${id}: ${detail}`;
+    case "approved":
+      return `Approved ${id}${r.actor === "autopilot" ? " on autopilot" : ""}: ${detail}`;
+    case "edited":
+      return `${detail} (${id})`;
+    case "rejected":
+      return `Rejected ${id}: ${detail}`;
+    case "expired":
+      return `Expired ${id} without a decision`;
+    default:
+      return detail;
   }
 }
 
-function withCopy(
-  copy: AudienceBody,
-  audience: Audience,
-  lang: Lang,
-  text: string,
-): AudienceBody {
-  return { ...copy, [audience]: { ...copy[audience], [lang]: text } };
+/** Goals so far, plus everything aired this session, for the momentum timeline. */
+export function timelineMarkers(
+  info: MatchInfo,
+  events: MatchEvent[],
+  history: AuditRecord[],
+): TimelineMarker[] {
+  const goals = events
+    .filter((e) => e.type === "goal")
+    .map((e): TimelineMarker => ({
+      minute: e.minute,
+      kind: "goal",
+      team: sideOf(info, e.team_id),
+      label: `Goal: ${surname(info.players.get(e.player_id ?? "")?.name ?? "")}`,
+    }));
+  const aired = history
+    .filter((r) => r.action === "approved" && r.match_clock_ms !== null)
+    .map((r): TimelineMarker => ({
+      minute: Math.floor((r.match_clock_ms ?? 0) / 60_000),
+      kind: "aired",
+      label: `Aired: ${r.detail ?? r.proposal_id}`,
+    }));
+  return [...goals, ...aired];
 }
 
-function decide(
-  state: State,
-  id: string,
-  decision: Decision,
-  edited = false,
-): State {
-  const proposal = state.proposals.find((p) => p.proposal_id === id);
-  if (!proposal) return state;
-  const { audience, lang, label } = FEEDS[state.feed];
-  const remaining = state.proposals.filter((p) => p.proposal_id !== id);
-  const headline = forFeed(proposal.headline, audience, lang);
-
-  let next: State = {
-    ...state,
-    proposals: remaining,
-    editingId: null,
-    decisions: { ...state.decisions, [id]: decision },
-    selectedId:
-      state.selectedId === id ? nextSelection(state, id) : state.selectedId,
-  };
-
-  if (decision === "approved") {
-    next = {
-      ...next,
-      onAir: {
-        id: `ovl_${id.slice(5)}`,
-        template:
-          proposal.type === "player_tag" && proposal.player_id
-            ? "player_tag"
-            : "lower_third",
-        label: ON_AIR_TYPE_LABEL[proposal.type],
-        headline: proposal.headline,
-        playerId: proposal.player_id,
-        startedAtMs: state.clockMs,
-        durationMs: ON_AIR_MS,
-      },
-      counts: { ...next.counts, aired: next.counts.aired + 1 },
-      markers: [
-        ...next.markers,
-        {
-          minute: Math.floor(state.clockMs / 60_000),
-          kind: "aired",
-          label: `Aired: ${headline}`,
-        },
-      ],
-    };
-    next = log(
-      next,
-      "you",
-      `${edited ? "Edited and approved" : "Approved"} ${id} for ${label}`,
-    );
-  } else if (decision === "rejected") {
-    next = {
-      ...next,
-      counts: { ...next.counts, rejected: next.counts.rejected + 1 },
-    };
-    next = log(next, "you", `Rejected ${id}`);
-  } else {
-    next = {
-      ...next,
-      counts: { ...next.counts, expired: next.counts.expired + 1 },
-    };
-    next = log(next, "producer", `Expired ${id} without a decision`);
+/** The score at `clockMs`: the score when the page loaded, plus goals since. */
+export function scoreAt(
+  info: MatchInfo,
+  baseline: { clockMs: number; home: number; away: number },
+  events: MatchEvent[],
+  clockMs: number,
+): Record<Side, number> {
+  const score = { home: baseline.home, away: baseline.away };
+  for (const e of events) {
+    if (
+      e.type === "goal" &&
+      e.match_clock_ms > baseline.clockMs &&
+      e.match_clock_ms <= clockMs
+    )
+      score[sideOf(info, e.team_id)] += 1;
   }
-  return next;
-}
-
-function nextSelection(state: State, leavingId: string): string | null {
-  const ordered = pendingSorted(state);
-  const at = ordered.findIndex((p) => p.proposal_id === leavingId);
-  const rest = ordered.filter((p) => p.proposal_id !== leavingId);
-  return rest[Math.min(at, rest.length - 1)]?.proposal_id ?? null;
-}
-
-function log(state: State, actor: string, text: string): State {
-  const line: AuditLine = {
-    id: `${state.clockMs}-${state.log.length}-${actor}`,
-    clock: formatClock(state.clockMs),
-    actor,
-    text,
-  };
-  return { ...state, log: [line, ...state.log].slice(0, MAX_LOG) };
-}
-
-function tick(state: State, clockMs: number): State {
-  const before = state.clockMs;
-  if (clockMs <= before) return state;
-  let next: State = { ...state, clockMs };
-  const now = next.clockMs;
-
-  // The orchestrator: log the localizer failure as it happens, then deliver the proposal.
-  const active = job(next.nextJob);
-  const failAt =
-    active.startAtMs + pipelineMs(active.template) - STAGE_MS.localizer;
-  if (active.template.localizerFails && before < failAt && now >= failAt) {
-    next = log(
-      next,
-      "localizer",
-      "es variant failed schema validation, retrying (1 of 3)",
-    );
-  }
-  if (now >= active.arriveAtMs) {
-    const proposal = proposalFromJob(active);
-    next = {
-      ...next,
-      proposals: [...next.proposals, proposal],
-      nextJob: next.nextJob + 1,
-      selectedId: next.selectedId ?? proposal.proposal_id,
-      markers: [
-        ...next.markers,
-        {
-          minute: Math.floor(now / 60_000),
-          kind: "moment",
-          label: forFeed(proposal.headline, "analyst", "en"),
-        },
-      ],
-    };
-    next = log(
-      next,
-      "producer",
-      `Queued ${proposal.proposal_id} at priority ${proposal.priority.toFixed(2)}`,
-    );
-  }
-
-  for (const p of next.proposals) {
-    if (p.expires_at_clock_ms <= now)
-      next = decide(next, p.proposal_id, "expired");
-  }
-
-  if (next.onAir && now >= next.onAir.startedAtMs + next.onAir.durationMs) {
-    next = { ...next, onAir: null };
-  }
-  return next;
+  return score;
 }

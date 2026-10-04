@@ -1,6 +1,6 @@
 import { ControlRoom } from "@/components/ControlRoom";
 
-// The control room runs on simulated data until the live stream and agents replace it.
+// The producer's control room on the featured match, live from the backend.
 export default function Page() {
   return <ControlRoom />;
 }

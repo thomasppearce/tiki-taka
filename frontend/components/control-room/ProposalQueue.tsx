@@ -9,10 +9,8 @@ import {
 import { Kbd } from "@/components/ui/Kbd";
 import { Panel } from "@/components/ui/Panel";
 import type { Proposal } from "@/lib/contracts.generated";
-import type { FeedId, State } from "@/lib/controlRoom";
+import type { Counts, Decisions, FeedId } from "@/lib/controlRoom";
 import { DURATION, EASE } from "@/lib/motion";
-
-type Decisions = State["decisions"];
 
 // Each exit says what happened: approved cards head left toward the program monitor, rejected
 // ones shrink away, expired ones just fade.
@@ -51,7 +49,7 @@ export function ProposalQueue({
   clockMs: number;
   feed: FeedId;
   decisions: Decisions;
-  counts: State["counts"];
+  counts: Counts;
   actions: CardActions;
   className?: string;
 }) {

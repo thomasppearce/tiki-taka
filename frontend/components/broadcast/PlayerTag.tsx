@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 
 import { SwapText } from "@/components/ui/SwapText";
-import { PLAYERS } from "@/lib/mock";
+import { sideOf, surname, useMatch } from "@/lib/match";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
@@ -21,9 +21,10 @@ export function PlayerTag({
   line: string;
   at: { x: number; y: number };
 }) {
-  const player = PLAYERS[playerId];
+  const info = useMatch();
+  const player = info.players.get(playerId);
   if (!player) return null;
-  const surname = player.name.split(" ").slice(1).join(" ");
+  const home = sideOf(info, player.club_id) === "home";
   // Near a frame edge, slide only the plate back inside; the leader line stays on the player.
   // The frame is the container, so 1% of its width is 1cqw.
   const plateShift = Math.min(82, Math.max(18, at.x)) - at.x;
@@ -46,11 +47,12 @@ export function PlayerTag({
           style={{ transform: `translateX(${plateShift}cqw)` }}
         >
           <span
-            className={`w-[0.6cqw] shrink-0 ${player.team === "t_home" ? "bg-home" : "bg-away"}`}
+            className={`w-[0.6cqw] shrink-0 ${home ? "bg-home" : "bg-away"}`}
           />
           <div className="bg-page/95 px-[1.4cqw] py-[1cqw]">
             <p className="text-[2.6cqw] leading-none font-bold whitespace-nowrap">
-              <span className="text-ink-3">{player.number}</span> {surname}
+              <span className="text-ink-3">{player.number}</span>{" "}
+              {surname(player.name)}
             </p>
             <SwapText
               as="p"

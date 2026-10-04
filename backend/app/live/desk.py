@@ -247,7 +247,7 @@ class ProposalDesk:
         )
         s.pending.append(proposal)
         s.pending.sort(key=lambda p: -p.priority)
-        self._log("created", "producer", "agent", proposal.proposal_id, f"Queued: {c.label}")
+        self._log("created", "producer", "agent", proposal.proposal_id, c.label)
         if self.autopilot and c.importance >= AUTOPILOT_IMPORTANCE:
             self._air(proposal, "autopilot", "system")
 
