@@ -42,12 +42,14 @@ class EventAttributes(Contract):
     )
     top_speed_kmh: float | None = Field(default=None, ge=0)
     sprint_distance_m: float | None = Field(default=None, ge=0)
+    card_color: Literal["yellow", "red"] | None = None
 
 
 REQUIRED_ATTRIBUTES: dict[str, tuple[str, ...]] = {
     "pass": ("pass_distance_m", "pass_difficulty"),
     "shot": ("ball_speed_kmh",),
     "sprint": ("top_speed_kmh", "sprint_distance_m"),
+    "card": ("card_color",),
 }
 """Attributes the challenge brief needs on every event of a given type."""
 

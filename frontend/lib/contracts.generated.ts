@@ -81,6 +81,7 @@ export interface EventAttributes {
   distance_covered_m: number | null;
   top_speed_kmh: number | null;
   sprint_distance_m: number | null;
+  card_color: ("yellow" | "red") | null;
 }
 /**
  * A single timed event in a synthetic match.

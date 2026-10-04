@@ -65,6 +65,7 @@ const EMPTY_ATTRIBUTES: MatchEvent["attributes"] = {
   distance_covered_m: null,
   top_speed_kmh: null,
   sprint_distance_m: null,
+  card_color: null,
 };
 
 /** Build a MatchEvent; attributes not given are null. */

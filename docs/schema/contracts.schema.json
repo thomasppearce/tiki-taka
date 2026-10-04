@@ -240,6 +240,21 @@
             }
           ],
           "default": null
+        },
+        "card_color": {
+          "anyOf": [
+            {
+              "enum": [
+                "yellow",
+                "red"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -250,7 +265,8 @@
         "player_speed_kmh",
         "distance_covered_m",
         "top_speed_kmh",
-        "sprint_distance_m"
+        "sprint_distance_m",
+        "card_color"
       ],
       "title": "EventAttributes",
       "type": "object"
