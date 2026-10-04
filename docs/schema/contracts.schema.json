@@ -136,6 +136,31 @@
       "title": "Claim",
       "type": "object"
     },
+    "ClubRef": {
+      "additionalProperties": false,
+      "properties": {
+        "club_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "short": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "club_id",
+        "name",
+        "short",
+        "color"
+      ],
+      "title": "ClubRef",
+      "type": "object"
+    },
     "EventAttributes": {
       "additionalProperties": false,
       "description": "Measurements attached to an event. Which ones are set depends on the event type.",
@@ -371,6 +396,48 @@
       "title": "KeyMoment",
       "type": "object"
     },
+    "LeagueGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "league_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/MatchCard"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "league_id",
+        "name",
+        "matches"
+      ],
+      "title": "LeagueGroup",
+      "type": "object"
+    },
+    "LiveEvent": {
+      "additionalProperties": false,
+      "description": "A match event as it happens, with how much it mattered.",
+      "properties": {
+        "event": {
+          "$ref": "#/$defs/MatchEvent"
+        },
+        "impact": {
+          "$ref": "#/$defs/EventImpact"
+        }
+      },
+      "required": [
+        "event",
+        "impact"
+      ],
+      "title": "LiveEvent",
+      "type": "object"
+    },
     "LocalizedText": {
       "additionalProperties": false,
       "description": "One piece of copy per supported language. English is always present.",
@@ -396,6 +463,132 @@
         "es"
       ],
       "title": "LocalizedText",
+      "type": "object"
+    },
+    "MatchCard": {
+      "additionalProperties": false,
+      "description": "One match on the match centre: score, clock, a momentum ribbon, and its biggest moment.",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "league_id": {
+          "type": "string"
+        },
+        "league_name": {
+          "type": "string"
+        },
+        "home": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "away": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "score_home": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "score_away": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "live",
+            "full_time"
+          ],
+          "type": "string"
+        },
+        "featured": {
+          "type": "boolean"
+        },
+        "momentum": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "top_moment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KeyMoment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "match_id",
+        "league_id",
+        "league_name",
+        "home",
+        "away",
+        "score_home",
+        "score_away",
+        "clock_ms",
+        "status",
+        "featured",
+        "momentum",
+        "top_moment"
+      ],
+      "title": "MatchCard",
+      "type": "object"
+    },
+    "MatchDetail": {
+      "additionalProperties": false,
+      "description": "Everything needed to open a match: the card, stats, key moments, squads, and recent play.",
+      "properties": {
+        "card": {
+          "$ref": "#/$defs/MatchCard"
+        },
+        "home_stats": {
+          "$ref": "#/$defs/TeamStats"
+        },
+        "away_stats": {
+          "$ref": "#/$defs/TeamStats"
+        },
+        "key_moments": {
+          "items": {
+            "$ref": "#/$defs/KeyMoment"
+          },
+          "type": "array"
+        },
+        "players": {
+          "items": {
+            "$ref": "#/$defs/PlayerRef"
+          },
+          "type": "array"
+        },
+        "recent_events": {
+          "items": {
+            "$ref": "#/$defs/MatchEvent"
+          },
+          "type": "array"
+        },
+        "impacts": {
+          "items": {
+            "$ref": "#/$defs/EventImpact"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "card",
+        "home_stats",
+        "away_stats",
+        "key_moments",
+        "players",
+        "recent_events",
+        "impacts"
+      ],
+      "title": "MatchDetail",
       "type": "object"
     },
     "MatchEvent": {
@@ -534,6 +727,27 @@
         "attributes"
       ],
       "title": "MatchEvent",
+      "type": "object"
+    },
+    "Matchday": {
+      "additionalProperties": false,
+      "properties": {
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "leagues": {
+          "items": {
+            "$ref": "#/$defs/LeagueGroup"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "clock_ms",
+        "leagues"
+      ],
+      "title": "Matchday",
       "type": "object"
     },
     "Moment": {
@@ -835,6 +1049,41 @@
         "speed_kmh"
       ],
       "title": "PlayerPosition",
+      "type": "object"
+    },
+    "PlayerRef": {
+      "additionalProperties": false,
+      "properties": {
+        "player_id": {
+          "type": "string"
+        },
+        "club_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "role": {
+          "enum": [
+            "gk",
+            "def",
+            "mid",
+            "fwd"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "player_id",
+        "club_id",
+        "name",
+        "number",
+        "role"
+      ],
+      "title": "PlayerRef",
       "type": "object"
     },
     "Proposal": {

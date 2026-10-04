@@ -152,64 +152,180 @@ _FIRST = [
 _LAST = [
     "Abara",
     "Achterberg",
+    "Adeleke-Moss",
     "Aldana",
     "Ambrose",
+    "Ancelin",
     "Arkwright",
+    "Ashdown",
     "Baptiste",
+    "Barraclough",
     "Bellamy",
     "Bergqvist",
+    "Birchall",
     "Blackwood",
+    "Bramwell",
     "Brannock",
+    "Brodersen",
     "Calloway",
+    "Carrow",
     "Castellan",
+    "Chadwell",
     "Cheval",
+    "Coldridge",
     "Corrigan",
+    "Cosgrave",
+    "Crabtree",
     "Dalgaard",
+    "Danforth",
     "Delacroix",
+    "Desrosiers",
     "Devereux",
+    "Dornan",
+    "Drummond-Ike",
     "Dunmore",
     "Eastwick",
+    "Edevane",
     "Ekwueme",
+    "Ellerby",
+    "Esposti",
+    "Falkenrath",
+    "Farrant",
     "Faulkner",
     "Fenwick",
+    "Fitzalan",
+    "Fonseca-Lira",
     "Galloway",
     "Garrow",
+    "Gerritsen",
+    "Goldhawk",
+    "Grimaldi-Shaw",
+    "Hadley",
     "Halvorsen",
     "Harcourt",
+    "Hardacre",
+    "Heathcote",
     "Hollis",
+    "Holmqvist",
+    "Hunsdon",
+    "Ibekwe",
     "Ingram",
     "Iwobi-Lane",
     "Jarrow",
+    "Jervaise",
+    "Jovanic",
     "Kallio",
+    "Kemberton",
     "Kerrigan",
+    "Kingsmill",
+    "Kowalczyk-Reid",
     "Lachance",
+    "Lambrecht",
     "Lindgren",
+    "Lockhart",
     "Lomax",
+    "Lucchesi",
+    "Lyndhurst",
+    "Madigan",
     "Marchetti",
-    "Merriman",
+    "Marwood",
     "Mbaye-Ross",
+    "Merriman",
+    "Mirabeau",
+    "Montague",
+    "Mortlake",
+    "Moreau-Quist",
     "Nakamura-Hale",
     "Navarro-Pike",
+    "Nettleford",
     "Northcott",
+    "Nyborg",
+    "Oakshott",
+    "Odhiambo",
     "Okafor-Lind",
+    "Oldroyd",
     "Orsini",
+    "Ostergaard",
+    "Palliser",
     "Pemberton",
+    "Penhallow",
+    "Pettersen",
+    "Quarshie",
     "Quintero",
     "Rademaker",
+    "Ravenhill",
+    "Redfern",
+    "Ridgeway",
+    "Rosendahl",
     "Rowntree",
+    "Rutherglen",
     "Salcedo",
+    "Saltonstall",
     "Saunderson",
+    "Scarrow",
+    "Sedgwick",
+    "Silvestri",
     "Solberg",
+    "Southwold",
+    "Stanbridge",
     "Strand-Holt",
+    "Sverdrup",
     "Tavernier",
+    "Tennant",
     "Thackeray",
+    "Thornhill",
+    "Toussaint",
+    "Treloar",
+    "Tregarthen",
     "Underhill",
+    "Uzoma",
     "Valcourt",
     "Vanterpool",
+    "Varga-Lind",
+    "Vellacott",
+    "Verhoeven-Dale",
+    "Wakeling",
+    "Warrender",
+    "Westerholm",
+    "Whitlock",
     "Wickham",
+    "Wilberforce",
+    "Winterbourne",
     "Wolfenden",
+    "Wrexley",
     "Yardley",
+    "Yeboah-Kent",
+    "Ystad",
+    "Zamorano",
     "Zeller",
+    "Abernethy",
+    "Albrecht-Owusu",
+    "Ardagh",
+    "Ballantyne",
+    "Belcourt",
+    "Borrowdale",
+    "Brightwell",
+    "Caddock",
+    "Carmody",
+    "Clemenceau",
+    "Cotterell",
+    "Dagenhart",
+    "Delamere",
+    "Dunleavy",
+    "Etheridge",
+    "Fairbairn",
+    "Fennimore",
+    "Glendinning",
+    "Gravesend",
+    "Haverford",
+    "Hesketh",
+    "Inchbald",
+    "Kilbride",
+    "Langstaff",
+    "Larkhill",
+    "Mallender",
+    "Merrivale",
+    "Oyelaran",
 ]
 
 # The featured fixture's squads, written out (names the mock data and demo already use).
@@ -307,6 +423,10 @@ def build_world(seed: int = 2026) -> tuple[League, ...]:
     leagues = []
     for index, (league_name, clubs) in enumerate(_LEAGUES):
         built = []
+        # Surnames are unique within a league, so labels like "Goal: Salcedo" are unambiguous.
+        used: list[str] = [
+            n.split(" ", 1)[1] for c in clubs for n in _FEATURED_SQUADS.get(c[1].lower(), ())
+        ]
         for name, short, color, formation in clubs:
             code = short.lower()
             built.append(
@@ -316,16 +436,18 @@ def build_world(seed: int = 2026) -> tuple[League, ...]:
                     short=short,
                     color=color,
                     formation=formation,
-                    squad=_squad(code, formation, rng),
+                    squad=_squad(code, formation, rng, used),
                 )
             )
         leagues.append(League(league_id=f"l_{index + 1}", name=league_name, clubs=tuple(built)))
     return tuple(leagues)
 
 
-def _squad(code: str, formation: str, rng: random.Random) -> tuple[Player, ...]:
+def _squad(
+    code: str, formation: str, rng: random.Random, used_surnames: list[str]
+) -> tuple[Player, ...]:
     roles = [slot[0] for slot in FORMATIONS[formation]] + list(_SUB_ROLES)
-    names = _FEATURED_SQUADS.get(code) or _unique_names(rng, len(roles))
+    names = _FEATURED_SQUADS.get(code) or _unique_names(rng, len(roles), used_surnames)
     numbers = _FEATURED_NUMBERS.get(code) or _numbers(roles)
     return tuple(
         _player(code, name, number, role, rng)
@@ -347,13 +469,15 @@ def _player(code: str, name: str, number: int, role: Role, rng: random.Random) -
     )
 
 
-def _unique_names(rng: random.Random, count: int) -> list[str]:
-    # A list, not a set: set iteration order varies between runs and would break determinism.
+def _unique_names(rng: random.Random, count: int, used_surnames: list[str]) -> list[str]:
+    # Lists, not sets: set iteration order varies between runs and would break determinism.
     names: list[str] = []
     while len(names) < count:
-        name = f"{rng.choice(_FIRST)} {rng.choice(_LAST)}"
-        if name not in names:
-            names.append(name)
+        surname = rng.choice(_LAST)
+        if surname in used_surnames:
+            continue
+        used_surnames.append(surname)
+        names.append(f"{rng.choice(_FIRST)} {surname}")
     return names
 
 

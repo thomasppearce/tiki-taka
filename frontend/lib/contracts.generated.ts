@@ -58,6 +58,16 @@ export interface Claim {
   evidence_event_ids: [string, ...string[]];
 }
 /**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ClubRef".
+ */
+export interface ClubRef {
+  club_id: string;
+  name: string;
+  short: string;
+  color: string;
+}
+/**
  * Measurements attached to an event. Which ones are set depends on the event type.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -120,6 +130,45 @@ export interface KeyMoment {
   evidence_event_ids: [string, ...string[]];
 }
 /**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "LeagueGroup".
+ */
+export interface LeagueGroup {
+  league_id: string;
+  name: string;
+  matches: MatchCard[];
+}
+/**
+ * One match on the match centre: score, clock, a momentum ribbon, and its biggest moment.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "MatchCard".
+ */
+export interface MatchCard {
+  match_id: string;
+  league_id: string;
+  league_name: string;
+  home: ClubRef;
+  away: ClubRef;
+  score_home: number;
+  score_away: number;
+  clock_ms: number;
+  status: "live" | "full_time";
+  featured: boolean;
+  momentum: number[];
+  top_moment: KeyMoment | null;
+}
+/**
+ * A match event as it happens, with how much it mattered.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "LiveEvent".
+ */
+export interface LiveEvent {
+  event: MatchEvent;
+  impact: EventImpact;
+}
+/**
  * A single timed event in a synthetic match.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -162,6 +211,62 @@ export interface MatchEvent {
 export interface PitchPoint {
   x: number;
   y: number;
+}
+/**
+ * Everything needed to open a match: the card, stats, key moments, squads, and recent play.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "MatchDetail".
+ */
+export interface MatchDetail {
+  card: MatchCard;
+  home_stats: TeamStats;
+  away_stats: TeamStats;
+  key_moments: KeyMoment[];
+  players: PlayerRef[];
+  recent_events: MatchEvent[];
+  impacts: EventImpact[];
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TeamStats".
+ */
+export interface TeamStats {
+  team_id: string;
+  goals: number;
+  shots: number;
+  shots_on_target: number;
+  xg: number;
+  passes: number;
+  pass_accuracy: number;
+  possession_pct: number;
+  /**
+   * Share of both teams' final-third passes made by this team.
+   */
+  field_tilt_pct: number;
+  tackles: number;
+  fouls: number;
+  yellow_cards: number;
+  red_cards: number;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "PlayerRef".
+ */
+export interface PlayerRef {
+  player_id: string;
+  club_id: string;
+  name: string;
+  number: number;
+  role: "gk" | "def" | "mid" | "fwd";
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Matchday".
+ */
+export interface Matchday {
+  clock_ms: number;
+  leagues: LeagueGroup[];
 }
 /**
  * Something worth surfacing, grounded in the events that triggered it.
@@ -280,28 +385,6 @@ export interface Proposal {
    * The player this is about; drives player tags and player focus.
    */
   player_id: string | null;
-}
-/**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
- * via the `definition` "TeamStats".
- */
-export interface TeamStats {
-  team_id: string;
-  goals: number;
-  shots: number;
-  shots_on_target: number;
-  xg: number;
-  passes: number;
-  pass_accuracy: number;
-  possession_pct: number;
-  /**
-   * Share of both teams' final-third passes made by this team.
-   */
-  field_tilt_pct: number;
-  tackles: number;
-  fouls: number;
-  yellow_cards: number;
-  red_cards: number;
 }
 /**
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so

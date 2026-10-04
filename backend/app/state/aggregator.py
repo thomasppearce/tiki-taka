@@ -54,7 +54,7 @@ def event_impacts(
                 importance = min(1.0, weight * abs(threat) / PASS_THREAT_SCALE)
             elif e.type == "shot":
                 threat = _xg(e, home)
-                importance = min(1.0, 0.3 + threat * 2)
+                importance = min(0.9, 0.3 + threat * 1.5)  # below a goal, however good the chance
             elif e.type == "goal":
                 importance = 1.0
             elif e.type == "tackle":

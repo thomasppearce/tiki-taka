@@ -1,0 +1,37 @@
+"""The matchday clock: maps wall time to match time for every fixture at once.
+
+All fixtures kick off together. The clock loops (play to full time, hold the result for a few
+minutes, kick off again) so a visitor on any day finds live matches. `MATCH_START_MINUTE` sets
+where the loop starts when the server boots (e.g. 55 to record a demo from the second half), and
+`MATCH_SPEED` speeds it up for testing.
+"""
+
+import os
+import time
+from collections.abc import Callable
+
+FULL_TIME_HOLD_MS = 4 * 60_000
+
+
+class MatchdayClock:
+    def __init__(
+        self,
+        cycle_ms: int,
+        start_minute: float | None = None,
+        speed: float | None = None,
+        now: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self.cycle_ms = cycle_ms + FULL_TIME_HOLD_MS
+        self.start_ms = 60_000 * (
+            start_minute
+            if start_minute is not None
+            else float(os.environ.get("MATCH_START_MINUTE", "55"))
+        )
+        self.speed = speed if speed is not None else float(os.environ.get("MATCH_SPEED", "1"))
+        self._now = now
+        self._started = now()
+
+    def clock_ms(self) -> int:
+        """Match time now, in milliseconds since kickoff, looping every cycle."""
+        elapsed = (self._now() - self._started) * 1000 * self.speed
+        return int((self.start_ms + elapsed) % self.cycle_ms)

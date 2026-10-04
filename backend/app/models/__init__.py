@@ -3,6 +3,8 @@
 from app.models.audit import AuditRecord
 from app.models.events import EventAttributes, MatchEvent
 from app.models.insight import EventImpact, KeyMoment, TeamStats
+from app.models.live import LiveEvent
+from app.models.matchday import Matchday, MatchDetail
 from app.models.moments import Moment
 from app.models.overlays import OverlayCommand
 from app.models.proposals import AudienceBody, Claim, LocalizedText, Proposal
@@ -20,6 +22,9 @@ CONTRACTS = (
     EventImpact,
     KeyMoment,
     TeamStats,
+    Matchday,
+    MatchDetail,
+    LiveEvent,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -31,6 +36,9 @@ __all__ = [
     "EventAttributes",
     "EventImpact",
     "KeyMoment",
+    "LiveEvent",
+    "MatchDetail",
+    "Matchday",
     "LocalizedText",
     "MatchEvent",
     "Moment",
