@@ -153,3 +153,22 @@ def test_unknown_proposal_and_feed_profile(client: TestClient, desk: ProposalDes
     assert client.post(f"{url}/proposals/prop_9999/reject").status_code == 409
     assert client.get(f"{url}/overlays", params={"profile_id": "feed_nope"}).status_code == 404
     assert client.get("/api/matches/m_nope/desk").status_code == 404
+
+
+def test_cues_fill_the_broadcast_between_the_big_moments(service: MatchdayService) -> None:
+    """Offsides, bookings, changes, stat checks, territory, and runners all reach the queue,
+    and the featured match never goes long without something to propose."""
+    desk = service.desks[FEATURED]
+    labels = [c.label for c in desk.candidates]
+    for prefix in (
+        "Offside:",
+        "Booked:",
+        "Change:",
+        "Shots and xG",
+        "Territory:",
+        "Hardest runner",
+    ):
+        assert any(label.startswith(prefix) for label in labels), prefix
+    clocks = [c.known_ms for c in desk.candidates]
+    gaps = sorted(b - a for a, b in zip(clocks, clocks[1:], strict=False))
+    assert gaps[len(gaps) // 2] <= 90_000  # typically a proposal every minute or so

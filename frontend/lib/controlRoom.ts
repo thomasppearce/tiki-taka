@@ -173,7 +173,14 @@ export function agentStates(
   );
   let next = true;
   const states = PIPELINE.map((agent): AgentState => {
-    const latest = run.find((r) => r.actor === agent);
+    // The agent's own reports (decisions the producer logs, like expiries, don't count).
+    const latest = run.find(
+      (r) =>
+        r.actor === agent &&
+        (r.action === "handoff" ||
+          r.action === "agent_failure" ||
+          r.action === "retry"),
+    );
     if (latest?.action === "agent_failure")
       return { agent, status: "retrying", detail: latest.detail ?? "Retrying" };
     if (latest || finished)

@@ -35,25 +35,25 @@ class CopyContext:
     score_at: Callable[[int], tuple[int, int]]
 
 
-def _audience(analyst: tuple[str, str], casual: tuple[str, str]) -> AudienceBody:
+def audience(analyst: tuple[str, str], casual: tuple[str, str]) -> AudienceBody:
     return AudienceBody(
         analyst=LocalizedText(en=analyst[0], es=analyst[1]),
         casual=LocalizedText(en=casual[0], es=casual[1]),
     )
 
 
-def _es(value: float, digits: int) -> str:
+def es_number(value: float, digits: int) -> str:
     """A number in Spanish style: decimal comma."""
     return f"{value:.{digits}f}".replace(".", ",")
 
 
-def _distance_to_goal(e: MatchEvent, home: bool) -> int:
+def distance_to_goal(e: MatchEvent, home: bool) -> int:
     assert e.location
     x, y = to_frame((e.location.x, e.location.y), home)
     return round(math.hypot((100 - x) * 1.05, (50 - y) * 0.68))
 
 
-def _minute(e: MatchEvent) -> str:
+def minute_label(e: MatchEvent) -> str:
     return f"{e.minute + 1}'"
 
 
@@ -74,7 +74,7 @@ def _goal(
     home_goals, away_goals = ctx.score_at(goal.match_clock_ms)
     ours, theirs = (home_goals, away_goals) if home else (away_goals, home_goals)
     xg = ctx.impacts[shot.event_id].threat
-    dist = _distance_to_goal(shot, home)
+    dist = distance_to_goal(shot, home)
     if ours > theirs:
         state_en, state_es = f"{team} lead {ours}-{theirs}.", f"{team} gana {ours}-{theirs}."
     elif ours == theirs:
@@ -86,19 +86,21 @@ def _goal(
         )
     return Copy(
         type="narrative_line",
-        headline=_audience(
+        headline=audience(
             (f"{scorer} scores for {team}", f"{scorer} marca para {team}"),
             (f"{scorer} scores!", f"¡Gol de {scorer}!"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"{scorer} finishes from {dist} m, a chance worth {xg:.2f} xG. {state_en}",
-                f"{scorer} define desde {dist} m, una ocasión de {_es(xg, 2)} xG. {state_es}",
+                f"{scorer} define desde {dist} m, una ocasión de {es_number(xg, 2)} xG. {state_es}",
             ),
             (state_en, state_es),
         ),
         claims=[
-            Claim(text=f"Goal by {scorer} at {_minute(goal)}", evidence_event_ids=[goal.event_id]),
+            Claim(
+                text=f"Goal by {scorer} at {minute_label(goal)}", evidence_event_ids=[goal.event_id]
+            ),
             Claim(text=f"Shot from {dist} m worth {xg:.2f} xG", evidence_event_ids=[shot.event_id]),
         ],
         player_id=goal.player_id,
@@ -118,18 +120,18 @@ def _big_chance(
     home = shot.team_id == ctx.home_id
     shooter, team = ctx.surname(shot.player_id), ctx.club(shot.team_id).name
     xg = ctx.impacts[shot.event_id].threat
-    dist = _distance_to_goal(shot, home)
+    dist = distance_to_goal(shot, home)
     outcome_en, outcome_es = _OUTCOME.get(shot.outcome or "", ("no goal", "no entra"))
     return Copy(
         type="narrative_line",
-        headline=_audience(
+        headline=audience(
             (f"{shooter} goes close", f"{shooter} roza el gol"),
             (f"So close for {team}!", f"¡Qué cerca, {team}!"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"A {xg:.2f} xG chance from {dist} m, but {outcome_en}.",
-                f"Una ocasión de {_es(xg, 2)} xG desde {dist} m, pero {outcome_es}.",
+                f"Una ocasión de {es_number(xg, 2)} xG desde {dist} m, pero {outcome_es}.",
             ),
             (
                 f"{shooter} had a great chance from {dist} m, but {outcome_en}.",
@@ -152,17 +154,17 @@ def _save(
     shot = evidence[0]
     keeper, shooter = ctx.surname(save.player_id), ctx.surname(shot.player_id)
     xg = ctx.impacts[shot.event_id].threat
-    dist = _distance_to_goal(shot, shot.team_id == ctx.home_id)
+    dist = distance_to_goal(shot, shot.team_id == ctx.home_id)
     return Copy(
         type="narrative_line",
-        headline=_audience(
+        headline=audience(
             (f"{keeper} denies {shooter}", f"{keeper} le niega el gol a {shooter}"),
             (f"What a save from {keeper}!", f"¡Paradón de {keeper}!"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"{keeper} stops a {xg:.2f} xG chance from {dist} m.",
-                f"{keeper} detiene una ocasión de {_es(xg, 2)} xG desde {dist} m.",
+                f"{keeper} detiene una ocasión de {es_number(xg, 2)} xG desde {dist} m.",
             ),
             (
                 f"{shooter} was through from {dist} m and {keeper} kept it out.",
@@ -185,14 +187,14 @@ def _red_card(
     player, team = ctx.surname(card.player_id), ctx.club(card.team_id).name
     return Copy(
         type="tactical_insight",
-        headline=_audience(
+        headline=audience(
             (f"{team} down to ten men", f"{team} se queda con diez"),
             (f"Red card for {player}", f"Roja para {player}"),
         ),
-        body=_audience(
+        body=audience(
             (
-                f"{player} is sent off at {_minute(card)}; {team} play the rest with ten.",
-                f"{player} es expulsado en el {_minute(card)}; {team} jugará con diez.",
+                f"{player} is sent off at {minute_label(card)}; {team} play the rest with ten.",
+                f"{player} es expulsado en el {minute_label(card)}; {team} jugará con diez.",
             ),
             (
                 f"{player} is off, and {team} have to cope with ten.",
@@ -201,7 +203,8 @@ def _red_card(
         ),
         claims=[
             Claim(
-                text=f"Red card for {player} at {_minute(card)}", evidence_event_ids=[card.event_id]
+                text=f"Red card for {player} at {minute_label(card)}",
+                evidence_event_ids=[card.event_id],
             )
         ],
         player_id=card.player_id,
@@ -218,16 +221,16 @@ def _decisive_pass(
     chance = round(100 * load_grid().at(*end), 1)
     return Copy(
         type="stat_graphic",
-        headline=_audience(
+        headline=audience(
             (f"{passer} opens them up", f"{passer} abre la defensa"),
             (f"Great ball from {passer}", f"Gran pase de {passer}"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"The pass to {receiver} added {xt:.3f} xT: possession there leads to a goal "
                 f"{chance}% of the time.",
-                f"El pase a {receiver} sumó {_es(xt, 3)} xT: desde ahí, la posesión acaba en "
-                f"gol el {_es(chance, 1)}% de las veces.",
+                f"El pase a {receiver} sumó {es_number(xt, 3)} xT: desde ahí, la posesión acaba en "
+                f"gol el {es_number(chance, 1)}% de las veces.",
             ),
             (
                 f"{passer} found {receiver} in a really dangerous spot.",
@@ -248,14 +251,14 @@ def _ball_won(
     moment: KeyMoment, evidence: list[MatchEvent], tackle: MatchEvent, ctx: CopyContext
 ) -> Copy:
     player, team = ctx.surname(tackle.player_id), ctx.club(tackle.team_id).name
-    dist = _distance_to_goal(tackle, tackle.team_id == ctx.home_id)
+    dist = distance_to_goal(tackle, tackle.team_id == ctx.home_id)
     return Copy(
         type="tactical_insight",
-        headline=_audience(
+        headline=audience(
             (f"{team} win it back high", f"{team} recupera arriba"),
             (f"{player} steals it", f"{player} roba el balón"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"{player} wins the ball {dist} m from goal.",
                 f"{player} recupera el balón a {dist} m de la portería.",
@@ -282,16 +285,16 @@ def _momentum_shift(
     threat = sum(ctx.impacts[e.event_id].threat for e in evidence)
     return Copy(
         type="tactical_insight",
-        headline=_audience(
+        headline=audience(
             (f"{team} take control", f"{team} toma el control"),
             (f"{team} are on top now", f"{team} manda ahora"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"Their last {len(evidence)} attacking actions added {threat:.2f} xT in three "
                 "minutes.",
-                f"Sus últimas {len(evidence)} acciones ofensivas sumaron {_es(threat, 2)} xT en "
-                "tres minutos.",
+                f"Sus últimas {len(evidence)} acciones ofensivas sumaron "
+                f"{es_number(threat, 2)} xT en tres minutos.",
             ),
             (
                 f"{team} have pinned their opponents back.",
@@ -320,18 +323,18 @@ def sprint_copy(sprint: MatchEvent, fastest_so_far: bool, ctx: CopyContext) -> C
     )
     return Copy(
         type="player_tag",
-        headline=_audience(
-            (f"{player} hits {speed:.1f} km/h", f"{player} alcanza {_es(speed, 1)} km/h"),
+        headline=audience(
+            (f"{player} hits {speed:.1f} km/h", f"{player} alcanza {es_number(speed, 1)} km/h"),
             (f"{player} is flying", f"{player} vuela"),
         ),
-        body=_audience(
+        body=audience(
             (
                 f"A {meters} m sprint at {speed:.1f} km/h, {rank_en}.",
-                f"Un sprint de {meters} m a {_es(speed, 1)} km/h, {rank_es}.",
+                f"Un sprint de {meters} m a {es_number(speed, 1)} km/h, {rank_es}.",
             ),
             (
                 f"{player} just hit {speed:.1f} km/h.",
-                f"{player} acaba de alcanzar {_es(speed, 1)} km/h.",
+                f"{player} acaba de alcanzar {es_number(speed, 1)} km/h.",
             ),
         ),
         claims=[

@@ -18,6 +18,7 @@ from typing import Literal
 
 from app.generator.matchday import ScheduledMatch
 from app.live.copy import Copy, CopyContext, moment_copy, sprint_copy
+from app.live.cues import cues
 from app.models import AuditRecord, OverlayCommand, Proposal, ViewerProfile
 from app.models.audit import ActorType, AuditAction
 from app.models.desk import ApproveRequest, Desk, OnAir
@@ -40,7 +41,7 @@ STAGES: tuple[tuple[AgentName, int], ...] = (
     ("localizer", 5_300),
 )
 RETRY_MS = 1_800  # a failed localizer run costs this much extra
-MIN_IMPORTANCE = 0.6
+MIN_IMPORTANCE = 0.5
 MAX_PENDING = 5
 ON_AIR_MS = 7_000
 AUTOPILOT_IMPORTANCE = 0.85
@@ -50,8 +51,8 @@ SPRINT_TAG_GAP_MS = 20 * 60_000  # one speed tag per player per 20 minutes
 REPEAT_GAP_MS = 5 * 60_000  # the same label is not proposed twice within 5 minutes
 SHIFT_CONFIRM_MS = 3 * 60_000  # a momentum shift is only known once the swing has held
 WARM_START_MS = 90_000  # on startup, replay only the last 90 s so the log looks lived-in
-DEFAULT_TTL_MS = 45_000
-TTL_MS = {"player_tag": 25_000}
+DEFAULT_TTL_MS = 60_000
+TTL_MS = {"player_tag": 30_000}
 MAX_AUDIT = 60
 YOU = "producer (you)"
 
@@ -154,6 +155,11 @@ class ProposalDesk:
             copy = sprint_copy(e, record, ctx)
             label = f"{ctx.surname(e.player_id)} hits {speed:.1f} km/h"
             raw.append((e.match_clock_ms, f"km_{e.event_id[4:]}", label, SPRINT_IMPORTANCE, copy))
+        # Between the defining plays: offsides, bookings, changes, stat checks, territory, runners.
+        result = self.match.result
+        teams = (self.match.home.club_id, self.match.away.club_id)
+        for cue in cues(result.events, ctx, teams, result.full_time_ms):
+            raw.append((cue.at_ms, cue.key, cue.label, cue.importance, cue.copy))
         raw.sort(key=lambda r: r[0])
         last_seen: dict[str, int] = {}
         kept: list[tuple[int, str, str, float, Copy]] = []
@@ -215,7 +221,8 @@ class ProposalDesk:
         cited = sum(len(claim.evidence_event_ids) for claim in c.copy.claims)
         detail = {
             "interpreter": f"Detected: {c.label}",
-            "explainer": f"Grounded {len(c.copy.claims)} claim(s) in {cited} cited event(s)",
+            "explainer": f"Grounded {_count(len(c.copy.claims), 'claim')} in "
+            f"{_count(cited, 'cited event')}",
             "producer": f"Ranked at priority {c.importance:.2f}",
             "localizer": "Wrote 4 variants: analyst and casual, EN and ES",
         }.get(action.agent, "")
@@ -409,3 +416,7 @@ def _edit(copy: AudienceBody, profile: ViewerProfile, text: str | None) -> Audie
     return copy.model_copy(
         update={profile.audience: current.model_copy(update={profile.language: text})}
     )
+
+
+def _count(n: int, noun: str) -> str:
+    return f"{n} {noun}{'' if n == 1 else 's'}"
