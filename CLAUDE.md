@@ -12,6 +12,18 @@ A **live broadcast control room**. Synthetic football match events stream in; a 
 
 One-line pitch: *"Every graphic on air has receipts, and a human in the loop."*
 
+### Product structure (decided 2026-10-04)
+- **Match centre (home, `/`):** live scores for **3 fictional leagues x 4 matches** (24 fictional clubs). Each card is a preview: score, minute, a mini momentum ribbon, and the match's single biggest moment. Clicking opens the match.
+- **One featured match runs the full AI agent team.** The other 11 run the deterministic match engine and aggregator only (scores, momentum, key moments, no LLM cost).
+- **Three ways to watch a match (`/match/[id]`), via an open role switch** in the top bar, clearly labelled as a demo switch. Sign-in is simulated, not real auth:
+  - **Guest** (not signed in): broadcast view with approved graphics in the default feed, a lighter data layer, and a prompt to sign in for more (the sign-up hook).
+  - **Fan** (signed in, demo account): full personalization via their `ViewerProfile` (audience, language, favorite club, player focus, spotlight metric) and the full data panels.
+  - **Producer** (admin): the control room for the featured match: proposal queue, approve/edit/reject, agents, audit trail.
+- The headline demo shot: split screen, the producer approves on the left and the fan's broadcast updates on the right.
+
+### Importance: expected threat (xT)
+Every action stays in the data (realism and aggregates need it), but screens and agents work from **importance**, computed by the aggregator from an **expected-threat (xT)** model: each pitch zone has a value (how likely possession there leads to a goal). An action's importance is the threat it added or removed; **momentum** is each team's rolling threat; the **most defining plays** are the biggest swings. One transparent model drives the key-play trail, timeline markers, home-page highlights, and the Interpreter's moment detection, and every importance score is explainable.
+
 ### Core pipeline (mirrors the hackathon brief)
 1. **Ingest** synthetic match events as they happen
 2. **Interpret** into stats, patterns, and key moments
@@ -205,17 +217,6 @@ Attribute keys (all optional; which ones appear depends on `type`):
 ### 5.5 AuditRecord
 Every proposal state change (created, approved, edited, rejected, expired, agent failure, retry) is logged with timestamp, actor (agent or human), and before/after. This powers the Enterprise story and a visible audit panel in the UI.
 
-### 5.7 TrackingFrame (synthetic tracking, streamed with events)
-```json
-{
-  "match_id": "m_001",
-  "match_clock_ms": 3792000,
-  "ball": { "x": 18.0, "y": 38.0 },
-  "players": [{ "player_id": "p_home_09", "team_id": "t_home", "x": 36.0, "y": 62.0, "speed_kmh": 21.4 }]
-}
-```
-Where every player and the ball are at one instant (same normalized coordinates as MatchEvent). The generator emits frames at a few Hz alongside events; the control room interpolates them so the program camera and the tactical view show the same formations moving in sync with the actions. Until the generator streams them, `frontend/lib/matchSim.ts` simulates them.
-
 ### 5.6 ViewerProfile (one per output feed)
 ```json
 {
@@ -231,11 +232,23 @@ Where every player and the ball are at one instant (same normalized coordinates 
 - `focus_player_id` set means **player-focus mode**: proposals about that player are boosted, and the broadcast preview keeps a persistent player card.
 - `spotlight_metric` is the "single performance metric a viewer cares about". The Personalizer adds it to every overlay for that feed.
 
+### 5.7 TrackingFrame (synthetic tracking, streamed with events)
+```json
+{
+  "match_id": "m_001",
+  "match_clock_ms": 3792000,
+  "ball": { "x": 18.0, "y": 38.0 },
+  "players": [{ "player_id": "p_home_09", "team_id": "t_home", "x": 36.0, "y": 62.0, "speed_kmh": 21.4 }]
+}
+```
+Where every player and the ball are at one instant (same normalized coordinates as MatchEvent). The generator emits frames at a few Hz alongside events; the control room interpolates them so the program camera and the tactical view show the same formations moving in sync with the actions. Until the generator streams them, `frontend/lib/matchSim.ts` simulates them.
+
 ---
 
 ## 6. Synthetic data generator (a scoring opportunity, so do it well)
 
-- Python module producing a full match (two fictional clubs, ~11 players each, subs) as a **timed event stream** that can replay at 1x / 5x / 20x.
+- Python module producing full matches (fictional clubs, 11 players each plus subs) as a **timed event stream** that can replay at 1x / 5x / 20x. It runs a whole **matchday: 3 fictional leagues x 4 matches**, each with its own seed and storyline.
+- Fictional leagues, clubs, and players only: no names resembling real competitions, clubs, or players. Squads are generated deterministically from name pools.
 - Realism: possession chains, plausible pass distances and success rates by zone, pressure events, shot quality by location, fouls/cards, set pieces.
 - Physical model: per-player speed and cumulative distance covered, plus `sprint` events, so speed/distance tags have real inputs. Also pass difficulty on every pass and shot speed on every shot.
 - Tracking frames (5.7): team shapes that shift with the ball and compact out of possession, receivers running onto passes. Consistent with the events (the ball is where the events say it is).
@@ -250,7 +263,11 @@ Where every player and the ball are at one instant (same normalized coordinates 
 
 UI polish is a top priority (UX & Presentation is 20% of the score and the rubric explicitly wants a balanced frontend/backend).
 
-**Layout (desktop-first, dark control-room aesthetic):**
+**Routes:** `/` match centre; `/match/[id]` the match for Guest/Fan; the Producer role on the featured match shows the control room below. (Static export: match ids come from the fixed matchday list via `generateStaticParams`.)
+
+**Color rule for many clubs:** data views encode by **role** (home = blue, away = aqua, validated for CVD) whichever clubs are playing. A club's own brand colors appear only on its crest and scorebug strip.
+
+**Producer control room layout (desktop-first, dark control-room aesthetic):**
 1. **Center: live pitch + timeline.** 2D SVG pitch with animated event markers/passing lines. Below it, a scrubbable momentum timeline (flowing line/area chart) with moment markers.
 2. **Right: proposal queue.** Cards with type, headline, confidence, priority, countdown to expiry. One-keystroke actions: **A** approve, **E** edit, **R** reject. Animated enter/exit.
 3. **Left/top: broadcast preview.** Mock match-feed frame with scorebug. Approved overlays animate in (lower-thirds, stat bars, player tags, momentum graph).
@@ -318,7 +335,9 @@ UI polish is a top priority (UX & Presentation is 20% of the score and the rubri
 
 **In:** control room UI, 4-5 proposal types, evidence view, audience toggle, 2-3 languages, human approval + audit log, one demonstrated agent failure/recovery, deployed demo. Also, because the official challenge names them explicitly: player-focus mode, spotlight metric, threshold-triggered player speed/distance tags, pass difficulty rating, shot speed, and visible match recaps.
 
-**Out (do not build):** video-based auto-eventing, many languages, user accounts/auth beyond a simple demo gate, anything that will not appear in the 2-minute demo video.
+Also in: the match centre (3 leagues x 4 matches), the Guest / Fan / Producer role switch with simulated sign-in, and the xT importance model.
+
+**Out (do not build):** video-based auto-eventing, many languages, real user accounts/auth (sign-in is simulated; Microsoft Entra External ID is a stretch goal only if everything else is done), anything that will not appear in the 2-minute demo video.
 
 **Test for every feature:** *Does it show up in the demo video or earn judging points?* If not, cut it.
 
