@@ -255,7 +255,8 @@ Where every player and the ball are at one instant (same normalized coordinates 
 - **Scripted storylines** selectable by seed/config: e.g. `late_collapse`, `second_half_comeback`, `red_card_swing`, `dominant_but_wasteful`. These guarantee interesting moments for the demo.
 - Deterministic by seed (reproducible demos and tests).
 - Include a **validation step** (basic realism checks: pass accuracy range, shots per match, possession sums to 100%, outfield distance covered roughly 9-13 km per 90 min, top sprint speeds roughly 30-36 km/h, plausible shot speeds, etc.) and document it, since "optimized synthetic data creation" is explicitly judged.
-- Also produce a small football-knowledge corpus (original text written for this project: tactical concepts such as pressing, field tilt, low block, transitions) to index in Azure AI Search for the Explainer. Do not copy copyrighted material.
+- **Tactical profiles** per club (`generator/tactics.py`: a style plus nine dials such as line height, pressing, directness, offside trap, runs in behind) drive the engine, and the engine enforces the laws that matter on screen (offside at the moment of the pass, throw-ins, goal kicks, corners, free kicks, realistic stoppages). Nothing teleports: players and the ball move continuously through restarts (a test checks every frame).
+- Also produce a small football-knowledge corpus (original text written for this project: tactical concepts such as pressing, field tilt, low block, transitions) to index in Azure AI Search for the Explainer. Do not copy copyrighted material. Club pages and the engine's laws are generated from code into `/knowledge` (`python -m app.generator.knowledge`), so agents cite the same profiles the matches were played with.
 
 ---
 

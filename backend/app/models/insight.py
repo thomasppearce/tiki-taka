@@ -50,5 +50,6 @@ class TeamStats(Contract):
     )
     tackles: int = Field(ge=0)
     fouls: int = Field(ge=0)
+    offsides: int = Field(ge=0)
     yellow_cards: int = Field(ge=0)
     red_cards: int = Field(ge=0)

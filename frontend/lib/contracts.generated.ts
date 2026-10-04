@@ -260,6 +260,7 @@ export interface MatchEvent {
     | "goal"
     | "save"
     | "sprint"
+    | "offside"
     | "kickoff"
     | "half_end";
   team_id: string | null;
@@ -314,6 +315,7 @@ export interface TeamStats {
   field_tilt_pct: number;
   tackles: number;
   fouls: number;
+  offsides: number;
   yellow_cards: number;
   red_cards: number;
 }

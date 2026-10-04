@@ -28,6 +28,7 @@ TEAM_RANGES: dict[str, tuple[float, float]] = {
     "tackles": (6, 32),
     "fouls": (1, 22),
     "pressures": (60, 280),
+    "offsides": (0, 7),
 }
 MATCH_RANGES: dict[str, tuple[float, float]] = {
     "goals": (0, 8),
@@ -84,6 +85,7 @@ def match_stats(result: MatchResult) -> dict[str, float]:
         stats[f"{side}.tackles"] = counts["tackle"]
         stats[f"{side}.fouls"] = counts["foul"]
         stats[f"{side}.pressures"] = counts["pressure"]
+        stats[f"{side}.offsides"] = counts["offside"]
 
     total_passes = stats["home.passes"] + stats["away.passes"]
     stats["goals"] = sum(c["goal"] for c in by_team.values())

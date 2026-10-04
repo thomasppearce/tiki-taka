@@ -745,6 +745,7 @@
             "goal",
             "save",
             "sprint",
+            "offside",
             "kickoff",
             "half_end"
           ],
@@ -1406,6 +1407,10 @@
           "minimum": 0,
           "type": "integer"
         },
+        "offsides": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "yellow_cards": {
           "minimum": 0,
           "type": "integer"
@@ -1427,6 +1432,7 @@
         "field_tilt_pct",
         "tackles",
         "fouls",
+        "offsides",
         "yellow_cards",
         "red_cards"
       ],

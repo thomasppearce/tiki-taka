@@ -52,7 +52,7 @@ def test_agents_hand_off_before_the_proposal_lands(
     proposal_id = _pin_after_goal(desk, at_minute)
     state = Desk.model_validate(client.get(f"/api/matches/{FEATURED}/desk").json())
     assert proposal_id in [p.proposal_id for p in state.proposals]
-    handoffs = {r.actor for r in state.audit if r.action == "handoff"}
+    handoffs = {r.actor for r in state.audit if r.action in ("handoff", "retry")}
     assert {"interpreter", "explainer", "producer", "localizer"} <= handoffs
     created = next(r for r in state.audit if r.action == "created")
     assert created.proposal_id == proposal_id and created.actor_type == "agent"

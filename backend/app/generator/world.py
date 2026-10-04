@@ -9,6 +9,8 @@ import random
 from dataclasses import dataclass
 from typing import Literal
 
+from app.generator.tactics import Style, Tactics, tactics_for
+
 Role = Literal["gk", "def", "mid", "fwd"]
 
 
@@ -32,6 +34,7 @@ class Club:
     color: str  # brand color for crests and scorebug strips only (data views encode by role)
     formation: str  # a key of FORMATIONS
     squad: tuple[Player, ...]  # 11 starters in formation order, then 5 substitutes
+    tactics: Tactics
 
 
 @dataclass(frozen=True)
@@ -417,6 +420,12 @@ _LEAGUES: tuple[tuple[str, tuple[tuple[str, str, str, str], ...]], ...] = (
 )
 
 
+# The featured pair is a deliberate clash: Northgate's high possession line against Westmere's
+# runners in behind. Every other club takes a style in rotation, so each league has a mix.
+_STYLES: dict[str, Style] = {"ngr": "possession", "wma": "counter"}
+_STYLE_ROTATION: tuple[Style, ...] = ("high_press", "direct", "balanced", "possession", "counter")
+
+
 def build_world(seed: int = 2026) -> tuple[League, ...]:
     """The three leagues with full squads. Same seed, same world."""
     rng = random.Random(seed)
@@ -427,8 +436,9 @@ def build_world(seed: int = 2026) -> tuple[League, ...]:
         used: list[str] = [
             n.split(" ", 1)[1] for c in clubs for n in _FEATURED_SQUADS.get(c[1].lower(), ())
         ]
-        for name, short, color, formation in clubs:
+        for position, (name, short, color, formation) in enumerate(clubs):
             code = short.lower()
+            style = _STYLES.get(code) or _STYLE_ROTATION[(position + index) % len(_STYLE_ROTATION)]
             built.append(
                 Club(
                     club_id=f"t_{code}",
@@ -437,6 +447,7 @@ def build_world(seed: int = 2026) -> tuple[League, ...]:
                     color=color,
                     formation=formation,
                     squad=_squad(code, formation, rng, used),
+                    tactics=tactics_for(code, style, seed),
                 )
             )
         leagues.append(League(league_id=f"l_{index + 1}", name=league_name, clubs=tuple(built)))

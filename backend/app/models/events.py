@@ -18,6 +18,7 @@ EventType = Literal[
     "goal",
     "save",
     "sprint",
+    "offside",
     "kickoff",
     "half_end",
 ]

@@ -266,6 +266,7 @@ def team_stats(
         field_tilt_pct=round(100 * mine_ft / max(1, all_ft), 1),
         tackles=sum(1 for e in mine if e.type == "tackle"),
         fouls=sum(1 for e in mine if e.type == "foul"),
+        offsides=sum(1 for e in mine if e.type == "offside"),
         yellow_cards=sum(
             1 for e in mine if e.type == "card" and e.attributes.card_color == "yellow"
         ),
