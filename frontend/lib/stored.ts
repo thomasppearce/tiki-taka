@@ -3,9 +3,10 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * A small value kept in localStorage and shared by every component that reads the same key (and
- * by other tabs). It is a per-viewer convenience: if storage is unavailable (private windows,
- * blocked site data) the page still works with the fallback, it just doesn't remember.
+ * A small per-viewer setting (role, feed preferences), shared by every component that reads the
+ * same key. The value lives in memory, so it always works; localStorage only remembers it across
+ * visits (and other tabs), and when storage is unavailable (private windows, blocked site data)
+ * the setting still changes, it just isn't remembered.
  */
 export function useStored<T>(
   key: string,
@@ -14,47 +15,58 @@ export function useStored<T>(
 ): [T, (value: T) => void] {
   const subscribe = useCallback(
     (notify: () => void) => {
-      const onStorage = (e: StorageEvent | CustomEvent<string>) => {
-        const changed = e instanceof StorageEvent ? e.key : e.detail;
-        if (changed === key) notify();
+      const keyListeners = listeners.get(key) ?? new Set();
+      keyListeners.add(notify);
+      listeners.set(key, keyListeners);
+      // Another tab changed it.
+      const onStorage = (e: StorageEvent) => {
+        if (e.key !== key) return;
+        memory.set(key, e.newValue);
+        notify();
       };
       window.addEventListener("storage", onStorage);
-      window.addEventListener(LOCAL_EVENT, onStorage as EventListener);
       return () => {
+        keyListeners.delete(notify);
         window.removeEventListener("storage", onStorage);
-        window.removeEventListener(LOCAL_EVENT, onStorage as EventListener);
       };
     },
     [key],
   );
   const raw = useSyncExternalStore(
     subscribe,
-    () => read(key),
+    () => snapshot(key),
     () => null,
   );
-  const value = parse(raw, fallback, valid);
   const set = useCallback(
     (next: T) => {
+      const value = JSON.stringify(next);
+      memory.set(key, value);
       try {
-        window.localStorage.setItem(key, JSON.stringify(next));
+        window.localStorage.setItem(key, value);
       } catch {
-        // Storage unavailable: nothing to remember it in.
+        // Storage unavailable: the setting still applies for this visit.
       }
-      window.dispatchEvent(new CustomEvent(LOCAL_EVENT, { detail: key }));
+      for (const notify of listeners.get(key) ?? []) notify();
     },
     [key],
   );
-  return [value, set];
+  return [parse(raw, fallback, valid), set];
 }
 
-const LOCAL_EVENT = "matchdesk:stored";
+const memory = new Map<string, string | null>();
+const listeners = new Map<string, Set<() => void>>();
 
-function read(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
+function snapshot(key: string): string | null {
+  if (!memory.has(key)) {
+    let stored: string | null = null;
+    try {
+      stored = window.localStorage.getItem(key);
+    } catch {
+      // Storage unavailable: start from the fallback.
+    }
+    memory.set(key, stored);
   }
+  return memory.get(key) ?? null;
 }
 
 function parse<T>(

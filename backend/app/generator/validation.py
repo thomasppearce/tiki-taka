@@ -39,6 +39,10 @@ MATCH_RANGES: dict[str, tuple[float, float]] = {
     "median_sprints_per_player": (5, 40),
     "max_top_speed_kmh": (30, 37.5),
     "median_shot_speed_kmh": (60, 110),
+    "corners": (1, 22),
+    "throw_ins": (15, 65),
+    "goal_kicks": (4, 30),
+    "free_kicks": (8, 45),
 }
 
 
@@ -96,6 +100,9 @@ def match_stats(result: MatchResult) -> dict[str, float]:
     stats["median_sprints_per_player"] = statistics.median(sprints.values()) if sprints else 0
     stats["max_top_speed_kmh"] = top_speed
     stats["median_shot_speed_kmh"] = statistics.median(shot_speeds) if shot_speeds else 0
+    restarts = Counter(e.type for e in result.events)
+    for kind in ("corner", "throw_in", "goal_kick", "free_kick"):
+        stats[f"{kind}s"] = restarts[kind]
     return stats
 
 

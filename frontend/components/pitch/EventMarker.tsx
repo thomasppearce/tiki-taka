@@ -5,10 +5,11 @@ import { toPitch } from "@/lib/pitch";
 const FADE = "opacity var(--duration-fast) var(--ease-smooth-out)";
 
 /**
- * One event on the pitch, in meters: a small mark where it happened and, for passes and sprints,
- * a line to where it ended. Shape carries team identity alongside color (home circle, away
- * diamond) so the encoding never relies on color alone. Kept smaller than the player markers.
- * `opacity` fades older events; cited events get an on-air ring.
+ * One event on the pitch, in meters: a small mark where it happened and, for passes, shots, and
+ * sprints, a line to where it ended (passes thin, shots bold to the goal mouth, sprints dashed).
+ * Shape carries team identity alongside color (home circle, away diamond) so the encoding never
+ * relies on color alone. Kept smaller than the player markers. `opacity` fades older events;
+ * cited events get an on-air ring.
  */
 export function EventMarker({
   event,
@@ -37,12 +38,24 @@ export function EventMarker({
             x2={end.x}
             y2={end.y}
             className={teamStroke}
-            strokeWidth={1.5}
-            strokeOpacity={0.7}
+            strokeWidth={event.type === "shot" ? 3 : 1.5}
+            strokeOpacity={event.type === "shot" ? 0.95 : 0.7}
             strokeDasharray={event.type === "sprint" ? "3 3" : undefined}
             vectorEffect="non-scaling-stroke"
           />
-          <circle cx={end.x} cy={end.y} r={0.45} className={teamFill} />
+          {event.type === "shot" ? (
+            <circle
+              cx={end.x}
+              cy={end.y}
+              r={1}
+              fill="none"
+              className={teamStroke}
+              strokeWidth={2}
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : (
+            <circle cx={end.x} cy={end.y} r={0.45} className={teamFill} />
+          )}
         </>
       )}
       {/* Always rendered so the ring can scale in and fade out as the selection changes. */}

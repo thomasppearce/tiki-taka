@@ -66,7 +66,19 @@ def learn(matches: list[tuple[list[MatchEvent], str]], iterations: int = 60) -> 
         receiver: tuple[str, int] | None = None  # (player_id, zone) after a completed pass
         for e in events:
             if e.type not in ("pass", "shot") or not e.location or not e.team_id:
-                if e.type in ("tackle", "foul", "offside", "kickoff", "save", "half_end", "goal"):
+                if e.type in (
+                    "tackle",
+                    "foul",
+                    "offside",
+                    "throw_in",
+                    "goal_kick",
+                    "corner",
+                    "free_kick",
+                    "kickoff",
+                    "save",
+                    "half_end",
+                    "goal",
+                ):
                     receiver = None
                 continue
             home = e.team_id == home_id

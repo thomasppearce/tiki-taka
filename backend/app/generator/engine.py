@@ -75,6 +75,14 @@ STOPPAGE_MS: dict[Restart, tuple[int, int]] = {
     "free_kick": (18_000, 32_000),
 }
 SUBSTITUTION_MS = (12_000, 20_000)  # added to the stoppage it is made in
+# Each restart is recorded as an event when it is awarded, so viewers can tell a stoppage apart
+# from open play.
+RESTART_EVENT: dict[Restart, EventType] = {
+    "throw": "throw_in",
+    "goal_kick": "goal_kick",
+    "corner": "corner",
+    "free_kick": "free_kick",
+}
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:
@@ -482,6 +490,8 @@ class MatchEngine:
             )
         for p in self.players:
             p.run_until_ms = 0
+        if kind in RESTART_EVENT:
+            self._emit(RESTART_EVENT[kind], self.restart_taker, side, spot)
 
     def _stopped(self) -> bool:
         """The ball is dead: a restart is pending (or a stoppage is still running)."""
