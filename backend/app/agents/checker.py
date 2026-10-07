@@ -35,7 +35,7 @@ def check_draft(draft: Draft, brief: MomentBrief) -> list[str]:
             continue
         cited = [citable[i] for i in claim.evidence_event_ids]
         allowed = frozenset().union(*(f.numbers for f in cited)) | situation
-        allowed |= {float(len(cited))}
+        allowed |= {float(len(cited))} | brief.supported(claim.evidence_event_ids)
         for number in sorted(numbers_in(claim.text)):
             if not is_close(number, allowed):
                 problems.append(

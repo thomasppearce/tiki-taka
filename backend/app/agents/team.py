@@ -11,7 +11,8 @@ One run per moment:
 - Interpreter (model): is the moment worth a graphic now, and what is its angle?
 - Explainer (model): headline, body, and claims, each citing the events that prove it. It can
   look up club tactics, the laws, and what metrics mean in the knowledge base (Azure AI Search,
-  Foundry IQ) through its MCP endpoint.
+  Foundry IQ) through its MCP endpoint: once per moment, because every lookup costs another
+  model round trip that resends the whole prompt. A redraft reuses what the first draft found.
 - Checker (code): every id, number, and name against the brief. A model checking its own work
   tends to agree with itself; this doesn't.
 - Producer (model): priority and shelf life, given the live queue and what this producer has
@@ -51,7 +52,7 @@ from app.agents.checker import check_draft, check_localized
 from app.agents.schemas import Draft, Interpretation, Localized, Placement
 
 MAX_DRAFTS = 3
-PROMPT_VERSION = "v4"  # bump when prompts change, so cached runs are regenerated
+PROMPT_VERSION = "v6"  # bump when prompts change, so cached runs are regenerated
 KNOWLEDGE_BASE = "matchdesk-kb"  # app/rag/knowledge_base.py builds it
 KNOWLEDGE_MCP_API = "2026-08-01-preview"  # the knowledge base MCP endpoint is in preview
 SEARCH_SCOPE = "https://search.azure.com/.default"
@@ -76,10 +77,12 @@ Write one broadcast graphic for the moment, in English:
 - claims: every factual statement the graphic makes, each citing the ids of the events in the
   brief that prove it.
 Rules: use only numbers, names, and facts that appear in the brief, and never invent a statistic.
-Cite only event ids listed in the brief.
+Cite only event ids listed in the brief. The score, the minute, and the stats so far are context:
+the body may mention them, but they are not claims, so don't list them.
 When the angle turns on how a club plays, the laws (offside, restarts), or what a metric means
 (xG, field tilt, momentum), first look it up with knowledge_base_retrieve, and list the titles of
-the sections you used in background_used. Background explains why; it is never a claim, and its
+the sections you used in background_used. You get one lookup per moment: make a single call, with
+a query variant for each thing you need. Background explains why; it is never a claim, and its
 numbers (tactical dials) never appear in the graphic.
 Present tense, broadcast tone, no exclamation marks. Headlines in sentence case, with names
 (players, clubs) capitalized as in the brief."""
@@ -116,6 +119,7 @@ class Run:
     placement: Placement | None = None
     localized: Localized | None = None
     tokens: int = 0
+    background: str = ""  # what the Explainer's lookup returned, reused on redrafts
 
 
 @dataclass
@@ -138,6 +142,9 @@ class AgentTeam:
             project_endpoint=project_endpoint, model=model, credential=credential
         )
         self.model = model
+        # One tool call per request; then the model must answer (agent_framework/_tools.py,
+        # FunctionInvocationConfiguration). The knowledge base is the only tool.
+        self.client.function_invocation_configuration["max_function_calls"] = 1
         self.knowledge: MCPStreamableHTTPTool | None = None
         if search_endpoint:
 
@@ -184,21 +191,34 @@ class AgentTeam:
         )
 
     async def ask(
+        self, name: str, instructions: str, prompt: str, schema: type[T]
+    ) -> tuple[T, int]:
+        """One structured call. A separate Agent per call keeps concurrent runs independent."""
+        value, tokens, _ = await self.ask_with_tools(name, instructions, prompt, schema, None)
+        return value, tokens
+
+    async def ask_with_tools(
         self,
         name: str,
         instructions: str,
         prompt: str,
         schema: type[T],
-        tools: list[MCPStreamableHTTPTool] | None = None,
-    ) -> tuple[T, int]:
-        """One structured call. A separate Agent per call keeps concurrent runs independent."""
+        tools: list[MCPStreamableHTTPTool] | None,
+    ) -> tuple[T, int, list[str]]:
+        """A structured call that may use tools; also returns what the tools gave back."""
         agent = Agent(client=self.client, name=name, instructions=instructions, tools=tools)
         response = await agent.run(prompt, options={"response_format": schema})
         value = response.value
         if not isinstance(value, schema):
             raise ValueError(f"{name} returned no valid {schema.__name__}")
         usage = response.usage_details or {}
-        return value, int(usage.get("total_token_count") or 0)
+        results = [
+            content.result
+            for message in response.messages
+            for content in message.contents
+            if content.type == "function_result" and content.result
+        ]
+        return value, int(usage.get("total_token_count") or 0), results
 
     async def run(self, brief: MomentBrief, report: Reporter) -> Outcome:
         interpreter = _Interpreter(self, report)
@@ -281,16 +301,27 @@ class _Explainer(Executor):
         )
         if run.problems and run.draft:
             fixes = "\n".join(f"- {p}" for p in run.problems)
+            if run.background:
+                prompt += (
+                    "\n\nWHAT YOUR LOOKUP FOUND (there is no second lookup):\n" + run.background
+                )
             prompt += (
                 f"\n\nThe checker rejected your previous draft:\n{run.draft.model_dump_json()}\n"
                 f"Problems:\n{fixes}\nFix every problem."
             )
-        knowledge = [self.team.knowledge] if self.team.knowledge else None
-        run.draft, tokens = await self.team.ask("Explainer", EXPLAINER, prompt, Draft, knowledge)
+        # The lookup is for the first draft only; a redraft fixes citations, not background.
+        first = run.drafts == 0
+        knowledge = [self.team.knowledge] if self.team.knowledge and first else None
+        run.draft, tokens, found = await self.team.ask_with_tools(
+            "Explainer", EXPLAINER, prompt, Draft, knowledge
+        )
+        if first:
+            run.background = "\n".join(found)
         run.drafts += 1
         run.tokens += tokens
         cited = len({i for claim in run.draft.claims for i in claim.evidence_event_ids})
-        pages = dict.fromkeys(title.split(":")[0] for title in run.draft.background_used)
+        used = run.draft.background_used if first and run.background else []
+        pages = dict.fromkeys(title.split(":")[0] for title in used)
         looked_up = f"; looked up {', '.join(pages)}" if pages else ""
         self.report(
             "explainer",

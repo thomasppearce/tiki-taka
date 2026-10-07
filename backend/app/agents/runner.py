@@ -77,6 +77,7 @@ class AgentRunner:
             desk.ctx,
             desk.match.home,
             desk.match.away,
+            candidate.copy.claims,
         )
         job = (desk, candidate, generation, replace(brief, queue=queue))
         self.loop.call_soon_threadsafe(self.queue.put_nowait, job)

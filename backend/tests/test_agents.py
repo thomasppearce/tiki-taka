@@ -2,14 +2,15 @@
 runner (a fake team stands in for Foundry, so no test calls a model)."""
 
 import asyncio
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from app.agents.brief import MomentBrief, build_brief
+from app.agents.brief import MomentBrief, build_brief, numbers_in
 from app.agents.checker import check_draft
 from app.agents.runner import AgentRunner
-from app.agents.schemas import Draft, DraftClaim, Interpretation, Placement
-from app.agents.team import Outcome, Run
+from app.agents.schemas import Draft, DraftClaim, Interpretation, Localized, Placement
+from app.agents.team import AgentTeam, Outcome, Run
 from app.live.desk import AGENT_DEADLINE_MS, ProposalDesk
 from app.live.service import MatchdayService
 from app.state.aggregator import key_moments
@@ -44,6 +45,7 @@ def goal_brief(service: MatchdayService) -> MomentBrief:
         desk.ctx,
         desk.match.home,
         desk.match.away,
+        c.copy.claims,
     )
 
 
@@ -81,6 +83,41 @@ def test_the_checker_catches_invented_ids_numbers_and_names(service: MatchdaySer
     assert "evt_999999" in problems
     assert "cites no events" in problems
     assert f"names {outsider}" in problems
+
+
+def test_a_claim_may_use_the_figures_code_computed_from_its_events(
+    service: MatchdayService,
+) -> None:
+    desk = service.desks[FEATURED]
+    c = next(c for c in desk.candidates if c.kind == "territory")  # labelled "Territory: NGR 72%"
+    brief = build_brief(
+        c.moment_id,
+        c.kind,
+        c.label,
+        c.known_ms,
+        c.evidence_ids,
+        desk.match.result.events,
+        desk.ctx,
+        desk.match.home,
+        desk.match.away,
+        c.copy.claims,
+    )
+    share = int(max(numbers_in(c.label)))
+    figure = c.copy.claims[0]  # "28 of 39 completed final-third passes from 5' to 15' were NGR's"
+    draft = Draft(
+        headline="Northgate pin Westmere back",
+        body="Northgate are camped in the final third.",
+        claims=[
+            DraftClaim(
+                text=f"{share}% of the final-third passes", evidence_event_ids=c.evidence_ids
+            ),
+            DraftClaim(text=figure.text, evidence_event_ids=figure.evidence_event_ids[:5]),
+        ],
+    )
+    assert check_draft(draft, brief) == []
+    elsewhere = [brief.lead_up[0].event_id]  # the same number, citing a play it didn't come from
+    draft.claims[0].evidence_event_ids = elsewhere
+    assert any(f"says {share}" in p for p in check_draft(draft, brief))
 
 
 # --- The desk and the runner -------------------------------------------------------------------
@@ -217,3 +254,46 @@ def test_the_knowledge_corpus_splits_into_sections_without_squad_tables() -> Non
     assert {d["category"] for d in docs} == {"club", "concept", "laws"}
     assert len({d["id"] for d in docs}) == len(docs)
     assert not any(d["title"].endswith(": Squad") for d in docs)  # the brief lists the players
+
+
+class ScriptedTeam(AgentTeam):
+    """The real workflow, with scripted answers where the model would be."""
+
+    def __init__(self, brief: MomentBrief) -> None:  # no client: nothing reaches Foundry
+        self.model = "scripted"
+        self.knowledge = cast(Any, "knowledge base")  # stands in for the MCP tool
+        self.calls: list[tuple[str, str, bool]] = []
+        goal = next(f for f in brief.evidence if "GOAL" in f.text)
+        scorer = goal.players[0]
+        uncited = DraftClaim(text=f"Goal by {scorer}", evidence_event_ids=[])
+        cited = DraftClaim(text=f"Goal by {scorer}", evidence_event_ids=[goal.event_id])
+        self.drafts = [
+            Draft(headline=f"{scorer} scores", body=f"{scorer} finishes.", claims=[uncited]),
+            Draft(headline=f"{scorer} scores", body=f"{scorer} finishes.", claims=[cited]),
+        ]
+        self.answers: dict[type, Any] = {
+            Interpretation: Interpretation(worth_airing=True, angle="x", type="stat_graphic"),
+            Placement: Placement(
+                priority=0.9, shelf_life_seconds=40, type="stat_graphic", reason="x"
+            ),
+            Localized: Localized(**{name: f"{scorer} scores" for name in Localized.model_fields}),
+        }
+
+    async def ask_with_tools(  # type: ignore[override]
+        self, name: str, instructions: str, prompt: str, schema: type, tools: Sequence[Any] | None
+    ) -> tuple[Any, int, list[str]]:
+        self.calls.append((name, prompt, bool(tools)))
+        if schema is Draft:
+            found = ["Offside trap: Overview. A high line steps up together."] if tools else []
+            return self.drafts.pop(0), 0, found
+        return self.answers[schema], 0, []
+
+
+def test_the_explainer_looks_up_once_and_reuses_it_on_a_redraft(service: MatchdayService) -> None:
+    brief = goal_brief(service)
+    team = ScriptedTeam(brief)
+    outcome = asyncio.run(team.run(brief, lambda *step: None))
+    assert outcome.status == "proposed" and outcome.run.drafts == 2
+    explainer = [(tools, prompt) for name, prompt, tools in team.calls if name == "Explainer"]
+    assert [tools for tools, _ in explainer] == [True, False]  # the redraft gets no tool
+    assert "A high line steps up together." in explainer[1][1]  # but sees what was found

@@ -1,19 +1,21 @@
 """What the agent team is told about a moment: the brief.
 
 A brief is everything the team may use to write a graphic, and nothing else: the moment, the
-events behind it (citable by id), the plays leading up to it, the score and stats, and both
-clubs' tactical profiles as background. The checker holds every draft to it: an event id, a
-number, or a player's name that isn't in the brief is a problem.
+events behind it (citable by id), the figures code computed from those events (a share of passes,
+a distance covered, a team's xG), the plays leading up to it, the score and stats, and each
+club's style as background. The checker holds every draft to it: an event id, a number, or a
+player's name that isn't in the brief is a problem.
 """
 
 import math
 import re
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
 from app.generator.tactics import STYLE_NAMES
 from app.generator.world import Club
 from app.live.copy import CopyContext, distance_to_goal
-from app.models import MatchEvent
+from app.models import Claim, MatchEvent
 from app.state.aggregator import team_stats
 from app.state.xt import to_frame
 
@@ -34,6 +36,18 @@ class EventFact:
 
 
 @dataclass(frozen=True)
+class Figure:
+    """A number code computed from events: the moment's own claims (cues.py, aggregator.py)."""
+
+    text: str
+    event_ids: frozenset[str]
+
+    @property
+    def numbers(self) -> frozenset[float]:
+        return numbers_in(self.text)
+
+
+@dataclass(frozen=True)
 class MomentBrief:
     match_id: str
     moment_id: str
@@ -46,11 +60,24 @@ class MomentBrief:
     stats: str
     background: str
     players: dict[str, str]  # player_id -> "Surname (CLUB #n)", everyone in the match
+    figures: tuple[Figure, ...] = ()
     queue: str = ""  # the live queue and the producer's recent decisions (for the Producer)
 
     @property
     def citable(self) -> dict[str, EventFact]:
         return {f.event_id: f for f in (*self.evidence, *self.lead_up)}
+
+    def supported(self, event_ids: Iterable[str]) -> frozenset[float]:
+        """Numbers code computed from these events: the figures they're behind, and the moment's
+        label (its number comes from the events behind the moment)."""
+        ids = set(event_ids)
+        found: set[float] = set()
+        if ids & {f.event_id for f in self.evidence}:
+            found |= numbers_in(self.label)
+        for figure in self.figures:
+            if ids & figure.event_ids:
+                found |= figure.numbers
+        return frozenset(found)
 
     @property
     def surnames(self) -> frozenset[str]:
@@ -62,10 +89,17 @@ class MomentBrief:
         def facts(items: tuple[EventFact, ...]) -> str:
             return "\n".join(f"- {f.event_id}: {f.text}" for f in items) or "- (none)"
 
+        figures = "".join(f"- {f.text}\n" for f in self.figures)
+        if figures:
+            figures = (
+                "FIGURES (computed from the events behind it; a claim citing those events may "
+                f"use them):\n{figures}"
+            )
         return (
             f"MOMENT: {self.label} ({self.kind})\n"
             f"SITUATION: {self.situation}\n"
             f"EVENTS BEHIND IT (citable):\n{facts(self.evidence)}\n"
+            f"{figures}"
             f"LEAD-UP (citable):\n{facts(self.lead_up)}\n"
             f"STATS SO FAR: {self.stats}\n"
             f"BACKGROUND (not citable, never a claim): {self.background}"
@@ -94,8 +128,10 @@ def build_brief(
     ctx: CopyContext,
     home: Club,
     away: Club,
+    figures: Sequence[Claim] = (),
 ) -> MomentBrief:
-    """Everything the team may use for one moment, as of `clock_ms`."""
+    """Everything the team may use for one moment, as of `clock_ms`. `figures` are the moment's
+    scripted claims: numbers code computed from its events."""
     players = {
         p.player_id: f"{p.name.split(' ', 1)[-1]} ({club.short} #{p.number})"
         for club in (home, away)
@@ -133,6 +169,7 @@ def build_brief(
         stats=stats,
         background=background,
         players=players,
+        figures=tuple(Figure(c.text, frozenset(c.evidence_event_ids)) for c in figures),
     )
 
 
