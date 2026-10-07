@@ -10,7 +10,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from app.generator.tactics import STYLE_NAMES, describe
+from app.generator.tactics import STYLE_NAMES
 from app.generator.world import Club
 from app.live.copy import CopyContext, distance_to_goal
 from app.models import MatchEvent
@@ -148,9 +148,8 @@ def _stats_line(
 
 
 def _tactics_line(club: Club) -> str:
-    t = club.tactics
-    traits = ", ".join(f"{label.lower()} {phrase}" for label, phrase in describe(t)[:4])
-    return f"{club.name} play a {STYLE_NAMES[t.style]} style ({traits})."
+    # Only the style: the details live in the knowledge base, for the Explainer to look up.
+    return f"{club.name} play a {STYLE_NAMES[club.tactics.style]} style."
 
 
 def _zone(e: MatchEvent, home: bool) -> str:

@@ -57,6 +57,9 @@ class AgentRunner:
         for worker in self.workers:
             worker.cancel()
         await asyncio.gather(*self.workers, return_exceptions=True)
+        close = getattr(self.team, "close", None)
+        if close:
+            await close()
 
     # --- The desk's side (called from the desk, possibly on another thread) ------------------
 

@@ -9,7 +9,9 @@ One run per moment:
       passed               failed checks (the desk falls back to its scripted copy)
 
 - Interpreter (model): is the moment worth a graphic now, and what is its angle?
-- Explainer (model): headline, body, and claims, each citing the events that prove it.
+- Explainer (model): headline, body, and claims, each citing the events that prove it. It can
+  look up club tactics, the laws, and what metrics mean in the knowledge base (Azure AI Search,
+  Foundry IQ) through its MCP endpoint.
 - Checker (code): every id, number, and name against the brief. A model checking its own work
   tends to agree with itself; this doesn't.
 - Producer (model): priority and shelf life, given the live queue and what this producer has
@@ -24,13 +26,21 @@ FoundryChatClient; WorkflowBuilder(start_executor=..., output_from=[...]).add_ed
 condition=...); executors are Executor subclasses with @handler methods.
 """
 
+import logging
 import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal, Never, TypeVar
 
-from agent_framework import Agent, Executor, WorkflowBuilder, WorkflowContext, handler
+from agent_framework import (
+    Agent,
+    Executor,
+    MCPStreamableHTTPTool,
+    WorkflowBuilder,
+    WorkflowContext,
+    handler,
+)
 from agent_framework.foundry import FoundryChatClient
 from azure.core.credentials import TokenCredential
 from azure.identity import AzureCliCredential, ManagedIdentityCredential
@@ -41,7 +51,12 @@ from app.agents.checker import check_draft, check_localized
 from app.agents.schemas import Draft, Interpretation, Localized, Placement
 
 MAX_DRAFTS = 3
-PROMPT_VERSION = "v3"  # bump when prompts change, so cached runs are regenerated
+PROMPT_VERSION = "v4"  # bump when prompts change, so cached runs are regenerated
+KNOWLEDGE_BASE = "matchdesk-kb"  # app/rag/knowledge_base.py builds it
+KNOWLEDGE_MCP_API = "2026-08-01-preview"  # the knowledge base MCP endpoint is in preview
+SEARCH_SCOPE = "https://search.azure.com/.default"
+
+log = logging.getLogger(__name__)
 
 Reporter = Callable[[str, str, str], None]  # (agent, action, detail)
 T = TypeVar("T", bound=BaseModel)
@@ -61,9 +76,13 @@ Write one broadcast graphic for the moment, in English:
 - claims: every factual statement the graphic makes, each citing the ids of the events in the
   brief that prove it.
 Rules: use only numbers, names, and facts that appear in the brief, and never invent a statistic.
-Cite only event ids listed in the brief. Background (tactics) may explain why, but it is never a
-claim. Present tense, broadcast tone, no exclamation marks. Headlines in sentence case, with
-names (players, clubs) capitalized as in the brief."""
+Cite only event ids listed in the brief.
+When the angle turns on how a club plays, the laws (offside, restarts), or what a metric means
+(xG, field tilt, momentum), first look it up with knowledge_base_retrieve, and list the titles of
+the sections you used in background_used. Background explains why; it is never a claim, and its
+numbers (tactical dials) never appear in the graphic.
+Present tense, broadcast tone, no exclamation marks. Headlines in sentence case, with names
+(players, clubs) capitalized as in the brief."""
 
 PRODUCER = """You are the Producer on a live football broadcast team. A graphic is ready.
 Decide how it goes into the queue the human producer works from:
@@ -108,11 +127,46 @@ class Outcome:
 class AgentTeam:
     """The agents and the client they share. One workflow is built per run."""
 
-    def __init__(self, project_endpoint: str, model: str, credential: TokenCredential) -> None:
+    def __init__(
+        self,
+        project_endpoint: str,
+        model: str,
+        credential: TokenCredential,
+        search_endpoint: str | None = None,
+    ) -> None:
         self.client = FoundryChatClient(
             project_endpoint=project_endpoint, model=model, credential=credential
         )
         self.model = model
+        self.knowledge: MCPStreamableHTTPTool | None = None
+        if search_endpoint:
+
+            def headers(_: dict[str, object]) -> dict[str, str]:
+                return {"Authorization": f"Bearer {credential.get_token(SEARCH_SCOPE).token}"}
+
+            self.knowledge = MCPStreamableHTTPTool(
+                name="knowledge",
+                url=f"{search_endpoint}/knowledgebases/{KNOWLEDGE_BASE}/mcp"
+                f"?api-version={KNOWLEDGE_MCP_API}",
+                header_provider=headers,
+                allowed_tools=["knowledge_base_retrieve"],
+                load_prompts=False,
+                approval_mode="never_require",
+            )
+
+    async def connect(self) -> None:
+        """Connect to the knowledge base's MCP endpoint; without it the Explainer still works."""
+        if not self.knowledge:
+            return
+        try:
+            await self.knowledge.connect()
+        except Exception as error:
+            log.warning("knowledge base unavailable, Explainer runs without it: %s", error)
+            self.knowledge = None
+
+    async def close(self) -> None:
+        if self.knowledge:
+            await self.knowledge.close()
 
     @classmethod
     def from_env(cls) -> "AgentTeam":
@@ -122,13 +176,23 @@ class AgentTeam:
             if os.environ.get("IDENTITY_ENDPOINT")
             else AzureCliCredential()
         )
-        return cls(os.environ["FOUNDRY_PROJECT_ENDPOINT"], os.environ["FOUNDRY_MODEL"], credential)
+        return cls(
+            os.environ["FOUNDRY_PROJECT_ENDPOINT"],
+            os.environ["FOUNDRY_MODEL"],
+            credential,
+            search_endpoint=os.environ.get("AZURE_SEARCH_ENDPOINT"),
+        )
 
     async def ask(
-        self, name: str, instructions: str, prompt: str, schema: type[T]
+        self,
+        name: str,
+        instructions: str,
+        prompt: str,
+        schema: type[T],
+        tools: list[MCPStreamableHTTPTool] | None = None,
     ) -> tuple[T, int]:
         """One structured call. A separate Agent per call keeps concurrent runs independent."""
-        agent = Agent(client=self.client, name=name, instructions=instructions)
+        agent = Agent(client=self.client, name=name, instructions=instructions, tools=tools)
         response = await agent.run(prompt, options={"response_format": schema})
         value = response.value
         if not isinstance(value, schema):
@@ -221,15 +285,18 @@ class _Explainer(Executor):
                 f"\n\nThe checker rejected your previous draft:\n{run.draft.model_dump_json()}\n"
                 f"Problems:\n{fixes}\nFix every problem."
             )
-        run.draft, tokens = await self.team.ask("Explainer", EXPLAINER, prompt, Draft)
+        knowledge = [self.team.knowledge] if self.team.knowledge else None
+        run.draft, tokens = await self.team.ask("Explainer", EXPLAINER, prompt, Draft, knowledge)
         run.drafts += 1
         run.tokens += tokens
         cited = len({i for claim in run.draft.claims for i in claim.evidence_event_ids})
+        pages = dict.fromkeys(title.split(":")[0] for title in run.draft.background_used)
+        looked_up = f"; looked up {', '.join(pages)}" if pages else ""
         self.report(
             "explainer",
             "handoff",
             f'Draft {run.drafts}: "{run.draft.headline}", {len(run.draft.claims)} claims citing '
-            f"{cited} events ({_seconds(start)}, {tokens} tokens)",
+            f"{cited} events{looked_up} ({_seconds(start)}, {tokens} tokens)",
         )
         await ctx.send_message(run)
 

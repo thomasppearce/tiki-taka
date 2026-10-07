@@ -205,3 +205,15 @@ def test_a_replayed_brief_still_gets_its_full_time(service: MatchdayService) -> 
     assert desk.state.awaiting and desk.state.pending == []
     desk.sync(first.known_ms + 30_000 + AGENT_DEADLINE_MS)
     assert [p.produced_by for p in desk.state.pending] == [["orchestrator"]]
+
+
+# --- The knowledge base ------------------------------------------------------------------------
+
+
+def test_the_knowledge_corpus_splits_into_sections_without_squad_tables() -> None:
+    from app.rag.knowledge_base import sections
+
+    docs = sections()
+    assert {d["category"] for d in docs} == {"club", "concept", "laws"}
+    assert len({d["id"] for d in docs}) == len(docs)
+    assert not any(d["title"].endswith(": Squad") for d in docs)  # the brief lists the players

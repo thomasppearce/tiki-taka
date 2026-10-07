@@ -34,7 +34,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     runner: AgentRunner | None = None
     if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
         cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
-        runner = AgentRunner(AgentTeam.from_env(), cache_dir=cache)
+        team = AgentTeam.from_env()
+        await team.connect()  # the knowledge base over MCP, when AI Search is configured
+        runner = AgentRunner(team, cache_dir=cache)
         runner.start()
     app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.

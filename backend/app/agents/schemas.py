@@ -31,6 +31,10 @@ class Draft(BaseModel):
     headline: str = Field(description="At most 8 words.")
     body: str = Field(description="At most 30 words: what happened and why it matters.")
     claims: list[DraftClaim] = Field(description="Every factual statement, each with its evidence.")
+    background_used: list[str] = Field(
+        default_factory=list,
+        description="Titles of the knowledge base sections the graphic draws on, if any.",
+    )
 
 
 class Placement(BaseModel):
