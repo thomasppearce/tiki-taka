@@ -8,6 +8,7 @@ import {
   Funnel,
   MagnifyingGlass,
   MonitorPlay,
+  ShieldCheck,
   Translate,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
@@ -20,6 +21,7 @@ import type { AgentName, AgentState, AuditLine } from "@/lib/controlRoom";
 const AGENT_META: Partial<Record<AgentName, { label: string; Icon: Icon }>> = {
   interpreter: { label: "Interpreter", Icon: MagnifyingGlass },
   explainer: { label: "Explainer", Icon: BookOpenText },
+  checker: { label: "Checker", Icon: ShieldCheck },
   producer: { label: "Producer", Icon: Funnel },
   localizer: { label: "Localizer", Icon: Translate },
   renderer: { label: "Renderer", Icon: MonitorPlay },
@@ -35,14 +37,19 @@ const STATUS_META: Record<
   idle: { label: "Idle", Icon: Circle, tone: "text-ink-3" },
 };
 
-/** The agent pipeline for the selected proposal, then the decision log (audit trail). */
+/**
+ * The agent pipeline for the latest moment, then the decision log (audit trail). `engine` says
+ * who is writing: the agent team on Microsoft Foundry (and its model), or the scripted fallback.
+ */
 export function AgentActivity({
   agents,
   log,
+  engine,
   className = "",
 }: {
   agents: AgentState[];
   log: AuditLine[];
+  engine: string | null;
   className?: string;
 }) {
   const retrying = agents.filter((a) => a.status === "retrying").length;
@@ -50,7 +57,12 @@ export function AgentActivity({
   return (
     <Panel
       title="Agents"
-      aside={<Health retrying={retrying} />}
+      aside={
+        <span className="flex items-center gap-3">
+          {engine && <span className="text-xs text-ink-3">{engine}</span>}
+          <Health retrying={retrying} />
+        </span>
+      }
       className={`min-h-0 ${className}`}
     >
       <ol className="grid grid-cols-1 gap-2 border-b border-line p-2.5 sm:grid-cols-2 lg:flex lg:items-stretch lg:gap-1">

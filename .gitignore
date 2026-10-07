@@ -24,3 +24,6 @@ next-env.d.ts
 # OS / editor
 .DS_Store
 .idea/
+
+# Cached agent runs (regenerated on demand)
+backend/.cache/

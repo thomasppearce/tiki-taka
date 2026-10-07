@@ -67,6 +67,7 @@ export type Counts = { aired: number; rejected: number; expired: number };
 const PIPELINE: AgentName[] = [
   "interpreter",
   "explainer",
+  "checker",
   "producer",
   "localizer",
 ];
@@ -74,6 +75,7 @@ const PIPELINE: AgentName[] = [
 const WORKING: Partial<Record<AgentName, string>> = {
   interpreter: "Scanning the match state",
   explainer: "Grounding claims in events and knowledge",
+  checker: "Checking every claim against the events",
   producer: "Ranking against the queue",
   localizer: "Writing audience and language variants",
 };

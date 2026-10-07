@@ -1,20 +1,21 @@
-"""The proposal desk for one match: the deterministic producer, decisions, on-air, and the log.
+"""The proposal desk for one match: the proposals, decisions, on-air, and the log.
 
-Until the agents run on Foundry, a deterministic producer turns key moments (and high-speed
-sprints) into proposals. It keeps the same contract and the same audit trail the agents will, so
-it is also the fallback that keeps the queue alive if the agents are unavailable.
+Moments come from the aggregator (key plays) and the broadcast cues. On the featured match the
+agent team on Microsoft Foundry writes each proposal (app/agents): the desk briefs the team when a
+moment becomes knowable, logs each agent's step as it reports, and queues the graphic it returns.
+If the team fails or doesn't answer in time, the desk uses its scripted copy and says so.
 
-Each match gets a precomputed timeline of desk actions: agent handoffs (with the occasional
-localizer failure and retry), then the proposal's creation. As the matchday clock advances the
-desk replays whatever is due, in order. Approvals and rejections come from the producer in real
-time; on matches without a producer, autopilot airs the most important proposals.
+Every other match runs the scripted producer on a precomputed timeline (its handoffs simulate the
+team's pacing), with autopilot airing the most important proposals. Approvals and rejections
+come from the human producer in real time.
 """
 
 import hashlib
+import itertools
 import threading
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, NamedTuple, Protocol
 
 from app.generator.matchday import ScheduledMatch
 from app.live.copy import Copy, CopyContext, moment_copy, sprint_copy
@@ -53,10 +54,41 @@ SHIFT_CONFIRM_MS = 3 * 60_000  # a momentum shift is only known once the swing h
 WARM_START_MS = 90_000  # on startup, replay only the last 90 s so the log looks lived-in
 DEFAULT_TTL_MS = 60_000
 TTL_MS = {"player_tag": 30_000}
+DEFAULT_TEAM: list[AgentName] = ["interpreter", "explainer", "producer", "localizer"]
 MAX_AUDIT = 60
 YOU = "producer (you)"
+AGENT_DEADLINE_MS = 60_000  # no answer from the team by then: the scripted copy goes out
+SCRIPTED: list[AgentName] = ["orchestrator"]  # credited on scripted (fallback) proposals
 
 Decision = Literal["approved", "rejected", "expired"]
+
+
+@dataclass(frozen=True)
+class AgentGraphic:
+    """What the agent team hands back for one moment."""
+
+    copy: Copy
+    priority: float
+    ttl_ms: int
+    produced_by: list[AgentName]
+
+
+class AgentBridge(Protocol):
+    """Runs the agent team for a desk (app/agents/runner.py). Must not block."""
+
+    def request(
+        self, desk: "ProposalDesk", candidate: "_Candidate", generation: int, queue: str
+    ) -> None: ...
+
+
+class _Raw(NamedTuple):
+    known: int
+    moment_id: str
+    label: str
+    importance: float
+    copy: Copy
+    kind: str
+    evidence: list[str]
 
 
 @dataclass(frozen=True)
@@ -66,8 +98,10 @@ class _Candidate:
     label: str
     importance: float
     known_ms: int  # when the moment became knowable to the agents
-    copy: Copy
+    copy: Copy  # the scripted copy: the fallback, and the whole proposal off the featured match
     localizer_fails: bool
+    kind: str
+    evidence_ids: list[str]
 
     @property
     def ready_ms(self) -> int:
@@ -81,7 +115,7 @@ class _Candidate:
 @dataclass(frozen=True)
 class _Action:
     at_ms: int
-    kind: Literal["handoff", "failure", "retry", "create"]
+    kind: Literal["handoff", "failure", "retry", "create", "brief"]
     candidate: _Candidate
     agent: AgentName = "producer"
 
@@ -95,11 +129,16 @@ class _Aired:
     approved_at: datetime
 
 
+_GENERATIONS = itertools.count(1)
+
+
 @dataclass
 class _State:
+    generation: int = field(default_factory=lambda: next(_GENERATIONS))
     started: bool = False
     cursor: int = 0
     clock_ms: int = 0
+    now_ms: int = 0  # the clock being synced to (replays catch up to it)
     version: int = 0
     pending: list[Proposal] = field(default_factory=list)
     on_air: OnAir | None = None
@@ -108,6 +147,8 @@ class _State:
     counts: dict[Decision, int] = field(
         default_factory=lambda: {"approved": 0, "rejected": 0, "expired": 0}
     )
+    awaiting: dict[int, tuple["_Candidate", int]] = field(default_factory=dict)  # index -> deadline
+    types: dict[str, str] = field(default_factory=dict)  # proposal_id -> type, for the Producer
 
 
 class ProposalDesk:
@@ -117,18 +158,22 @@ class ProposalDesk:
         moments: list[KeyMoment],
         ctx: CopyContext,
         autopilot: bool,
+        agents: AgentBridge | None = None,
     ) -> None:
         self.match = match
+        self.ctx = ctx
         self.autopilot = autopilot
+        self.agents = agents
         self._lock = threading.Lock()
         self.candidates = self._candidates(moments, ctx)
+        timeline = _brief if agents else _actions
         self.actions = sorted(
-            (a for c in self.candidates for a in _actions(c)), key=lambda a: a.at_ms
+            (a for c in self.candidates for a in timeline(c)), key=lambda a: a.at_ms
         )
         self.state = _State()
 
     def _candidates(self, moments: list[KeyMoment], ctx: CopyContext) -> list[_Candidate]:
-        raw: list[tuple[int, str, str, float, Copy]] = []
+        raw: list[_Raw] = []
         for m in moments:
             if m.importance < MIN_IMPORTANCE:
                 continue
@@ -139,7 +184,9 @@ class ProposalDesk:
                 m.match_clock_ms + (SHIFT_CONFIRM_MS if m.kind == "momentum_shift" else 0),
                 *(ctx.events[e].match_clock_ms for e in m.evidence_event_ids),
             )
-            raw.append((known, m.moment_id, m.label, m.importance, copy))
+            raw.append(
+                _Raw(known, m.moment_id, m.label, m.importance, copy, m.kind, m.evidence_event_ids)
+            )
         fastest = 0.0
         last_tag: dict[str | None, int] = {}
         for e in self.match.result.events:
@@ -154,22 +201,38 @@ class ProposalDesk:
             last_tag[e.player_id] = e.match_clock_ms
             copy = sprint_copy(e, record, ctx)
             label = f"{ctx.surname(e.player_id)} hits {speed:.1f} km/h"
-            raw.append((e.match_clock_ms, f"km_{e.event_id[4:]}", label, SPRINT_IMPORTANCE, copy))
+            key = f"km_{e.event_id[4:]}"
+            raw.append(
+                _Raw(e.match_clock_ms, key, label, SPRINT_IMPORTANCE, copy, "sprint", [e.event_id])
+            )
         # Between the defining plays: offsides, bookings, changes, stat checks, territory, runners.
         result = self.match.result
         teams = (self.match.home.club_id, self.match.away.club_id)
         for cue in cues(result.events, ctx, teams, result.full_time_ms):
-            raw.append((cue.at_ms, cue.key, cue.label, cue.importance, cue.copy))
-        raw.sort(key=lambda r: r[0])
+            evidence = list(dict.fromkeys(i for c in cue.copy.claims for i in c.evidence_event_ids))
+            raw.append(
+                _Raw(cue.at_ms, cue.key, cue.label, cue.importance, cue.copy, cue.kind, evidence)
+            )
+        raw.sort(key=lambda r: r.known)
         last_seen: dict[str, int] = {}
-        kept: list[tuple[int, str, str, float, Copy]] = []
+        kept: list[_Raw] = []
         for r in raw:
-            if r[0] - last_seen.get(r[2], -REPEAT_GAP_MS) >= REPEAT_GAP_MS:
+            if r.known - last_seen.get(r.label, -REPEAT_GAP_MS) >= REPEAT_GAP_MS:
                 kept.append(r)
-            last_seen[r[2]] = r[0]
+            last_seen[r.label] = r.known
         return [
-            _Candidate(i + 1, moment_id, label, importance, known, copy, i % 5 == 3)
-            for i, (known, moment_id, label, importance, copy) in enumerate(kept)
+            _Candidate(
+                i + 1,
+                r.moment_id,
+                r.label,
+                r.importance,
+                r.known,
+                r.copy,
+                i % 5 == 3,
+                r.kind,
+                list(r.evidence),
+            )
+            for i, r in enumerate(kept)
         ]
 
     # --- Clock ---------------------------------------------------------------------------------
@@ -185,6 +248,7 @@ class ProposalDesk:
             s = self.state
             if clock_ms < s.clock_ms:
                 self.state = s = _State()  # the matchday loop kicked off again
+            s.now_ms = clock_ms
             if not s.started:
                 s.started = True
                 s.clock_ms = max(0, clock_ms - WARM_START_MS)
@@ -200,6 +264,14 @@ class ProposalDesk:
     def _advance(self, clock_ms: int) -> None:
         s = self.state
         s.clock_ms = max(s.clock_ms, clock_ms)
+        for index, (c, deadline) in list(s.awaiting.items()):
+            if s.clock_ms >= deadline:
+                del s.awaiting[index]
+                detail = f"No answer on {c.label} within {AGENT_DEADLINE_MS // 1000} s"
+                self._log(
+                    "agent_failure", "orchestrator", "agent", None, f"{detail}; scripted copy used"
+                )
+                self._create(c, c.copy, c.importance, _ttl(c.copy), SCRIPTED)
         for p in [p for p in s.pending if p.expires_at_clock_ms <= s.clock_ms]:
             self._decide(p, "expired", "producer", "agent")
         if s.on_air and s.clock_ms >= s.on_air.start_clock_ms + s.on_air.duration_ms:
@@ -208,8 +280,16 @@ class ProposalDesk:
 
     def _apply(self, action: _Action) -> None:
         c = action.candidate
+        if action.kind == "brief" and self.agents:
+            s = self.state
+            # The team gets its full time from when it is briefed, even if the desk is replaying
+            # moments it missed (the warm start), so the deadline runs from "now", not the moment.
+            s.awaiting[c.index] = (c, max(s.clock_ms, s.now_ms) + AGENT_DEADLINE_MS)
+            self._log("handoff", "orchestrator", "agent", None, f"Briefed the team: {c.label}")
+            self.agents.request(self, c, s.generation, self._queue_summary())
+            return
         if action.kind == "create":
-            self._create(c)
+            self._create(c, c.copy, c.importance, _ttl(c.copy), DEFAULT_TEAM)
             return
         if action.kind == "failure":
             detail = "Spanish variant failed schema validation; retrying (attempt 2 of 3)"
@@ -228,11 +308,18 @@ class ProposalDesk:
         }.get(action.agent, "")
         self._log("handoff", action.agent, "agent", None, detail)
 
-    def _create(self, c: _Candidate) -> None:
+    def _create(
+        self,
+        c: _Candidate,
+        copy: Copy,
+        priority: float,
+        ttl_ms: int,
+        produced_by: list[AgentName],
+    ) -> None:
         s = self.state
         if len(s.pending) >= MAX_PENDING:
             weakest = min(s.pending, key=lambda p: p.priority)
-            if weakest.priority >= c.importance:
+            if weakest.priority >= priority:
                 self._log("handoff", "producer", "agent", None, f"Held back, queue full: {c.label}")
                 return
             self._decide(weakest, "expired", "producer", "agent")
@@ -240,23 +327,80 @@ class ProposalDesk:
         proposal = Proposal(
             proposal_id=c.proposal_id,
             moment_id=c.moment_id,
-            type=c.copy.type,
-            priority=round(c.importance, 2),
+            type=copy.type,
+            priority=round(priority, 2),
             confidence=0.9,
-            expires_at_clock_ms=c.ready_ms + TTL_MS.get(c.copy.type, DEFAULT_TTL_MS),
-            headline=c.copy.headline,
-            body=c.copy.body,
-            claims=c.copy.claims,
+            expires_at_clock_ms=s.clock_ms + ttl_ms,
+            headline=copy.headline,
+            body=copy.body,
+            claims=copy.claims,
             status="pending",
-            produced_by=["interpreter", "explainer", "producer", "localizer"],
+            produced_by=produced_by,
             trace_id=trace,
-            player_id=c.copy.player_id,
+            player_id=copy.player_id,
         )
         s.pending.append(proposal)
         s.pending.sort(key=lambda p: -p.priority)
+        s.types[proposal.proposal_id] = copy.type
         self._log("created", "producer", "agent", proposal.proposal_id, c.label)
-        if self.autopilot and c.importance >= AUTOPILOT_IMPORTANCE:
+        if self.autopilot and priority >= AUTOPILOT_IMPORTANCE:
             self._air(proposal, "autopilot", "system")
+
+    # --- The agent team's answers (from the runner, on the event loop) ------------------------
+
+    def agent_step(self, index: int, generation: int, agent: str, action: str, detail: str) -> None:
+        """Log one agent's step for a moment the desk is still waiting on."""
+        with self._lock:
+            s = self.state
+            if s.generation == generation and index in s.awaiting:
+                self._log(action, agent, "agent", None, detail)  # type: ignore[arg-type]
+
+    def agent_result(
+        self,
+        index: int,
+        generation: int,
+        graphic: AgentGraphic | None,
+        status: str,
+        reason: str = "",
+    ) -> None:
+        """Queue the team's graphic, or fall back to the scripted copy and say why."""
+        with self._lock:
+            s = self.state
+            if s.generation != generation or index not in s.awaiting:
+                return  # the matchday looped, or the deadline already passed
+            c, _ = s.awaiting.pop(index)
+            if graphic:
+                self._create(c, graphic.copy, graphic.priority, graphic.ttl_ms, graphic.produced_by)
+            elif status != "passed":  # the Interpreter's pass is already in the log
+                why = {
+                    "failed_checks": "The checker rejected every draft",
+                    "error": f"The agent team failed ({reason or 'error'})",
+                }.get(status, f"The agent team {status}")
+                self._log(
+                    "agent_failure",
+                    "orchestrator",
+                    "agent",
+                    None,
+                    f"{why} on {c.label}; scripted copy used",
+                )
+                self._create(c, c.copy, c.importance, _ttl(c.copy), SCRIPTED)
+
+    def _queue_summary(self) -> str:
+        """The live queue and this producer's recent decisions, for the Producer agent."""
+        s = self.state
+        queue = [
+            f"- {p.type}, priority {p.priority:.2f}, {_seconds_left(p, s.clock_ms)} s left: "
+            f"{p.headline.analyst.en}"
+            for p in s.pending
+        ]
+        decisions = [
+            f"- {r.action} a {s.types.get(r.proposal_id or '', 'graphic')}: {r.detail}"
+            for r in s.audit
+            if r.actor_type == "human" and r.action in ("approved", "rejected")
+        ][:8]
+        return "QUEUE:\n" + (
+            "\n".join(queue) or "- empty"
+        ) + "\n" "PRODUCER'S RECENT DECISIONS:\n" + ("\n".join(decisions) or "- none yet")
 
     # --- Decisions -----------------------------------------------------------------------------
 
@@ -389,6 +533,19 @@ class ProposalDesk:
                 )
                 for a in self.state.aired
             ]
+
+
+def _brief(c: _Candidate) -> list[_Action]:
+    """With the agent team, the desk only briefs it when the moment becomes knowable."""
+    return [_Action(c.known_ms, "brief", c)]
+
+
+def _seconds_left(p: Proposal, clock_ms: int) -> int:
+    return max(0, (p.expires_at_clock_ms - clock_ms) // 1000)
+
+
+def _ttl(copy: Copy) -> int:
+    return TTL_MS.get(copy.type, DEFAULT_TTL_MS)
 
 
 def _actions(c: _Candidate) -> list[_Action]:

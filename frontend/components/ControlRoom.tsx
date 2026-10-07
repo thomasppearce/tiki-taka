@@ -11,7 +11,7 @@ import { ProposalQueue } from "@/components/control-room/ProposalQueue";
 import { TacticalPitch } from "@/components/control-room/TacticalPitch";
 import { TopBar } from "@/components/control-room/TopBar";
 import { FeedState } from "@/components/match/FeedState";
-import { postJson } from "@/lib/api";
+import { getJson, postJson } from "@/lib/api";
 import type { Desk, Proposal } from "@/lib/contracts.generated";
 import {
   type Decisions,
@@ -77,6 +77,7 @@ function Room({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [inFlight, setInFlight] = useState<Decisions>({});
   const clockMs = usePlaybackClock(live.source.getClockMs);
+  const engine = useEngine();
   const { desk, setDesk, refreshDesk } = live;
 
   const queue = useMemo(() => pendingQueue(desk, inFlight), [desk, inFlight]);
@@ -85,7 +86,7 @@ function Room({
     queue.find((p) => p.proposal_id === chosenId) ?? queue[0] ?? null;
   const selectedId = selected?.proposal_id ?? null;
   const citedIds = useMemo(
-    () => selected?.claims.flatMap((c) => c.evidence_event_ids) ?? [],
+    () => [...new Set(selected?.claims.flatMap((c) => c.evidence_event_ids))],
     [selected],
   );
   const citedEventIds = useMemo(() => new Set(citedIds), [citedIds]);
@@ -209,6 +210,7 @@ function Room({
             <AgentActivity
               agents={agentStates(desk, FEEDS[feed].label)}
               log={auditLines(desk)}
+              engine={engine}
               className="order-5 lg:order-none"
             />
           </div>
@@ -227,6 +229,23 @@ function Room({
       </div>
     </MotionConfig>
   );
+}
+
+/** Who writes the featured match's proposals: the agent team on Foundry, or the script. */
+function useEngine(): string | null {
+  const [engine, setEngine] = useState<string | null>(null);
+  useEffect(() => {
+    getJson<{ agents?: string; model?: string }>("/api/health")
+      .then((health) =>
+        setEngine(
+          health.agents === "foundry"
+            ? `Microsoft Foundry · ${health.model ?? "model"}`
+            : "Scripted",
+        ),
+      )
+      .catch(() => setEngine(null));
+  }, []);
+  return engine;
 }
 
 /** J/K or arrows to move, A approve, E edit, R reject. Ignored while typing or with modifiers. */

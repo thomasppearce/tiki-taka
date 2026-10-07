@@ -115,7 +115,7 @@ export interface Proposal {
    */
   claims: [Claim, ...Claim[]];
   status: "pending" | "approved" | "edited" | "rejected" | "expired";
-  produced_by: ("interpreter" | "explainer" | "producer" | "localizer" | "renderer" | "orchestrator")[];
+  produced_by: ("interpreter" | "explainer" | "checker" | "producer" | "localizer" | "renderer" | "orchestrator")[];
   trace_id: string | null;
   /**
    * The player this is about; drives player tags and player focus.

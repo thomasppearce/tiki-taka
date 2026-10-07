@@ -1,13 +1,18 @@
 """Shared fixtures: one API client (and one simulated matchday) for the whole test session."""
 
+import os
 from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.live.clock import MatchdayClock
-from app.live.service import MatchdayService
-from app.main import app
+# Tests never call Foundry: the featured match uses the scripted producer unless a test wires a
+# fake team in itself.
+os.environ["MATCHDESK_AGENTS"] = "off"
+
+from app.live.clock import MatchdayClock  # noqa: E402
+from app.live.service import MatchdayService  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="session")

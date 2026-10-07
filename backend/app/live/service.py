@@ -10,7 +10,7 @@ from app.generator.matchday import ScheduledMatch, build_matchday
 from app.generator.world import Club
 from app.live.clock import MatchdayClock
 from app.live.copy import CopyContext
-from app.live.desk import ProposalDesk
+from app.live.desk import AgentBridge, ProposalDesk
 from app.models.desk import Desk
 from app.models.insight import EventImpact, KeyMoment
 from app.models.matchday import (
@@ -27,7 +27,13 @@ RECENT_EVENTS = 40
 
 
 class MatchdayService:
-    def __init__(self, seed: int = 2026, clock: MatchdayClock | None = None) -> None:
+    def __init__(
+        self,
+        seed: int = 2026,
+        clock: MatchdayClock | None = None,
+        agents: AgentBridge | None = None,
+    ) -> None:
+        self.agents = agents  # the agent team, for the featured match only
         self.matches = build_matchday(seed)
         self.by_id = {m.match_id: m for m in self.matches}
         self.impacts: dict[str, dict[str, EventImpact]] = {
@@ -132,7 +138,9 @@ class MatchdayService:
             club=self.club,
             score_at=m.result.score_at,
         )
-        return ProposalDesk(m, moments, ctx, autopilot=not m.featured)
+        return ProposalDesk(
+            m, moments, ctx, autopilot=not m.featured, agents=self.agents if m.featured else None
+        )
 
     # Cached per match and per second of match time: views are recomputed at most once a second.
 

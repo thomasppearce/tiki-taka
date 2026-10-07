@@ -12,9 +12,11 @@ import type { MatchEvent } from "@/lib/contracts.generated";
  */
 export function useEvidence(
   matchId: string,
-  ids: readonly string[],
+  cited: readonly string[],
   known: readonly MatchEvent[],
 ): MatchEvent[] {
+  // Several claims can cite the same event; each is fetched and drawn once.
+  const ids = useMemo(() => [...new Set(cited)], [cited]);
   const [fetched, setFetched] = useState<ReadonlyMap<string, MatchEvent>>(
     new Map(),
   );

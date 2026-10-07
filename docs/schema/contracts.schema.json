@@ -1310,6 +1310,7 @@
             "enum": [
               "interpreter",
               "explainer",
+              "checker",
               "producer",
               "localizer",
               "renderer",

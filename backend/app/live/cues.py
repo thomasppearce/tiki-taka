@@ -26,6 +26,7 @@ CLEAR_XG_GAP = 0.4  # below this, chances are "even"
 class Cue:
     at_ms: int  # when it can be proposed: all its evidence has happened by then
     key: str  # unique within the match; becomes the proposal's moment_id
+    kind: str  # offside, booking, substitution, shots_xg, territory, runner
     label: str  # short English label for the audit log
     importance: float
     copy: Copy
@@ -111,6 +112,7 @@ def _offside(
     return Cue(
         at_ms=flag.match_clock_ms,
         key=f"cue_{flag.event_id[4:]}",
+        kind="offside",
         label=f"Offside: {player} ({team.short} #{n})",
         importance=min(0.8, 0.6 + 0.06 * (n - 1)),
         copy=Copy(
@@ -144,6 +146,7 @@ def _booking(card: MatchEvent, foul: MatchEvent | None, ctx: CopyContext) -> Cue
     return Cue(
         at_ms=card.match_clock_ms,
         key=f"cue_{card.event_id[4:]}",
+        kind="booking",
         label=f"Booked: {player}",
         importance=0.6,
         copy=Copy(
@@ -177,6 +180,7 @@ def _substitution(sub: MatchEvent, ctx: CopyContext) -> Cue:
     return Cue(
         at_ms=sub.match_clock_ms,
         key=f"cue_{sub.event_id[4:]}",
+        kind="substitution",
         label=f"Change: {on} for {off}",
         importance=0.6,
         copy=Copy(
@@ -237,6 +241,7 @@ def _shots_and_xg(
     return Cue(
         at_ms=t,
         key=f"cue_stats_{minute}",
+        kind="shots_xg",
         label=f"Shots and xG at {minute}'",
         importance=0.64,
         copy=Copy(
@@ -295,6 +300,7 @@ def _territory(
     return Cue(
         at_ms=t,
         key=f"cue_tilt_{minute}",
+        kind="territory",
         label=f"Territory: {team.short} {share}%",
         importance=0.66,
         copy=Copy(
@@ -347,6 +353,7 @@ def _hardest_runner(events: list[MatchEvent], t: int, ctx: CopyContext) -> Cue |
     return Cue(
         at_ms=t,
         key=f"cue_runner_{minute}",
+        kind="runner",
         label=f"Hardest runner: {player} {km:.1f} km",
         importance=0.62,
         copy=Copy(

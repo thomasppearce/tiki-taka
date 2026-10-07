@@ -5,11 +5,15 @@ import os
 from bisect import bisect_right
 from collections.abc import AsyncIterable, AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
+from app.agents.runner import AgentRunner
+from app.agents.team import AgentTeam
 from app.generator.matchday import ScheduledMatch
 from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
@@ -24,9 +28,20 @@ MAX_EVENT_IDS = 200
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    load_dotenv()  # Agent Framework doesn't load .env by itself
+    # The agent team runs on Microsoft Foundry when a project is configured (backend/.env);
+    # otherwise, and in tests (MATCHDESK_AGENTS=off), every match uses the scripted producer.
+    runner: AgentRunner | None = None
+    if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
+        cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
+        runner = AgentRunner(AgentTeam.from_env(), cache_dir=cache)
+        runner.start()
+    app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
-    app.state.matchday = MatchdayService()
+    app.state.matchday = MatchdayService(agents=runner)
     yield
+    if runner:
+        await runner.stop()
 
 
 app = FastAPI(title="Match Desk API", version="0.2.0", lifespan=lifespan)
@@ -50,8 +65,13 @@ def _match(service: MatchdayService, match_id: str) -> ScheduledMatch:
 
 
 @app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health(request: Request) -> dict[str, str]:
+    """Up, and who writes the featured match's proposals: the agent team or the script."""
+    runner: AgentRunner | None = request.app.state.agents
+    if runner:
+        model = os.environ.get("FOUNDRY_MODEL_LABEL", runner.team.model)
+        return {"status": "ok", "agents": "foundry", "model": model}
+    return {"status": "ok", "agents": "scripted"}
 
 
 @app.get("/api/matchday")

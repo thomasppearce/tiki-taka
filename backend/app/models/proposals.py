@@ -12,7 +12,9 @@ ProposalType = Literal[
 
 ProposalStatus = Literal["pending", "approved", "edited", "rejected", "expired"]
 
-AgentName = Literal["interpreter", "explainer", "producer", "localizer", "renderer", "orchestrator"]
+AgentName = Literal[
+    "interpreter", "explainer", "checker", "producer", "localizer", "renderer", "orchestrator"
+]
 
 
 class LocalizedText(Contract):
