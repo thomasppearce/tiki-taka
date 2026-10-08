@@ -9,6 +9,7 @@ from functools import lru_cache
 from app.generator.matchday import ScheduledMatch, build_matchday
 from app.generator.season import table_before_final_day
 from app.generator.world import Club
+from app.live.channel import ChannelDirector
 from app.live.clock import MatchdayClock
 from app.live.copy import CopyContext
 from app.live.desk import AgentBridge, ProposalDesk
@@ -55,6 +56,8 @@ class MatchdayService:
         self.clock = clock or MatchdayClock(cycle)
         # The featured match has a human producer; every other match airs on autopilot.
         self.desks = {m.match_id: self._build_desk(m) for m in self.matches}
+        # The whip-around: one feed across all ten matches.
+        self.channel = ChannelDirector(self)
 
     def surname(self, player_id: str | None) -> str:
         return self.surnames.get(player_id or "", "?")

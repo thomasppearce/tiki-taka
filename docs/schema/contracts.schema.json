@@ -166,6 +166,73 @@
       "title": "AuditRecord",
       "type": "object"
     },
+    "Channel": {
+      "additionalProperties": false,
+      "properties": {
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "version": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "on_air": {
+          "$ref": "#/$defs/Cut"
+        },
+        "pending": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PendingCut"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "held": {
+          "description": "The producer has paused automatic cuts.",
+          "type": "boolean"
+        },
+        "pinned_match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The producer has fixed the feed on a match."
+        },
+        "history": {
+          "description": "Earlier cuts, newest first.",
+          "items": {
+            "$ref": "#/$defs/Cut"
+          },
+          "type": "array"
+        },
+        "signals": {
+          "description": "Every live match, most deserving first.",
+          "items": {
+            "$ref": "#/$defs/MatchSignal"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "clock_ms",
+        "version",
+        "on_air",
+        "pending",
+        "held",
+        "pinned_match_id",
+        "history",
+        "signals"
+      ],
+      "title": "Channel",
+      "type": "object"
+    },
     "Claim": {
       "additionalProperties": false,
       "description": "A factual statement made by a proposal. Every claim cites the events that support it.",
@@ -212,6 +279,99 @@
         "color"
       ],
       "title": "ClubRef",
+      "type": "object"
+    },
+    "Cut": {
+      "additionalProperties": false,
+      "properties": {
+        "cut_id": {
+          "type": "string"
+        },
+        "match_id": {
+          "type": "string"
+        },
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "reason": {
+          "enum": [
+            "kickoff",
+            "goal",
+            "pressure",
+            "check_in",
+            "manual"
+          ],
+          "type": "string"
+        },
+        "decided_by": {
+          "enum": [
+            "code",
+            "director",
+            "producer"
+          ],
+          "type": "string"
+        },
+        "package": {
+          "$ref": "#/$defs/CutPackage"
+        }
+      },
+      "required": [
+        "cut_id",
+        "match_id",
+        "clock_ms",
+        "reason",
+        "decided_by",
+        "package"
+      ],
+      "title": "Cut",
+      "type": "object"
+    },
+    "CutPackage": {
+      "additionalProperties": false,
+      "description": "What the viewer is told when the feed cuts to a match.",
+      "properties": {
+        "why": {
+          "description": "Why we're here.",
+          "type": "string"
+        },
+        "at_stake": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What a goal here would change in the table."
+        },
+        "story": {
+          "description": "The story of this match so far.",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "type": "array"
+        },
+        "written_by": {
+          "description": "'code', or the agents that wrote it.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "why",
+        "at_stake",
+        "story",
+        "claims",
+        "written_by"
+      ],
+      "title": "CutPackage",
       "type": "object"
     },
     "Desk": {
@@ -448,6 +608,19 @@
         "importance"
       ],
       "title": "EventImpact",
+      "type": "object"
+    },
+    "HoldRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "held": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "held"
+      ],
+      "title": "HoldRequest",
       "type": "object"
     },
     "KeyMoment": {
@@ -888,6 +1061,33 @@
       "title": "MatchEvent",
       "type": "object"
     },
+    "MatchSignal": {
+      "additionalProperties": false,
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "home": {
+          "$ref": "#/$defs/SideSignal"
+        },
+        "away": {
+          "$ref": "#/$defs/SideSignal"
+        },
+        "score": {
+          "description": "How much the match deserves the screen right now.",
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "match_id",
+        "home",
+        "away",
+        "score"
+      ],
+      "title": "MatchSignal",
+      "type": "object"
+    },
     "Matchday": {
       "additionalProperties": false,
       "properties": {
@@ -1184,6 +1384,66 @@
       "title": "OverlayStyle",
       "type": "object"
     },
+    "PendingCut": {
+      "additionalProperties": false,
+      "description": "The Director's next cut, counting down. The producer can take it now or hold it.",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "kickoff",
+            "goal",
+            "pressure",
+            "check_in",
+            "manual"
+          ],
+          "type": "string"
+        },
+        "proposed_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "take_at_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "package": {
+          "$ref": "#/$defs/CutPackage"
+        }
+      },
+      "required": [
+        "match_id",
+        "reason",
+        "proposed_ms",
+        "take_at_ms",
+        "package"
+      ],
+      "title": "PendingCut",
+      "type": "object"
+    },
+    "PinRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "match_id"
+      ],
+      "title": "PinRequest",
+      "type": "object"
+    },
     "PitchPoint": {
       "additionalProperties": false,
       "description": "Normalized pitch coordinates (0-100 on both axes). x runs in the home attacking direction.",
@@ -1399,6 +1659,44 @@
       "title": "Proposal",
       "type": "object"
     },
+    "SideSignal": {
+      "additionalProperties": false,
+      "properties": {
+        "club_id": {
+          "type": "string"
+        },
+        "pressure": {
+          "description": "Something about to happen: recent threat, shots.",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "stake": {
+          "description": "What a goal for this side would change (table weight).",
+          "minimum": 0,
+          "type": "number"
+        },
+        "stake_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "club_id",
+        "pressure",
+        "stake",
+        "stake_summary"
+      ],
+      "title": "SideSignal",
+      "type": "object"
+    },
     "Stake": {
       "additionalProperties": false,
       "description": "What one more goal for one side in one live match would change in the table right now.",
@@ -1562,6 +1860,28 @@
         "summary"
       ],
       "title": "TableSwing",
+      "type": "object"
+    },
+    "TakeRequest": {
+      "additionalProperties": false,
+      "description": "Take the pending cut now (no match_id), or cut straight to a match.",
+      "properties": {
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "match_id"
+      ],
+      "title": "TakeRequest",
       "type": "object"
     },
     "TeamStats": {

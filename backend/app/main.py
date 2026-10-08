@@ -17,6 +17,7 @@ from app.agents.team import AgentTeam
 from app.generator.matchday import ScheduledMatch
 from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
+from app.models.channel import Channel, HoldRequest, PinRequest, TakeRequest
 from app.models.desk import ApproveRequest, Desk
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
@@ -24,6 +25,8 @@ from app.models.table import LeagueTable
 
 FRAME_INTERVAL_S = 0.25  # 4 Hz; the browser interpolates between frames
 CARD_EVERY_FRAMES = 8  # score, momentum, and top moment every 2 s
+CHANNEL_INTERVAL_S = 0.5  # the channel stream checks for a new cut twice a second
+TABLE_EVERY_TICKS = 10  # and sends the table every 5 s
 MAX_EVENT_IDS = 200
 
 
@@ -88,6 +91,66 @@ def league_table(request: Request) -> LeagueTable:
     """The league as it stands, every zone change so far today, and what a goal in each live
     match would change."""
     return _service(request).table()
+
+
+@app.get("/api/channel")
+def channel(request: Request) -> Channel:
+    """The whip-around: the match on air, the Director's next cut, and every match's signals."""
+    service = _service(request)
+    return service.channel.snapshot(service.clock.clock_ms())
+
+
+@app.post("/api/channel/take")
+def channel_take(body: TakeRequest, request: Request) -> Channel:
+    """Take the pending cut now, or cut straight to a match."""
+    service = _service(request)
+    try:
+        service.channel.take(service.clock.clock_ms(), body.match_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"No match {body.match_id}") from None
+    return service.channel.snapshot(service.clock.clock_ms())
+
+
+@app.post("/api/channel/hold")
+def channel_hold(body: HoldRequest, request: Request) -> Channel:
+    """Pause or resume the Director's automatic cuts."""
+    service = _service(request)
+    service.channel.hold(service.clock.clock_ms(), body.held)
+    return service.channel.snapshot(service.clock.clock_ms())
+
+
+@app.post("/api/channel/pin")
+def channel_pin(body: PinRequest, request: Request) -> Channel:
+    """Fix the feed on a match (cutting to it), or release it (no match_id)."""
+    service = _service(request)
+    try:
+        service.channel.pin(service.clock.clock_ms(), body.match_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"No match {body.match_id}") from None
+    return service.channel.snapshot(service.clock.clock_ms())
+
+
+@app.get("/api/channel/stream", response_class=EventSourceResponse)
+async def channel_stream(
+    request: Request,
+    ticks: int | None = Query(default=None, ge=1, description="Stop after this many ticks."),
+) -> AsyncIterable[ServerSentEvent]:
+    """The whip-around live: `channel` whenever the feed cuts or a cut is proposed, and `table`
+    (the league as it stands) every 5 s. Pages follow the match on air through its own stream."""
+    service = _service(request)
+    version = -1
+    tick = 0
+    while ticks is None or tick < ticks:
+        if await request.is_disconnected():
+            break
+        snapshot = service.channel.snapshot(service.clock.clock_ms())
+        if snapshot.version != version:
+            version = snapshot.version
+            yield ServerSentEvent(data=snapshot, event="channel")
+        if tick % TABLE_EVERY_TICKS == 0:
+            yield ServerSentEvent(data=service.table(), event="table")
+        tick += 1
+        await asyncio.sleep(CHANNEL_INTERVAL_S)
 
 
 @app.get("/api/matches/{match_id}")

@@ -57,6 +57,69 @@ export interface AuditRecord {
   detail: string | null;
 }
 /**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Channel".
+ */
+export interface Channel {
+  clock_ms: number;
+  version: number;
+  on_air: Cut;
+  pending: PendingCut | null;
+  /**
+   * The producer has paused automatic cuts.
+   */
+  held: boolean;
+  /**
+   * The producer has fixed the feed on a match.
+   */
+  pinned_match_id: string | null;
+  /**
+   * Earlier cuts, newest first.
+   */
+  history: Cut[];
+  /**
+   * Every live match, most deserving first.
+   */
+  signals: MatchSignal[];
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Cut".
+ */
+export interface Cut {
+  cut_id: string;
+  match_id: string;
+  clock_ms: number;
+  reason: "kickoff" | "goal" | "pressure" | "check_in" | "manual";
+  decided_by: "code" | "director" | "producer";
+  package: CutPackage;
+}
+/**
+ * What the viewer is told when the feed cuts to a match.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "CutPackage".
+ */
+export interface CutPackage {
+  /**
+   * Why we're here.
+   */
+  why: string;
+  /**
+   * What a goal here would change in the table.
+   */
+  at_stake: string | null;
+  /**
+   * The story of this match so far.
+   */
+  story: string;
+  claims: Claim[];
+  /**
+   * 'code', or the agents that wrote it.
+   */
+  written_by: string[];
+}
+/**
  * A factual statement made by a proposal. Every claim cites the events that support it.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -68,6 +131,48 @@ export interface Claim {
    * @minItems 1
    */
   evidence_event_ids: [string, ...string[]];
+}
+/**
+ * The Director's next cut, counting down. The producer can take it now or hold it.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "PendingCut".
+ */
+export interface PendingCut {
+  match_id: string;
+  reason: "kickoff" | "goal" | "pressure" | "check_in" | "manual";
+  proposed_ms: number;
+  take_at_ms: number;
+  package: CutPackage;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "MatchSignal".
+ */
+export interface MatchSignal {
+  match_id: string;
+  home: SideSignal;
+  away: SideSignal;
+  /**
+   * How much the match deserves the screen right now.
+   */
+  score: number;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "SideSignal".
+ */
+export interface SideSignal {
+  club_id: string;
+  /**
+   * Something about to happen: recent threat, shots.
+   */
+  pressure: number;
+  /**
+   * What a goal for this side would change (table weight).
+   */
+  stake: number;
+  stake_summary: string | null;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -175,6 +280,13 @@ export interface EventImpact {
    */
   threat: number;
   importance: number;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "HoldRequest".
+ */
+export interface HoldRequest {
+  held: boolean;
 }
 /**
  * A defining play, ranked by importance, with the events that make it up.
@@ -513,6 +625,13 @@ export interface OverlayStyle {
   animation_out: "fade" | "slide_down" | "wipe";
 }
 /**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "PinRequest".
+ */
+export interface PinRequest {
+  match_id: string | null;
+}
+/**
  * One player's position. Players can stand just off the pitch (throw-ins), hence the margin.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -524,6 +643,15 @@ export interface PlayerPosition {
   x: number;
   y: number;
   speed_kmh: number | null;
+}
+/**
+ * Take the pending cut now (no match_id), or cut straight to a match.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TakeRequest".
+ */
+export interface TakeRequest {
+  match_id: string | null;
 }
 /**
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so

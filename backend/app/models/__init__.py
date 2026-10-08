@@ -1,6 +1,7 @@
 """Data contracts (CLAUDE.md section 5): the single source of truth for all shared types."""
 
 from app.models.audit import AuditRecord
+from app.models.channel import Channel, HoldRequest, PinRequest, TakeRequest
 from app.models.desk import ApproveRequest, Desk, OnAir
 from app.models.events import EventAttributes, MatchEvent
 from app.models.insight import EventImpact, KeyMoment, TeamStats
@@ -30,6 +31,10 @@ CONTRACTS = (
     Desk,
     ApproveRequest,
     LeagueTable,
+    Channel,
+    TakeRequest,
+    HoldRequest,
+    PinRequest,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -38,6 +43,10 @@ __all__ = [
     "ApproveRequest",
     "AudienceBody",
     "AuditRecord",
+    "Channel",
+    "HoldRequest",
+    "PinRequest",
+    "TakeRequest",
     "Claim",
     "Desk",
     "EventAttributes",
