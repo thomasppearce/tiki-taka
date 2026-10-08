@@ -25,8 +25,9 @@ from app.models.table import LeagueTable
 
 FRAME_INTERVAL_S = 0.25  # 4 Hz; the browser interpolates between frames
 CARD_EVERY_FRAMES = 8  # score, momentum, and top moment every 2 s
-CHANNEL_INTERVAL_S = 0.5  # the channel stream checks for a new cut twice a second
-TABLE_EVERY_TICKS = 10  # and sends the table every 5 s
+CHANNEL_INTERVAL_S = 0.5  # the channel stream checks for a new cut twice a second,
+SIGNALS_EVERY_TICKS = 4  # sends every match's signals every 2 s,
+TABLE_EVERY_TICKS = 10  # and the table every 5 s
 MAX_EVENT_IDS = 200
 
 
@@ -135,8 +136,9 @@ async def channel_stream(
     request: Request,
     ticks: int | None = Query(default=None, ge=1, description="Stop after this many ticks."),
 ) -> AsyncIterable[ServerSentEvent]:
-    """The whip-around live: `channel` whenever the feed cuts or a cut is proposed, and `table`
-    (the league as it stands) every 5 s. Pages follow the match on air through its own stream."""
+    """The whip-around live: `channel` whenever the feed cuts or a cut is proposed, `signals`
+    (every live match's pressure and stakes) every 2 s, and `table` (the league as it stands)
+    every 5 s. Pages follow the match on air through its own stream."""
     service = _service(request)
     version = -1
     tick = 0
@@ -147,6 +149,8 @@ async def channel_stream(
         if snapshot.version != version:
             version = snapshot.version
             yield ServerSentEvent(data=snapshot, event="channel")
+        elif tick % SIGNALS_EVERY_TICKS == 0:
+            yield ServerSentEvent(data=snapshot.signals, event="signals")
         if tick % TABLE_EVERY_TICKS == 0:
             yield ServerSentEvent(data=service.table(), event="table")
         tick += 1

@@ -173,7 +173,8 @@ class ChannelDirector:
         featured = next(m.match_id for m in self.service.matches if m.featured)
         match_id = best.match_id if best and best.score >= MIN_SCORE else featured
         version = self.state.version + 1 if self.state else 0
-        cut = self._cut(clock_ms, match_id, "kickoff", "code", self._package(match_id, "kickoff"))
+        package = self._package(match_id, "kickoff", clock_ms)
+        cut = self._cut(clock_ms, match_id, "kickoff", "code", package)
         self.state = _State(clock_ms=clock_ms, on_air=cut, version=version)
 
     def _tick(self, t: int) -> None:
@@ -347,7 +348,8 @@ class ChannelDirector:
 
         goals = [e for e in m.result.events if e.type == "goal" and e.match_clock_ms <= at]
         home, away = m.result.score_at(at)
-        story = f"{m.home.name} {home}-{away} {m.away.name}, {_minute(at)}."
+        scoreline = f"{m.home.name} {home}-{away} {m.away.name}, {_minute(at)}."
+        story = scoreline
         if goals:
             scorers = ", ".join(
                 f"{service.surname(e.player_id)} {_minute(e.match_clock_ms)}" for e in goals
@@ -407,12 +409,10 @@ class ChannelDirector:
                     )
                 else:
                     why = f"{club} are pushing into the final third."
-            elif reason == "check_in":
-                why = f"Checking in at {fixture}."
-            elif reason == "kickoff":
-                why = f"The final day, live from {fixture}."
-            else:
-                why = f"The producer's call: {fixture}."
+            elif reason == "kickoff" and at < 60_000:
+                why = f"The final day kicks off, and we start at {fixture}."
+            else:  # a check-in, the producer's call, or joining a day under way
+                why = scoreline
             if signal and side:
                 staked = (
                     side

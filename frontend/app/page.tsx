@@ -1,6 +1,6 @@
-import { MatchCentre } from "@/components/centre/MatchCentre";
+import { ChannelPage } from "@/components/channel/ChannelPage";
 
-// The match centre: every fixture, live. Each card opens its match page.
+// The channel: the final day's ten matches as one feed, cut by the Director.
 export default function Page() {
-  return <MatchCentre />;
+  return <ChannelPage />;
 }

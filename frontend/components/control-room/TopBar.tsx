@@ -1,4 +1,4 @@
-import { Broadcast } from "@phosphor-icons/react/dist/ssr";
+import { SoccerBall } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { ClubCrest } from "@/components/ClubCrest";
@@ -42,8 +42,8 @@ export function TopBar({
         href="/"
         className="flex items-center gap-2 rounded-md text-sm font-semibold whitespace-nowrap text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-air"
       >
-        <Broadcast size={18} weight="bold" className="text-ink-2" />
-        Match Desk
+        <SoccerBall size={18} weight="bold" className="text-ink-2" />
+        Tiki-Taka
       </Link>
 
       <div className="hidden h-5 w-px bg-line sm:block" aria-hidden />

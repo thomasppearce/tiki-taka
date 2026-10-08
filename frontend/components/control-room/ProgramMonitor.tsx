@@ -91,7 +91,7 @@ export function ProgramMonitor({
  * Where the camera aims: the ball's average x over the last two seconds, so it follows play
  * smoothly instead of snapping to every pass.
  */
-function cameraAim(source: FrameSource, frame: TrackingFrame): number {
+export function cameraAim(source: FrameSource, frame: TrackingFrame): number {
   let sum = 0;
   let count = 0;
   for (let k = 0; k < CAMERA_SAMPLES; k++) {

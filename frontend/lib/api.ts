@@ -1,4 +1,4 @@
-/** The Match Desk backend: where it is, and small typed helpers for its REST endpoints. */
+/** The Tiki-Taka backend: where it is, and small typed helpers for its REST endpoints. */
 
 // Must be referenced literally so Next.js can inline it at build time.
 export const API_URL =
