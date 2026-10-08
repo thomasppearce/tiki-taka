@@ -93,6 +93,10 @@ export interface Cut {
   reason: "kickoff" | "goal" | "pressure" | "check_in" | "manual";
   decided_by: "code" | "director" | "producer";
   package: CutPackage;
+  /**
+   * Open with a replay of this goal or chance.
+   */
+  replay_event_id: string | null;
 }
 /**
  * What the viewer is told when the feed cuts to a match.
@@ -144,6 +148,7 @@ export interface PendingCut {
   proposed_ms: number;
   take_at_ms: number;
   package: CutPackage;
+  replay_event_id: string | null;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -645,13 +650,43 @@ export interface PlayerPosition {
   speed_kmh: number | null;
 }
 /**
- * Take the pending cut now (no match_id), or cut straight to a match.
- *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
- * via the `definition` "TakeRequest".
+ * via the `definition` "Replay".
  */
-export interface TakeRequest {
-  match_id: string | null;
+export interface Replay {
+  match_id: string;
+  /**
+   * The goal or shot replayed.
+   */
+  event_id: string;
+  kind: "goal" | "chance";
+  /**
+   * One line, e.g. 'Ambrose scores for Halvern Town'.
+   */
+  label: string;
+  /**
+   * What the goal changed in the table, e.g. 'As it stands: Halvern Town go top'.
+   */
+  as_it_stands: string | null;
+  from_ms: number;
+  to_ms: number;
+  /**
+   * Slow motion from here...
+   */
+  slow_from_ms: number;
+  /**
+   * ...to here: the shot.
+   */
+  slow_to_ms: number;
+  shooter_id: string | null;
+  /**
+   * Every 250 ms across the window.
+   */
+  frames: TrackingFrame[];
+  /**
+   * The events in the window, oldest first.
+   */
+  events: MatchEvent[];
 }
 /**
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so
@@ -668,6 +703,15 @@ export interface TrackingFrame {
    * @minItems 1
    */
   players: [PlayerPosition, ...PlayerPosition[]];
+}
+/**
+ * Take the pending cut now (no match_id), or cut straight to a match.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TakeRequest".
+ */
+export interface TakeRequest {
+  match_id: string | null;
 }
 /**
  * Setting `focus_player_id` turns on player-focus mode for the feed.

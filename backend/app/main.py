@@ -21,6 +21,7 @@ from app.models.channel import Channel, HoldRequest, PinRequest, TakeRequest
 from app.models.desk import ApproveRequest, Desk
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
+from app.models.replay import Replay
 from app.models.table import LeagueTable
 
 FRAME_INTERVAL_S = 0.25  # 4 Hz; the browser interpolates between frames
@@ -177,6 +178,18 @@ def match_events(
     wanted = set(ids.split(",")[:MAX_EVENT_IDS])
     now = service.now(match)
     return [e for e in match.result.events if e.event_id in wanted and e.match_clock_ms <= now]
+
+
+@app.get("/api/matches/{match_id}/replays/{event_id}")
+def match_replay(match_id: str, event_id: str, request: Request) -> Replay:
+    """The move behind a goal or a shot that has already happened: frames every 250 ms and the
+    events, with the shot marked for slow motion."""
+    service = _service(request)
+    _match(service, match_id)
+    replay = service.replay(match_id, event_id)
+    if replay is None:
+        raise HTTPException(status_code=404, detail=f"No replay for {event_id}")
+    return replay
 
 
 @app.get("/api/matches/{match_id}/desk")

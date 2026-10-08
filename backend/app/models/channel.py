@@ -42,6 +42,9 @@ class Cut(Contract):
     reason: CutReason
     decided_by: DecidedBy
     package: CutPackage
+    replay_event_id: str | None = Field(
+        default=None, description="Open with a replay of this goal or chance."
+    )
 
 
 class PendingCut(Contract):
@@ -52,6 +55,7 @@ class PendingCut(Contract):
     proposed_ms: int = Field(ge=0)
     take_at_ms: int = Field(ge=0)
     package: CutPackage
+    replay_event_id: str | None = None
 
 
 class Channel(Contract):

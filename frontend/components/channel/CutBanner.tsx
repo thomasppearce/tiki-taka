@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useState } from "react";
 
 import type { Cut } from "@/lib/contracts.generated";
 import { DURATION, EASE } from "@/lib/motion";
@@ -62,9 +63,12 @@ export const STINGER_S = 0.6;
  * moment the new match's feed starts. Fades instead of sliding when motion is reduced.
  */
 export function Stinger({ cutId }: { cutId: string }) {
+  const [crossed, setCrossed] = useState<string | null>(null);
+  if (crossed === cutId) return null; // gone once it has crossed
   return (
     <motion.div
       key={cutId}
+      onAnimationComplete={() => setCrossed(cutId)}
       aria-hidden
       className="pointer-events-none absolute inset-y-0 -left-full z-10 flex w-full items-center justify-center bg-panel"
       initial={{ x: "0%" }}

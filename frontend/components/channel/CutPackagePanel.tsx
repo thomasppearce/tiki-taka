@@ -44,7 +44,10 @@ export function CutPackagePanel({
       }
     >
       <div className="grid gap-3 p-3">
-        <p className="text-base leading-snug text-ink">{why}</p>
+        <div>
+          <p className="text-xs text-ink-3">{fixtureOf(cut.match_id)}</p>
+          <p className="mt-1 text-base leading-snug text-ink">{why}</p>
+        </div>
         {atStake && <p className="text-sm text-ink-2">{atStake}</p>}
         <div className="border-t border-line pt-3">
           <h3 className="text-xs text-ink-3">Story so far</h3>

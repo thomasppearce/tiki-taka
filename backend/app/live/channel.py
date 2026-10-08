@@ -58,6 +58,8 @@ PRESSURE_WINDOW_MS = 180_000
 PRESSURE_TAU_MS = 45_000  # recent threat counts most: e^-1 after 45 s
 PRESSURE_SCALE = 0.15  # raw threat at which pressure reaches 63% (the busiest 10% of spells)
 SHOT_WEIGHT = 3.0
+REPLAY_CHANCE_MS = 90_000  # a pressure cut replays a big chance from the last 90 s...
+REPLAY_CHANCE_XG = 0.08  # ...if there was one this good
 STAKE_BASE = 0.15  # a match with nothing at stake still deserves the screen when it's wild
 MAX_STAKE = 1.5
 
@@ -133,7 +135,8 @@ class ChannelDirector:
             assert s
             if match_id is None:
                 if s.pending:
-                    self._take(s.pending.match_id, s.pending.reason, "producer", s.pending.package)
+                    p = s.pending
+                    self._take(p.match_id, p.reason, "producer", p.package, p.replay_event_id)
                 return
             if match_id not in self.service.by_id:
                 raise KeyError(match_id)
@@ -186,7 +189,7 @@ class ChannelDirector:
             s.version += 1
         if s.pending and t >= s.pending.take_at_ms:
             p = s.pending
-            self._take(p.match_id, p.reason, "code", p.package)
+            self._take(p.match_id, p.reason, "code", p.package, p.replay_event_id)
             return
         automatic = s.held_since is None and s.pinned is None
         if not automatic:
@@ -257,22 +260,33 @@ class ChannelDirector:
             proposed_ms=t,
             take_at_ms=t + countdown,
             package=self._package(match_id, reason, t, goal),
+            replay_event_id=goal.event_id if goal else self._chance(match_id, t),
         )
         s.version += 1
 
     def _take(
-        self, match_id: str, reason: CutReason, decided_by: DecidedBy, package: CutPackage
+        self,
+        match_id: str,
+        reason: CutReason,
+        decided_by: DecidedBy,
+        package: CutPackage,
+        replay_event_id: str | None = None,
     ) -> None:
         s = self.state
         assert s
         s.history = [s.on_air, *s.history][:HISTORY]
-        s.on_air = self._cut(s.clock_ms, match_id, reason, decided_by, package)
+        s.on_air = self._cut(s.clock_ms, match_id, reason, decided_by, package, replay_event_id)
         s.pending = None
         s.version += 1
 
     @staticmethod
     def _cut(
-        t: int, match_id: str, reason: CutReason, decided_by: DecidedBy, package: CutPackage
+        t: int,
+        match_id: str,
+        reason: CutReason,
+        decided_by: DecidedBy,
+        package: CutPackage,
+        replay_event_id: str | None = None,
     ) -> Cut:
         return Cut(
             cut_id=f"cut_{t}_{match_id}",
@@ -281,7 +295,23 @@ class ChannelDirector:
             reason=reason,
             decided_by=decided_by,
             package=package,
+            replay_event_id=replay_event_id,
         )
+
+    def _chance(self, match_id: str, t: int) -> str | None:
+        """The best chance in this match in the last 90 s, worth replaying as we cut in."""
+        m = self.service.by_id[match_id]
+        impacts = self.service.impacts[match_id]
+        clocks = self.clocks[match_id]
+        shots = [
+            e
+            for e in m.result.events[
+                bisect_left(clocks, t - REPLAY_CHANCE_MS) : bisect_right(clocks, t)
+            ]
+            if e.type == "shot" and impacts[e.event_id].threat >= REPLAY_CHANCE_XG
+        ]
+        best = max(shots, key=lambda e: impacts[e.event_id].threat, default=None)
+        return best.event_id if best else None
 
     # --- Signals -----------------------------------------------------------------------------
 
@@ -368,7 +398,7 @@ class ChannelDirector:
         if reason == "goal" and goal:
             scorer = service.surname(goal.player_id)
             club = service.club(goal.team_id).name
-            why = f"Goal at {fixture}: {scorer} scores for {club} ({_minute(goal.match_clock_ms)})."
+            why = f"{scorer} scores for {club} ({_minute(goal.match_clock_ms)})."
             swing = next((x for x in table.swings if x.event_id == goal.event_id), None)
             if swing:
                 at_stake = f"As it stands: {swing.summary}"

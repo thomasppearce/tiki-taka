@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence } from "motion/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { CutBanner, Stinger } from "@/components/channel/CutBanner";
 import { type FeedView, MatchFeed } from "@/components/channel/MatchFeed";
@@ -10,6 +10,7 @@ import type { Cut, PendingCut } from "@/lib/contracts.generated";
 import { useCountdown } from "@/lib/live/useCountdown";
 
 const BANNER_MS = 9_000;
+const BANNER_AFTER_REPLAY_MS = 5_000;
 
 /**
  * The channel's program output: the match on air, the stinger on every cut, the cut package as a
@@ -28,13 +29,26 @@ export function OnAirPanel({
   serverClockMs: () => number;
   view: FeedView;
 }) {
-  // The package shows for a few seconds after each cut; the page's first cut gets no stinger.
+  // The package shows for a few seconds after each cut, and through the replay a cut opens
+  // with. The page's first cut gets no stinger and no replay: it was already on air.
   const [bannerDone, setBannerDone] = useState<string | null>(null);
+  const [replaying, setReplaying] = useState(false);
+  const [replayedFor, setReplayedFor] = useState<string | null>(null);
   const [firstCut] = useState(cut.cut_id);
+  const onReplay = useCallback(
+    (active: boolean) => {
+      setReplaying(active);
+      if (active) setReplayedFor(cut.cut_id);
+    },
+    [cut.cut_id],
+  );
   useEffect(() => {
-    const timer = setTimeout(() => setBannerDone(cut.cut_id), BANNER_MS);
+    if (replaying) return;
+    const after =
+      replayedFor === cut.cut_id ? BANNER_AFTER_REPLAY_MS : BANNER_MS;
+    const timer = setTimeout(() => setBannerDone(cut.cut_id), after);
     return () => clearTimeout(timer);
-  }, [cut.cut_id]);
+  }, [cut.cut_id, replaying, replayedFor]);
   const banner = bannerDone !== cut.cut_id;
 
   const fixture = fixtureOf(cut.match_id);
@@ -58,6 +72,8 @@ export function OnAirPanel({
             fixture={fixture}
             view={view}
             graphics={!banner}
+            replayEventId={cut.cut_id === firstCut ? null : cut.replay_event_id}
+            onReplay={onReplay}
           />
           {cut.cut_id !== firstCut && <Stinger cutId={cut.cut_id} />}
           <AnimatePresence>

@@ -13,6 +13,7 @@ from app.live.channel import ChannelDirector
 from app.live.clock import MatchdayClock
 from app.live.copy import CopyContext
 from app.live.desk import AgentBridge, ProposalDesk
+from app.live.replay import window
 from app.models.desk import Desk
 from app.models.insight import EventImpact, KeyMoment
 from app.models.matchday import (
@@ -23,11 +24,13 @@ from app.models.matchday import (
     MatchDetail,
     PlayerRef,
 )
+from app.models.replay import Replay
 from app.models.table import LeagueTable, Stake, TableRow, TableSwing, ZoneChange
 from app.state.aggregator import event_impacts, key_moments, momentum, team_stats
 from app.state.table import Change, Scores, standings, summarize, weight, zone_changes
 
 RECENT_EVENTS = 40
+REPLAY_FRAME_MS = 250  # replays carry frames at the live stream's 4 Hz
 
 
 class MatchdayService:
@@ -234,6 +237,43 @@ class MatchdayService:
                     )
                 )
         return swings
+
+    def replay(self, match_id: str, event_id: str) -> Replay | None:
+        """The move behind a goal or a shot that has happened, as frames and events. None if the
+        event isn't a goal or shot, or hasn't happened yet."""
+        m = self.by_id[match_id]
+        now = self.now(m)
+        events = [e for e in m.result.events if e.match_clock_ms <= now]
+        w = window(events, event_id)
+        if w is None:
+            return None
+        to_ms = min(w.to_ms, now)
+        shooter = self.surname(w.shot.player_id)
+        club = self.club(w.shot.team_id).name
+        label = {
+            "goal": f"{shooter} scores for {club}",
+            "saved": f"{shooter} forces a save",
+            "blocked": f"{shooter}'s shot is blocked",
+        }.get("goal" if w.kind == "goal" else (w.shot.outcome or ""), f"{shooter} goes close")
+        return Replay(
+            match_id=match_id,
+            event_id=event_id,
+            kind=w.kind,
+            label=label,
+            as_it_stands=next(
+                (f"As it stands: {s.summary}" for s in self.swings if s.event_id == event_id),
+                None,
+            ),
+            from_ms=w.from_ms,
+            to_ms=to_ms,
+            slow_from_ms=w.slow_from_ms,
+            slow_to_ms=min(w.slow_to_ms, to_ms),
+            shooter_id=w.shot.player_id,
+            frames=[
+                m.result.frames.frame_at(t) for t in range(w.from_ms, to_ms + 1, REPLAY_FRAME_MS)
+            ],
+            events=[e for e in events if w.from_ms <= e.match_clock_ms <= to_ms],
+        )
 
     def desk(self, match_id: str) -> Desk:
         return self.desks[match_id].snapshot(self.now(self.by_id[match_id]))

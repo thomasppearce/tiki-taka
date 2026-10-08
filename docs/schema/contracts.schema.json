@@ -314,6 +314,18 @@
         },
         "package": {
           "$ref": "#/$defs/CutPackage"
+        },
+        "replay_event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Open with a replay of this goal or chance."
         }
       },
       "required": [
@@ -322,7 +334,8 @@
         "clock_ms",
         "reason",
         "decided_by",
-        "package"
+        "package",
+        "replay_event_id"
       ],
       "title": "Cut",
       "type": "object"
@@ -1411,6 +1424,17 @@
         },
         "package": {
           "$ref": "#/$defs/CutPackage"
+        },
+        "replay_event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -1418,7 +1442,8 @@
         "reason",
         "proposed_ms",
         "take_at_ms",
-        "package"
+        "package",
+        "replay_event_id"
       ],
       "title": "PendingCut",
       "type": "object"
@@ -1657,6 +1682,100 @@
         "player_id"
       ],
       "title": "Proposal",
+      "type": "object"
+    },
+    "Replay": {
+      "additionalProperties": false,
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "event_id": {
+          "description": "The goal or shot replayed.",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "goal",
+            "chance"
+          ],
+          "type": "string"
+        },
+        "label": {
+          "description": "One line, e.g. 'Ambrose scores for Halvern Town'.",
+          "type": "string"
+        },
+        "as_it_stands": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the goal changed in the table, e.g. 'As it stands: Halvern Town go top'."
+        },
+        "from_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "to_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "slow_from_ms": {
+          "description": "Slow motion from here...",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "slow_to_ms": {
+          "description": "...to here: the shot.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "shooter_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "frames": {
+          "description": "Every 250 ms across the window.",
+          "items": {
+            "$ref": "#/$defs/TrackingFrame"
+          },
+          "type": "array"
+        },
+        "events": {
+          "description": "The events in the window, oldest first.",
+          "items": {
+            "$ref": "#/$defs/MatchEvent"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "match_id",
+        "event_id",
+        "kind",
+        "label",
+        "as_it_stands",
+        "from_ms",
+        "to_ms",
+        "slow_from_ms",
+        "slow_to_ms",
+        "shooter_id",
+        "frames",
+        "events"
+      ],
+      "title": "Replay",
       "type": "object"
     },
     "SideSignal": {
