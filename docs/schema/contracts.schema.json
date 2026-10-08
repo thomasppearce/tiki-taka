@@ -537,6 +537,43 @@
       "title": "LeagueGroup",
       "type": "object"
     },
+    "LeagueTable": {
+      "additionalProperties": false,
+      "properties": {
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/TableRow"
+          },
+          "type": "array"
+        },
+        "swings": {
+          "description": "Every zone change so far today, oldest first.",
+          "items": {
+            "$ref": "#/$defs/TableSwing"
+          },
+          "type": "array"
+        },
+        "stakes": {
+          "description": "For each live match and side, what a goal would do.",
+          "items": {
+            "$ref": "#/$defs/Stake"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "clock_ms",
+        "rows",
+        "swings",
+        "stakes"
+      ],
+      "title": "LeagueTable",
+      "type": "object"
+    },
     "LiveEvent": {
       "additionalProperties": false,
       "description": "A match event as it happens, with how much it mattered.",
@@ -1362,6 +1399,171 @@
       "title": "Proposal",
       "type": "object"
     },
+    "Stake": {
+      "additionalProperties": false,
+      "description": "What one more goal for one side in one live match would change in the table right now.",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "scorer_club_id": {
+          "type": "string"
+        },
+        "changes": {
+          "items": {
+            "$ref": "#/$defs/ZoneChange"
+          },
+          "type": "array"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "weight": {
+          "description": "How much the change matters: title and drop 1, top four 0.5.",
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "match_id",
+        "scorer_club_id",
+        "changes",
+        "summary",
+        "weight"
+      ],
+      "title": "Stake",
+      "type": "object"
+    },
+    "TableRow": {
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "club": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "played": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "won": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "drawn": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "lost": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "goals_for": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "goals_against": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "goal_difference": {
+          "type": "integer"
+        },
+        "points": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "zone": {
+          "anyOf": [
+            {
+              "enum": [
+                "champions",
+                "continental",
+                "relegation"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "start_position": {
+          "description": "Position before today's kickoff.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "match_id": {
+          "description": "Today's match.",
+          "type": "string"
+        },
+        "result": {
+          "description": "Today's match as it stands (or as it ended).",
+          "enum": [
+            "winning",
+            "drawing",
+            "losing"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "position",
+        "club",
+        "played",
+        "won",
+        "drawn",
+        "lost",
+        "goals_for",
+        "goals_against",
+        "goal_difference",
+        "points",
+        "zone",
+        "start_position",
+        "match_id",
+        "result"
+      ],
+      "title": "TableRow",
+      "type": "object"
+    },
+    "TableSwing": {
+      "additionalProperties": false,
+      "description": "A goal that changed the table's zones: who moved where. Written by code, citable.",
+      "properties": {
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "match_id": {
+          "type": "string"
+        },
+        "event_id": {
+          "description": "The goal.",
+          "type": "string"
+        },
+        "changes": {
+          "items": {
+            "$ref": "#/$defs/ZoneChange"
+          },
+          "type": "array"
+        },
+        "summary": {
+          "description": "One sentence, e.g. 'Halvern Town go top on goal difference.'",
+          "type": "string"
+        }
+      },
+      "required": [
+        "match_clock_ms",
+        "match_id",
+        "event_id",
+        "changes",
+        "summary"
+      ],
+      "title": "TableSwing",
+      "type": "object"
+    },
     "TeamStats": {
       "additionalProperties": false,
       "properties": {
@@ -1556,6 +1758,62 @@
         "spotlight_metric"
       ],
       "title": "ViewerProfile",
+      "type": "object"
+    },
+    "ZoneChange": {
+      "additionalProperties": false,
+      "description": "One club moving into or out of a zone.",
+      "properties": {
+        "club_id": {
+          "type": "string"
+        },
+        "from_position": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "to_position": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "from_zone": {
+          "anyOf": [
+            {
+              "enum": [
+                "champions",
+                "continental",
+                "relegation"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "to_zone": {
+          "anyOf": [
+            {
+              "enum": [
+                "champions",
+                "continental",
+                "relegation"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "club_id",
+        "from_position",
+        "to_position",
+        "from_zone",
+        "to_zone"
+      ],
+      "title": "ZoneChange",
       "type": "object"
     }
   },

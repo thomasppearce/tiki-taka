@@ -227,6 +227,99 @@ export interface MatchCard {
   top_moment: KeyMoment | null;
 }
 /**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "LeagueTable".
+ */
+export interface LeagueTable {
+  clock_ms: number;
+  rows: TableRow[];
+  /**
+   * Every zone change so far today, oldest first.
+   */
+  swings: TableSwing[];
+  /**
+   * For each live match and side, what a goal would do.
+   */
+  stakes: Stake[];
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TableRow".
+ */
+export interface TableRow {
+  position: number;
+  club: ClubRef;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
+  zone: ("champions" | "continental" | "relegation") | null;
+  /**
+   * Position before today's kickoff.
+   */
+  start_position: number;
+  /**
+   * Today's match.
+   */
+  match_id: string;
+  /**
+   * Today's match as it stands (or as it ended).
+   */
+  result: "winning" | "drawing" | "losing";
+}
+/**
+ * A goal that changed the table's zones: who moved where. Written by code, citable.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "TableSwing".
+ */
+export interface TableSwing {
+  match_clock_ms: number;
+  match_id: string;
+  /**
+   * The goal.
+   */
+  event_id: string;
+  changes: ZoneChange[];
+  /**
+   * One sentence, e.g. 'Halvern Town go top on goal difference.'
+   */
+  summary: string;
+}
+/**
+ * One club moving into or out of a zone.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ZoneChange".
+ */
+export interface ZoneChange {
+  club_id: string;
+  from_position: number;
+  to_position: number;
+  from_zone: ("champions" | "continental" | "relegation") | null;
+  to_zone: ("champions" | "continental" | "relegation") | null;
+}
+/**
+ * What one more goal for one side in one live match would change in the table right now.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Stake".
+ */
+export interface Stake {
+  match_id: string;
+  scorer_club_id: string;
+  changes: ZoneChange[];
+  summary: string;
+  /**
+   * How much the change matters: title and drop 1, top four 0.5.
+   */
+  weight: number;
+}
+/**
  * A match event as it happens, with how much it mattered.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema

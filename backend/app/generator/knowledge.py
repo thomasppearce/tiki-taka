@@ -1,6 +1,6 @@
-"""Write the generated part of the knowledge corpus: one page per club, and the laws the engine
-enforces. The Explainer agent retrieves these (Azure AI Search), so its tactical claims rest on
-the same profiles and rules the matches were played with.
+"""Write the generated part of the knowledge corpus: one page per club, the season so far, and
+the laws the engine enforces. The Explainer agent retrieves these (Azure AI Search), so its
+tactical claims rest on the same profiles and rules the matches were played with.
 
 Every word here is original to this project, and every club and player is fictional.
 
@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 
 from app.generator import engine
+from app.generator.matchday import FIXTURES
+from app.generator.season import ZONES, table_before_final_day
 from app.generator.tactics import STYLE_NAMES, STYLE_SUMMARIES, describe
 from app.generator.world import Club, League, build_world
 
@@ -143,6 +145,82 @@ stoppages, the ball is in play for roughly 60 of the 90-odd minutes, as in real 
 """
 
 
+def season_page(league: League) -> str:
+    """The table going into the final day, and the races it sets up."""
+    clubs = {c.club_id: c for c in league.clubs}
+    table = table_before_final_day()
+    rows = "\n".join(
+        f"| {i} | {clubs[r.club_id].name} | {r.played} | {r.won} | {r.drawn} | {r.lost} | "
+        f"{r.goals_for} | {r.goals_against} | {r.goal_difference:+d} | {r.points} |"
+        for i, r in enumerate(table, start=1)
+    )
+    by_short = {clubs[r.club_id].short: (i, r) for i, r in enumerate(table, start=1)}
+
+    def club(short: str) -> str:
+        position, r = by_short[short]
+        return (
+            f"{clubs[r.club_id].name} ({_ordinal(position)}, {r.points} points, "
+            f"goal difference {r.goal_difference:+d})"
+        )
+
+    first, second = (by_short[s][1] for s in ("NGR", "HVT"))
+    safe, drop = (by_short[s][1] for s in ("WMA", "CRB"))
+    top, bottom = ZONES["relegation"]
+    fixtures = "\n".join(
+        f"- {_name(clubs, home)} v {_name(clubs, away)}" for home, away, _ in FIXTURES
+    )
+    return f"""# The {league.name}: the season so far
+
+## Overview
+
+The {league.name} is a fictional league of {len(league.clubs)} clubs, each playing 38 games.
+After 37 rounds, everything that matters is still to be decided on the final day, when all ten
+matches kick off at the same time. The champions finish first, the continental cup places are
+{_ordinal(ZONES["continental"][0])} to {_ordinal(ZONES["continental"][1])}, and the bottom
+three ({_ordinal(top)} to {_ordinal(bottom)}) are relegated. Clubs level on points are separated
+by goal difference, then goals scored.
+
+## The table going into the final day
+
+| Pos | Club | P | W | D | L | GF | GA | GD | Pts |
+|---|---|---|---|---|---|---|---|---|---|
+{rows}
+
+## The title race
+
+{club("NGR")} lead {club("HVT")} by {first.points - second.points} points.
+Halvern's goal difference is {second.goal_difference - first.goal_difference} better, so if
+Northgate fail to win and Halvern win, Halvern are champions. Northgate host Westmere Athletic;
+Halvern travel to Brackenford FC.
+
+## The relegation battle
+
+{_name(clubs, "DHU")} and {_name(clubs, "LPT")} are already relegated. The last relegation place
+is between {club("WMA")} and {club("CRB")}. Westmere are {safe.points - drop.points} points
+ahead, but Corrin Bay's goal difference is {drop.goal_difference - safe.goal_difference} better,
+so a Corrin Bay win and a Westmere draw would send Westmere down. Westmere play the leaders,
+Northgate Rovers; Corrin Bay host Millbrook Town.
+
+## The race for fourth
+
+{club("TDR")}, {club("KRC")}, and {club("PHA")} are chasing the last continental cup place.
+{club("GHV")} have third secured.
+
+## Final-day fixtures
+
+{fixtures}
+"""
+
+
+def _name(clubs: dict[str, Club], short: str) -> str:
+    return clubs[f"t_{short.lower()}"].name
+
+
+def _ordinal(n: int) -> str:
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
 def main(out: Path) -> None:
     clubs_dir = out / "clubs"
     clubs_dir.mkdir(parents=True, exist_ok=True)
@@ -155,8 +233,10 @@ def main(out: Path) -> None:
     for stale in set(clubs_dir.glob("*.md")) - pages:  # clubs no longer in the world
         stale.unlink()
     count = len(pages)
+    (league,) = build_world()
+    (out / "season.md").write_text(season_page(league))
     (out / "laws-of-the-engine.md").write_text(laws_page())
-    print(f"Wrote {count} club pages and the laws page to {out}")
+    print(f"Wrote {count} club pages, the season page, and the laws page to {out}")
 
 
 if __name__ == "__main__":

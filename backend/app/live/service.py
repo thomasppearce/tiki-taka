@@ -7,6 +7,7 @@ match page always agree, and nothing after the current minute leaks out.
 from functools import lru_cache
 
 from app.generator.matchday import ScheduledMatch, build_matchday
+from app.generator.season import table_before_final_day
 from app.generator.world import Club
 from app.live.clock import MatchdayClock
 from app.live.copy import CopyContext
@@ -21,7 +22,9 @@ from app.models.matchday import (
     MatchDetail,
     PlayerRef,
 )
+from app.models.table import LeagueTable, Stake, TableRow, TableSwing, ZoneChange
 from app.state.aggregator import event_impacts, key_moments, momentum, team_stats
+from app.state.table import Change, Scores, standings, summarize, weight, zone_changes
 
 RECENT_EVENTS = 40
 
@@ -46,6 +49,8 @@ class MatchdayService:
                 self.clubs[club.club_id] = club
                 for p in club.squad:
                     self.surnames[p.player_id] = p.name.split(" ", 1)[-1]
+        self.season = table_before_final_day()
+        self.swings = self._all_swings()
         cycle = max(m.result.full_time_ms for m in self.matches)
         self.clock = clock or MatchdayClock(cycle)
         # The featured match has a human producer; every other match airs on autopilot.
@@ -121,6 +126,112 @@ class MatchdayService:
             impacts=[impacts[e.event_id] for e in recent],
         )
 
+    def table(self) -> LeagueTable:
+        """The league as it stands now, the day's swings so far, and what is at stake."""
+        return self._table(self.clock.clock_ms() // 1000)
+
+    @lru_cache(maxsize=64)  # noqa: B019
+    def _table(self, second: int) -> LeagueTable:
+        now = second * 1000
+        scores = self._scores(now)
+        table = standings(self.season, scores)
+        start = {p.record.club_id: p.position for p in standings(self.season, {})}
+        playing = {c.club_id: m for m in self.matches for c in (m.home, m.away)}
+        rows = []
+        for p in table:
+            club_id = p.record.club_id
+            scored, conceded = scores[club_id]
+            rows.append(
+                TableRow(
+                    position=p.position,
+                    club=_club(self.clubs[club_id]),
+                    played=p.record.played,
+                    won=p.record.won,
+                    drawn=p.record.drawn,
+                    lost=p.record.lost,
+                    goals_for=p.record.goals_for,
+                    goals_against=p.record.goals_against,
+                    goal_difference=p.record.goal_difference,
+                    points=p.record.points,
+                    zone=p.zone,
+                    start_position=start[club_id],
+                    match_id=playing[club_id].match_id,
+                    result=(
+                        "winning"
+                        if scored > conceded
+                        else "drawing" if scored == conceded else "losing"
+                    ),
+                )
+            )
+        stakes = []
+        for m in self.matches:
+            if self.now(m) >= m.result.full_time_ms:
+                continue
+            for scorer, other in ((m.home, m.away), (m.away, m.home)):
+                after = dict(scores)
+                s, c = after[scorer.club_id]
+                after[scorer.club_id] = (s + 1, c)
+                o_s, o_c = after[other.club_id]
+                after[other.club_id] = (o_s, o_c + 1)
+                changes = zone_changes(table, standings(self.season, after))
+                if changes:
+                    stakes.append(
+                        Stake(
+                            match_id=m.match_id,
+                            scorer_club_id=scorer.club_id,
+                            changes=[_change(c) for c in changes],
+                            summary=summarize(changes, standings(self.season, after), self._names),
+                            weight=weight(changes),
+                        )
+                    )
+        return LeagueTable(
+            clock_ms=now,
+            rows=rows,
+            swings=[s for s in self.swings if s.match_clock_ms <= now],
+            stakes=sorted(stakes, key=lambda s: -s.weight),
+        )
+
+    def _scores(self, now: int) -> Scores:
+        """Every club's goals scored and conceded today, as it stands at `now`."""
+        scores: dict[str, tuple[int, int]] = {}
+        for m in self.matches:
+            home, away = m.result.score_at(min(now, m.result.full_time_ms))
+            scores[m.home.club_id] = (home, away)
+            scores[m.away.club_id] = (away, home)
+        return scores
+
+    @property
+    def _names(self) -> dict[str, str]:
+        return {club_id: club.name for club_id, club in self.clubs.items()}
+
+    def _all_swings(self) -> list[TableSwing]:
+        """Every goal of the day that moved a club into or out of a zone, in time order."""
+        goals = sorted(
+            (
+                (e.match_clock_ms, m, e)
+                for m in self.matches
+                for e in m.result.events
+                if e.type == "goal"
+            ),
+            key=lambda g: g[0],
+        )
+        swings = []
+        for clock_ms, m, e in goals:
+            before = standings(self.season, self._scores(clock_ms - 1))
+            after = standings(self.season, self._scores(clock_ms))
+            changes = zone_changes(before, after)
+            if changes:
+                swings.append(
+                    TableSwing(
+                        match_clock_ms=clock_ms,
+                        match_id=m.match_id,
+                        event_id=e.event_id,
+                        changes=[_change(c) for c in changes],
+                        summary=summarize(changes, after, self._names),
+                    )
+                )
+        return swings
+
     def desk(self, match_id: str) -> Desk:
         return self.desks[match_id].snapshot(self.now(self.by_id[match_id]))
 
@@ -160,6 +271,16 @@ class MatchdayService:
     def _momentum(self, match_id: str, second: int) -> list[float]:
         m = self.by_id[match_id]
         return momentum(m.result.events, self.impacts[match_id], m.home.club_id, second * 1000)
+
+
+def _change(c: Change) -> ZoneChange:
+    return ZoneChange(
+        club_id=c.club_id,
+        from_position=c.from_position,
+        to_position=c.to_position,
+        from_zone=c.from_zone,
+        to_zone=c.to_zone,
+    )
 
 
 def _club(club: Club) -> ClubRef:

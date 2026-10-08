@@ -20,6 +20,7 @@ from app.models import MatchEvent, OverlayCommand
 from app.models.desk import ApproveRequest, Desk
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
+from app.models.table import LeagueTable
 
 FRAME_INTERVAL_S = 0.25  # 4 Hz; the browser interpolates between frames
 CARD_EVERY_FRAMES = 8  # score, momentum, and top moment every 2 s
@@ -80,6 +81,13 @@ def health(request: Request) -> dict[str, str]:
 def matchday(request: Request) -> Matchday:
     """The match centre: every fixture, grouped by league."""
     return _service(request).matchday()
+
+
+@app.get("/api/table")
+def league_table(request: Request) -> LeagueTable:
+    """The league as it stands, every zone change so far today, and what a goal in each live
+    match would change."""
+    return _service(request).table()
 
 
 @app.get("/api/matches/{match_id}")

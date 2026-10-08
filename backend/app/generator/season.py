@@ -11,8 +11,22 @@ engine (app/generator/matchday.py) and added to this table live (app/state/table
 """
 
 from dataclasses import dataclass
+from typing import Literal
 
 LEAGUE_GAMES = 38
+
+Zone = Literal["champions", "continental", "relegation"]
+# Positions (1-based, inclusive) of each zone in the twenty-club table.
+ZONES: dict[Zone, tuple[int, int]] = {
+    "champions": (1, 1),
+    "continental": (2, 4),  # the continental cup places
+    "relegation": (18, 20),
+}
+
+
+def zone_of(position: int) -> Zone | None:
+    return next((z for z, (top, bottom) in ZONES.items() if top <= position <= bottom), None)
+
 
 # (short, won, drawn, lost, goals for, goals against) after 37 games, in table order.
 _TABLE: tuple[tuple[str, int, int, int, int, int], ...] = (

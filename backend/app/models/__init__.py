@@ -9,6 +9,7 @@ from app.models.matchday import Matchday, MatchDetail
 from app.models.moments import Moment
 from app.models.overlays import OverlayCommand
 from app.models.proposals import AudienceBody, Claim, LocalizedText, Proposal
+from app.models.table import LeagueTable
 from app.models.tracking import PlayerPosition, TrackingFrame
 from app.models.viewer import ViewerProfile
 
@@ -28,6 +29,7 @@ CONTRACTS = (
     LiveEvent,
     Desk,
     ApproveRequest,
+    LeagueTable,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -44,6 +46,7 @@ __all__ = [
     "LiveEvent",
     "MatchDetail",
     "Matchday",
+    "LeagueTable",
     "LocalizedText",
     "MatchEvent",
     "Moment",

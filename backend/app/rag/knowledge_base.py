@@ -59,7 +59,9 @@ def sections(root: Path = CORPUS) -> list[dict[str, str]]:
         text = path.read_text()
         title_match = re.match(r"#\s+(.+)", text)
         page = title_match.group(1).strip() if title_match else path.stem
-        category = {"clubs": "club", "concepts": "concept"}.get(path.parent.name, "laws")
+        category = {"clubs": "club", "concepts": "concept"}.get(
+            path.parent.name, "season" if path.stem == "season" else "laws"
+        )
         body = text[title_match.end() :] if title_match else text
         parts = re.split(r"^##\s+", body, flags=re.MULTILINE)
         for i, part in enumerate(parts):

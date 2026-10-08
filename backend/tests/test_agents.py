@@ -252,7 +252,7 @@ def test_the_knowledge_corpus_splits_into_sections_without_squad_tables() -> Non
     from app.rag.knowledge_base import sections
 
     docs = sections()
-    assert {d["category"] for d in docs} == {"club", "concept", "laws"}
+    assert {d["category"] for d in docs} == {"club", "concept", "laws", "season"}
     assert len({d["id"] for d in docs}) == len(docs)
     assert not any(d["title"].endswith(": Squad") for d in docs)  # the brief lists the players
 
