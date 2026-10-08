@@ -1,44 +1,44 @@
 # Dunhallow United (DHU)
 
-A fictional club in the Meridian League. Formation: 4-4-2. Style: high press.
+A fictional club in the Meridian League. Formation: 4-4-2. Style: possession.
 
 ## How they play
 
-They hunt the ball high up the pitch, with the nearest players closing down quickly and the rest pushing up behind them. Winning it back near the opponent's goal creates chances straight away. The cost is a high line and tired legs late in the game.
+They build patiently from the back with short passes, spread wide to stretch the opposition, and push the defensive line high so the team stays compact around the ball. The high line squeezes the pitch, but it leaves space behind for quick forwards to attack.
 
 | Aspect | Setting | Dial (0 to 1) |
 |---|---|---|
-| Defensive line | high | 0.76 |
-| Pressing starts | high | 0.91 |
-| Pressing intensity | relentless | 0.79 |
-| Width with the ball | wide | 0.76 |
-| Shape without the ball | compact | 0.72 |
-| Tempo | quick | 0.76 |
-| Passing | mixed | 0.41 |
-| Offside trap | often | 0.74 |
-| Runs in behind | regular | 0.59 |
+| Defensive line | high | 0.66 |
+| Pressing starts | in midfield | 0.61 |
+| Pressing intensity | steady | 0.49 |
+| Width with the ball | wide | 0.91 |
+| Shape without the ball | organised | 0.57 |
+| Tempo | patient | 0.36 |
+| Passing | short and patient | 0.16 |
+| Offside trap | sometimes | 0.64 |
+| Runs in behind | rare | 0.39 |
 
 ## What to watch for
 
-A high line that steps up together catches runners offside, but a well-timed run or a ball over the top can leave the keeper exposed. They win the ball high up the pitch, so turnovers near the opponent's box are a major source of their chances.
+A high line that steps up together catches runners offside, but a well-timed run or a ball over the top can leave the keeper exposed. They keep the ball patiently and can dominate possession without shooting.
 
 ## Squad
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Aarav Fennimore | Goalkeeper | Starter |
-| 2 | Bram Ostergaard | Defender | Starter |
-| 5 | Lasse Orsini | Defender | Starter |
-| 4 | Ezra Westerholm | Defender | Starter |
-| 3 | Joao Carmody | Defender | Starter |
-| 6 | Dario Drummond-Ike | Midfielder | Starter |
-| 8 | Soren Mortlake | Midfielder | Starter |
-| 10 | Nils Carrow | Midfielder | Starter |
-| 7 | Lasse Clemenceau | Midfielder | Starter |
-| 9 | Malik Devereux | Forward | Starter |
-| 11 | Taro Tennant | Forward | Starter |
-| 12 | Joao Vellacott | Goalkeeper | Bench |
-| 13 | Ruben Merrivale | Defender | Bench |
-| 14 | Malik Albrecht-Owusu | Midfielder | Bench |
-| 15 | Bram Cheval | Midfielder | Bench |
-| 16 | Taro Coldridge | Forward | Bench |
+| 1 | Bram Northcott | Goalkeeper | Starter |
+| 2 | Amadou Kovalenko | Defender | Starter |
+| 5 | Finn Saltonstall | Defender | Starter |
+| 4 | Elias Ellerby | Defender | Starter |
+| 3 | Finn Merriman | Defender | Starter |
+| 6 | Hamza Kennaway | Midfielder | Starter |
+| 8 | Soren Wilberforce | Midfielder | Starter |
+| 10 | Alvaro Wyndham | Midfielder | Starter |
+| 7 | Musa Sherwin | Midfielder | Starter |
+| 9 | Kofi Greenhalgh | Forward | Starter |
+| 11 | Lior Bexley | Forward | Starter |
+| 12 | Teo Nwachukwu | Goalkeeper | Bench |
+| 13 | Oisin Goldsworthy | Defender | Bench |
+| 14 | Kofi Saunderson | Midfielder | Bench |
+| 15 | Kofi Falkenrath | Midfielder | Bench |
+| 16 | Rafa Brodersen | Forward | Bench |

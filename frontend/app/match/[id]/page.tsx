@@ -1,13 +1,11 @@
 import { MatchPage } from "@/components/match/MatchPage";
 
-// The matchday is always 3 leagues x 4 fixtures, so every match page is generated at build time
-// (the app ships as a static export).
+// The final day is always ten fixtures, so every match page is generated at build time (the app
+// ships as a static export).
 export const dynamicParams = false;
 
 export function generateStaticParams(): { id: string }[] {
-  return [1, 2, 3].flatMap((league) =>
-    [1, 2, 3, 4].map((fixture) => ({ id: `m_l${league}_${fixture}` })),
-  );
+  return Array.from({ length: 10 }, (_, i) => ({ id: `m_l1_${i + 1}` }));
 }
 
 export default async function Page({

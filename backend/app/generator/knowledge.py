@@ -146,11 +146,15 @@ stoppages, the ball is in play for roughly 60 of the 90-odd minutes, as in real 
 def main(out: Path) -> None:
     clubs_dir = out / "clubs"
     clubs_dir.mkdir(parents=True, exist_ok=True)
-    count = 0
+    pages = set()
     for league in build_world():
         for club in league.clubs:
-            (clubs_dir / f"{club.short.lower()}.md").write_text(club_page(club, league))
-            count += 1
+            page = clubs_dir / f"{club.short.lower()}.md"
+            page.write_text(club_page(club, league))
+            pages.add(page)
+    for stale in set(clubs_dir.glob("*.md")) - pages:  # clubs no longer in the world
+        stale.unlink()
+    count = len(pages)
     (out / "laws-of-the-engine.md").write_text(laws_page())
     print(f"Wrote {count} club pages and the laws page to {out}")
 

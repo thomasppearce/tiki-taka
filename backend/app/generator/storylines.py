@@ -86,6 +86,22 @@ STORYLINES: dict[str, Storyline] = {
             (Beat(74, "goal", "away"),),
             finishing=(0.25, 1.0),
         ),
+        # The final day's other two scripts: only these goals, at these minutes, because the
+        # title and the drop are written around them (app/generator/season.py).
+        Storyline(
+            "late_away_winner",
+            "A tight, goalless game until the away side's late winner.",
+            ((0, 0.0), (60, -0.15), (95, -0.3)),
+            (Beat(78, "goal", "away", 9),),
+            finishing=(0.0, 0.0),
+        ),
+        Storyline(
+            "early_home_goal_holds",
+            "Home start fast, score, and hold on more nervously as the game goes on.",
+            ((0, 0.5), (32, 0.15), (95, -0.2)),
+            (Beat(31, "goal", "home", 9),),
+            finishing=(0.0, 0.0),
+        ),
         Storyline(
             "end_to_end",
             "Both sides attack; goals at both ends.",

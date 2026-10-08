@@ -1,6 +1,6 @@
-# Match Desk: Project Brief for Claude Code
+# Tiki-Taka: Project Brief for Claude Code
 
-> Working name: **Match Desk**. Rename freely.
+> Name: **Tiki-Taka** (formerly Match Desk; renamed 2026-10-08 because another hackathon entry is called MatchDesk). The rename in code and UI happens with the whip-around frontend.
 > Built for **Inside the Game: Developer Hackathon** (Microsoft x Premier League).
 > Solo developer. Strong in Python, RAG, pipelines, data architecture, GCP, REST APIs. New to React/Next.js and Azure agent tooling, so explain non-obvious frontend and Azure choices briefly as you go.
 
@@ -12,9 +12,19 @@ A **live broadcast control room**. Synthetic football match events stream in; a 
 
 One-line pitch: *"Every graphic on air has receipts, and a human in the loop."*
 
+### Repositioned 2026-10-08: the final-day whip-around (supersedes parts of the structure below)
+About 20 of the 50 projects in the hackathon gallery pitch an "AI broadcast crew" with evidence-backed, personalized graphics, so the concept must be distinct within the first seconds of the video. Tiki-Taka covers **the final day of a season, ten matches at once** (RedZone-style whip-around coverage):
+- **One fictional league of 20 clubs** (the Meridian League); all ten final-day matches kick off together. The season table going into the day (`backend/app/generator/season.py`) sets up a title race decided on goal difference, one relegation place between two clubs, and a race for fourth; three scripted matches carry the swings (Northgate v Westmere decides both the title and the drop in stoppage time).
+- **A watcher agent per match** keeps that match's story so far; a **Director agent** proposes cuts, weighing "is something about to happen" (pressure, xT, shots) against "does it matter" (how a goal changes the live table); the producer approves cuts on the channel.
+- **Every cut explains itself:** why we're here, the story so far in this match, what's at stake. Cited and checked like every graphic.
+- **As it stands:** a live table that moves with every goal, with the consequences spelled out.
+- **The niche, a personal whip-around:** a fan picks their club (cuts by what matters to their table position) or a fantasy XI of the league's fictional players (cuts to their players' big moments, live fantasy points). Nothing betting-like.
+- The existing desk keeps making graphics for the match on air; the full-time recap becomes "how the final day unfolded".
+- Dropped to fit: the "Why" graph hero visual, pre-match preview, replay-on-moment. Spoken commentary is a stretch goal (radio-style whip-around).
+
 ### Product structure (decided 2026-10-04)
-- **Match centre (home, `/`):** live scores for **3 fictional leagues x 4 matches** (24 fictional clubs). Each card is a preview: score, minute, a mini momentum ribbon, and the match's single biggest moment. Clicking opens the match.
-- **One featured match runs the full AI agent team.** The other 11 run the deterministic match engine and aggregator only (scores, momentum, key moments, no LLM cost).
+- **Match centre (home, `/`):** live scores for the final day's **ten matches** (one league of 20 fictional clubs; until 2026-10-08 this was 3 leagues x 4 matches). Each card is a preview: score, minute, a mini momentum ribbon, and the match's single biggest moment. Clicking opens the match.
+- **One featured match runs the full AI agent team.** The other 9 run the deterministic match engine and aggregator only (scores, momentum, key moments, no LLM cost).
 - **Three ways to watch a match (`/match/[id]`), via an open role switch** in the top bar, clearly labelled as a demo switch. Sign-in is simulated, not real auth:
   - **Guest** (not signed in): broadcast view with approved graphics in the default feed, a lighter data layer, and a prompt to sign in for more (the sign-up hook).
   - **Fan** (signed in, demo account): full personalization via their `ViewerProfile` (audience, language, favorite club, player focus, spotlight metric) and the full data panels.
@@ -336,7 +346,7 @@ UI polish is a top priority (UX & Presentation is 20% of the score and the rubri
 
 **In:** control room UI, 4-5 proposal types, evidence view, audience toggle, 2-3 languages, human approval + audit log, one demonstrated agent failure/recovery, deployed demo. Also, because the official challenge names them explicitly: player-focus mode, spotlight metric, threshold-triggered player speed/distance tags, pass difficulty rating, shot speed, and visible match recaps.
 
-Also in: the match centre (3 leagues x 4 matches), the Guest / Fan / Producer role switch with simulated sign-in, and the xT importance model.
+Also in: the match centre (the final day's ten matches), the Guest / Fan / Producer role switch with simulated sign-in, the xT importance model, and (since 2026-10-08) the whip-around: Director and watcher agents, explained cuts, the live table, and the personal club/fantasy whip-around.
 
 **Out (do not build):** video-based auto-eventing, many languages, real user accounts/auth (sign-in is simulated; Microsoft Entra External ID is a stretch goal only if everything else is done), anything that will not appear in the 2-minute demo video.
 

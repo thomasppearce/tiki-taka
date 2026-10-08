@@ -47,11 +47,13 @@ export function MatchCentre() {
       </SiteHeader>
       <main className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-8 px-4 py-6">
         <div className="flex max-w-[70ch] flex-col gap-2">
-          <h1 className="text-xl font-semibold text-ink">Matchday</h1>
+          <h1 className="text-xl font-semibold text-ink">Final day</h1>
           <p className="text-sm text-ink-2">
-            Three fictional leagues, live. The featured match has the full AI
-            agent team proposing graphics, each with the events that justify it,
-            and a human producer deciding what goes on air.
+            The last day of the Meridian League season: ten matches at once,
+            with the title and the last relegation place still to be decided.
+            The featured match has the full AI agent team proposing graphics,
+            each with the events that justify it, and a human producer deciding
+            what goes on air.
           </p>
         </div>
         {featured && <Featured card={featured} />}

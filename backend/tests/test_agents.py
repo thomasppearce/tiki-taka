@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
-from app.agents.brief import MomentBrief, build_brief, numbers_in
+from app.agents.brief import MomentBrief, build_brief, is_close, numbers_in
 from app.agents.checker import check_draft
 from app.agents.runner import AgentRunner
 from app.agents.schemas import Draft, DraftClaim, Interpretation, Localized, Placement
@@ -69,17 +69,18 @@ def test_the_checker_catches_invented_ids_numbers_and_names(service: MatchdaySer
     shot = next(f for f in brief.evidence if "shot from" in f.text)
     involved = {name for f in (*brief.evidence, *brief.lead_up) for name in f.players}
     outsider = next(name for name in sorted(brief.surnames) if name not in involved)
+    invented = next(n for n in range(41, 99) if not is_close(n, brief.numbers))
     draft = Draft(
         headline=f"{outsider} watches on",
         body="A goal from nowhere.",
         claims=[
-            DraftClaim(text="A goal from 47 m", evidence_event_ids=[shot.event_id]),
+            DraftClaim(text=f"A goal from {invented} m", evidence_event_ids=[shot.event_id]),
             DraftClaim(text="The keeper was beaten", evidence_event_ids=["evt_999999"]),
             DraftClaim(text="It counts", evidence_event_ids=[]),
         ],
     )
     problems = " | ".join(check_draft(draft, brief))
-    assert "says 47" in problems
+    assert f"says {invented}" in problems
     assert "evt_999999" in problems
     assert "cites no events" in problems
     assert f"names {outsider}" in problems

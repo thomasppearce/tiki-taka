@@ -1,44 +1,44 @@
 # Ironvale United (IVU)
 
-A fictional club in the Ironvale League. Formation: 4-4-2. Style: balanced.
+A fictional club in the Meridian League. Formation: 4-4-2. Style: direct.
 
 ## How they play
 
-They mix short build-up with direct balls, press in midfield rather than high, and keep a medium defensive line. They adapt to the game rather than imposing one plan.
+They move the ball forward early, with longer passes into the forwards and runners attacking the space behind. They spend less time in midfield and accept losing the ball more often in exchange for getting it into dangerous areas quickly.
 
 | Aspect | Setting | Dial (0 to 1) |
 |---|---|---|
-| Defensive line | medium | 0.48 |
-| Pressing starts | in midfield | 0.46 |
-| Pressing intensity | steady | 0.61 |
-| Width with the ball | wide | 0.81 |
-| Shape without the ball | compact | 0.69 |
-| Tempo | measured | 0.51 |
-| Passing | mixed | 0.49 |
-| Offside trap | sometimes | 0.42 |
-| Runs in behind | regular | 0.61 |
+| Defensive line | medium | 0.43 |
+| Pressing starts | in midfield | 0.41 |
+| Pressing intensity | steady | 0.56 |
+| Width with the ball | wide | 0.86 |
+| Shape without the ball | organised | 0.64 |
+| Tempo | quick | 0.66 |
+| Passing | direct | 0.84 |
+| Offside trap | rarely | 0.32 |
+| Runs in behind | constant | 0.76 |
 
 ## What to watch for
 
-They have no extreme tendencies; the game state shapes how they play.
+Their forwards attack the space behind the defence constantly; expect sprints, through balls, and the occasional offside flag. They move the ball forward quickly and do not mind losing it in the process.
 
 ## Squad
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Sami Mirabeau | Goalkeeper | Starter |
-| 2 | Jonah Hadley | Defender | Starter |
-| 5 | Casper Winterbourne | Defender | Starter |
-| 4 | Jules Edevane | Defender | Starter |
-| 3 | Ruben Devereux | Defender | Starter |
-| 6 | Felix Oyelaran | Midfielder | Starter |
-| 8 | Jonas Palliser | Midfielder | Starter |
-| 10 | Omar Hunsdon | Midfielder | Starter |
-| 7 | Ezra Quintero | Midfielder | Starter |
-| 9 | Finn Vellacott | Forward | Starter |
-| 11 | Alvaro Zamorano | Forward | Starter |
-| 12 | Florian Hesketh | Goalkeeper | Bench |
-| 13 | Tomas Aldana | Defender | Bench |
-| 14 | Leon Eastwick | Midfielder | Bench |
-| 15 | Ezra Falkenrath | Midfielder | Bench |
-| 16 | Kofi Arkwright | Forward | Bench |
+| 1 | Anders Claybourne | Goalkeeper | Starter |
+| 2 | Yanis Orsini | Defender | Starter |
+| 5 | Jalen Iqbal | Defender | Starter |
+| 4 | Luka Fleetwood | Defender | Starter |
+| 3 | Malik Oyelaran | Defender | Starter |
+| 6 | Silas Etheridge | Midfielder | Starter |
+| 8 | Soren Vanterpool | Midfielder | Starter |
+| 10 | Soren Carrow | Midfielder | Starter |
+| 7 | Adrian Kowalczyk-Reid | Midfielder | Starter |
+| 9 | Jonah Ashby | Forward | Starter |
+| 11 | Musa Quintero | Forward | Starter |
+| 12 | Theo Winterbourne | Goalkeeper | Bench |
+| 13 | Isak Caddock | Defender | Bench |
+| 14 | Aron Overton | Midfielder | Bench |
+| 15 | Bram Chadwick | Midfielder | Bench |
+| 16 | Theo Tumelo | Forward | Bench |

@@ -11,10 +11,10 @@ from app.models import Desk, LiveEvent, Matchday, MatchDetail, TrackingFrame
 Pin = Callable[..., None]
 
 
-def test_matchday_lists_three_leagues_of_four(client: TestClient, at_minute: Pin) -> None:
+def test_matchday_is_one_league_of_ten(client: TestClient, at_minute: Pin) -> None:
     at_minute(63)
     day = Matchday.model_validate(client.get("/api/matchday").json())
-    assert [len(league.matches) for league in day.leagues] == [4, 4, 4]
+    assert [len(league.matches) for league in day.leagues] == [10]
     featured = [m for league in day.leagues for m in league.matches if m.featured]
     assert [m.match_id for m in featured] == ["m_l1_1"]
     card = featured[0]

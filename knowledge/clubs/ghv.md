@@ -1,44 +1,44 @@
 # Gullhaven FC (GHV)
 
-A fictional club in the Harbour Coast League. Formation: 4-3-3. Style: direct.
+A fictional club in the Meridian League. Formation: 4-3-3. Style: balanced.
 
 ## How they play
 
-They move the ball forward early, with longer passes into the forwards and runners attacking the space behind. They spend less time in midfield and accept losing the ball more often in exchange for getting it into dangerous areas quickly.
+They mix short build-up with direct balls, press in midfield rather than high, and keep a medium defensive line. They adapt to the game rather than imposing one plan.
 
 | Aspect | Setting | Dial (0 to 1) |
 |---|---|---|
-| Defensive line | medium | 0.50 |
-| Pressing starts | in midfield | 0.49 |
-| Pressing intensity | steady | 0.55 |
-| Width with the ball | wide | 0.78 |
-| Shape without the ball | organised | 0.63 |
-| Tempo | quick | 0.71 |
-| Passing | direct | 0.79 |
-| Offside trap | rarely | 0.39 |
-| Runs in behind | constant | 0.73 |
+| Defensive line | medium | 0.55 |
+| Pressing starts | in midfield | 0.54 |
+| Pressing intensity | steady | 0.60 |
+| Width with the ball | wide | 0.73 |
+| Shape without the ball | compact | 0.68 |
+| Tempo | measured | 0.56 |
+| Passing | mixed | 0.44 |
+| Offside trap | sometimes | 0.49 |
+| Runs in behind | regular | 0.58 |
 
 ## What to watch for
 
-Their forwards attack the space behind the defence constantly; expect sprints, through balls, and the occasional offside flag. They move the ball forward quickly and do not mind losing it in the process.
+They have no extreme tendencies; the game state shapes how they play.
 
 ## Squad
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Anders Chadwell | Goalkeeper | Starter |
-| 2 | Tomas Calloway | Defender | Starter |
-| 5 | Zane Solberg | Defender | Starter |
-| 4 | Noah Danforth | Defender | Starter |
-| 3 | Ruben Glendinning | Defender | Starter |
-| 6 | Silas Clemenceau | Midfielder | Starter |
-| 8 | Adrian Wickham | Midfielder | Starter |
-| 10 | Levi Falkenrath | Midfielder | Starter |
-| 9 | Alvaro Eastwick | Forward | Starter |
-| 11 | Nolan Dalgaard | Forward | Starter |
-| 7 | Finn Corrigan | Forward | Starter |
-| 12 | Jonah Westerholm | Goalkeeper | Bench |
-| 13 | Anders Ambrose | Defender | Bench |
-| 14 | Tobias Carrow | Midfielder | Bench |
-| 15 | Luca Devereux | Midfielder | Bench |
-| 16 | Santi Marwood | Forward | Bench |
+| 1 | Santi Ingleby | Goalkeeper | Starter |
+| 2 | Lasse Haverford | Defender | Starter |
+| 5 | Lior Eastwood | Defender | Starter |
+| 4 | Finn Oakes | Defender | Starter |
+| 3 | Tobias Marwood | Defender | Starter |
+| 6 | Rafa Ridgeway | Midfielder | Starter |
+| 8 | Luka Skelton | Midfielder | Starter |
+| 10 | Jalen Embleton | Midfielder | Starter |
+| 9 | Yanis Edevane | Forward | Starter |
+| 11 | Amadou Buchholz | Forward | Starter |
+| 7 | Florian Quarshie | Forward | Starter |
+| 12 | Wilf Corrigan | Goalkeeper | Bench |
+| 13 | Remy Cosgrave | Defender | Bench |
+| 14 | Hamza Tolland | Midfielder | Bench |
+| 15 | Adrian Gathii | Midfielder | Bench |
+| 16 | Tomas Kerrigan | Forward | Bench |

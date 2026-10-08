@@ -1,44 +1,44 @@
 # Redstack Rovers (RSR)
 
-A fictional club in the Ironvale League. Formation: 4-3-3. Style: high press.
+A fictional club in the Meridian League. Formation: 4-3-3. Style: balanced.
 
 ## How they play
 
-They hunt the ball high up the pitch, with the nearest players closing down quickly and the rest pushing up behind them. Winning it back near the opponent's goal creates chances straight away. The cost is a high line and tired legs late in the game.
+They mix short build-up with direct balls, press in midfield rather than high, and keep a medium defensive line. They adapt to the game rather than imposing one plan.
 
 | Aspect | Setting | Dial (0 to 1) |
 |---|---|---|
-| Defensive line | high | 0.76 |
-| Pressing starts | high | 0.92 |
-| Pressing intensity | relentless | 0.86 |
+| Defensive line | medium | 0.46 |
+| Pressing starts | in midfield | 0.52 |
+| Pressing intensity | steady | 0.56 |
 | Width with the ball | wide | 0.77 |
-| Shape without the ball | compact | 0.77 |
-| Tempo | quick | 0.67 |
-| Passing | mixed | 0.45 |
-| Offside trap | often | 0.77 |
-| Runs in behind | regular | 0.65 |
+| Shape without the ball | compact | 0.72 |
+| Tempo | measured | 0.47 |
+| Passing | mixed | 0.50 |
+| Offside trap | sometimes | 0.47 |
+| Runs in behind | regular | 0.60 |
 
 ## What to watch for
 
-A high line that steps up together catches runners offside, but a well-timed run or a ball over the top can leave the keeper exposed. They win the ball high up the pitch, so turnovers near the opponent's box are a major source of their chances.
+They have no extreme tendencies; the game state shapes how they play.
 
 ## Squad
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Noah Rutherglen | Goalkeeper | Starter |
-| 2 | Ilya Lachance | Defender | Starter |
-| 5 | Ilya Fenwick | Defender | Starter |
-| 4 | Rafa Delacroix | Defender | Starter |
-| 3 | Rayan Tennant | Defender | Starter |
-| 6 | Felix Silvestri | Midfielder | Starter |
-| 8 | Kenji Cheval | Midfielder | Starter |
-| 10 | Musa Corrigan | Midfielder | Starter |
-| 9 | Kofi Hollis | Forward | Starter |
-| 11 | Rayan Madigan | Forward | Starter |
-| 7 | Nolan Fennimore | Forward | Starter |
-| 12 | Emil Scarrow | Goalkeeper | Bench |
-| 13 | Florian Nyborg | Defender | Bench |
-| 14 | Viggo Brodersen | Midfielder | Bench |
-| 15 | Amadou Ballantyne | Midfielder | Bench |
-| 16 | Isak Hardacre | Forward | Bench |
+| 1 | Aron Oakshott | Goalkeeper | Starter |
+| 2 | Ruben Llewellyn | Defender | Starter |
+| 5 | Viggo Salazar | Defender | Starter |
+| 4 | Aron Jablonski | Defender | Starter |
+| 3 | Elias Abernethy | Defender | Starter |
+| 6 | Dario Eastwick | Midfielder | Starter |
+| 8 | Noah Ekwueme | Midfielder | Starter |
+| 10 | Rayan Lambrecht | Midfielder | Starter |
+| 9 | Alvaro Mortensen | Forward | Starter |
+| 11 | Omar Zamorano | Forward | Starter |
+| 7 | Yusuf Ayodele | Forward | Starter |
+| 12 | Leon Cheswick | Goalkeeper | Bench |
+| 13 | Viggo Westerholm | Defender | Bench |
+| 14 | Nolan Moreau-Quist | Midfielder | Bench |
+| 15 | Omar Edgerton | Midfielder | Bench |
+| 16 | Rayan Frampton | Forward | Bench |

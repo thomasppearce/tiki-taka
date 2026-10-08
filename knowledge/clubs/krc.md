@@ -1,6 +1,6 @@
 # Kingsreach (KRC)
 
-A fictional club in the Harbour Coast League. Formation: 4-4-2. Style: low block and counter.
+A fictional club in the Meridian League. Formation: 4-4-2. Style: low block and counter.
 
 ## How they play
 
@@ -26,19 +26,19 @@ A deep line leaves little space in behind, so opponents have to break them down 
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Declan Quintero | Goalkeeper | Starter |
-| 2 | Malik Stanbridge | Defender | Starter |
-| 5 | Tobias Etheridge | Defender | Starter |
-| 4 | Cian Delamere | Defender | Starter |
-| 3 | Jasper Rosendahl | Defender | Starter |
-| 6 | Leon Montague | Midfielder | Starter |
-| 8 | Cian Abara | Midfielder | Starter |
-| 10 | Luka Brodersen | Midfielder | Starter |
-| 7 | Ezra Hesketh | Midfielder | Starter |
-| 9 | Cian Ridgeway | Forward | Starter |
-| 11 | Dario Fennimore | Forward | Starter |
-| 12 | Soren Wolfenden | Goalkeeper | Bench |
-| 13 | Gabriel Nettleford | Defender | Bench |
-| 14 | Casper Dornan | Midfielder | Bench |
-| 15 | Jasper Northcott | Midfielder | Bench |
-| 16 | Rayan Esposti | Forward | Bench |
+| 1 | Luka Wolfenden | Goalkeeper | Starter |
+| 2 | Musa Rademaker | Defender | Starter |
+| 5 | Ruben Antrobus | Defender | Starter |
+| 4 | Ruben Tamura | Defender | Starter |
+| 3 | Leon Folau | Defender | Starter |
+| 6 | Felix Palliser | Midfielder | Starter |
+| 8 | Omar Spellman | Midfielder | Starter |
+| 10 | Aarav Gilchrist | Midfielder | Starter |
+| 7 | Tobias Amsel | Midfielder | Starter |
+| 9 | Amadou Castellanos | Forward | Starter |
+| 11 | Florian Thistlewood | Forward | Starter |
+| 12 | Lasse Fitzalan | Goalkeeper | Bench |
+| 13 | Wilf Bakshi | Defender | Bench |
+| 14 | Emil Warrender | Midfielder | Bench |
+| 15 | Adrian Halvorsen | Midfielder | Bench |
+| 16 | Isak Lambourne | Forward | Bench |

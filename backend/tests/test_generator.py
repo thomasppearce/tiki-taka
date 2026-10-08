@@ -15,17 +15,39 @@ def test_world_is_deterministic_with_unique_players() -> None:
     world = build_world()
     assert world == build_world()
     player_ids = [p.player_id for league in world for club in league.clubs for p in club.squad]
-    assert len(player_ids) == len(set(player_ids)) == 3 * 8 * 16
+    assert len(player_ids) == len(set(player_ids)) == 20 * 16
+    surnames = [p.name.split(" ", 1)[1] for league in world for c in league.clubs for p in c.squad]
+    assert len(set(surnames)) == len(surnames)  # so "Goal: Marlow" is never ambiguous
 
 
 def test_same_seed_gives_the_same_match() -> None:
-    home, away = build_world()[1].clubs[:2]
+    home, away = build_world()[0].clubs[2:4]
     story = STORYLINES["balanced"]
     first = MatchEngine("m_a", home, away, story, seed=11).run()
     second = MatchEngine("m_a", home, away, story, seed=11).run()
     assert first.events == second.events
     # Compare raw bytes: sent-off players are NaN in the frames, and NaN != NaN.
     assert first.frames.data.tobytes() == second.frames.data.tobytes()
+
+
+def test_the_final_day_goals_land_in_story_order() -> None:
+    """The title and the last relegation place are written around five goals in three matches
+    (app/generator/season.py); they must come in this order for the stories to work."""
+    matches = {(m.home.short, m.away.short): m for m in build_matchday()}
+
+    def goals(home: str, away: str) -> list[tuple[int, str]]:
+        m = matches[(home, away)]
+        return [
+            (e.match_clock_ms, m.home.short if e.team_id == m.home.club_id else m.away.short)
+            for e in m.result.events
+            if e.type == "goal"
+        ]
+
+    featured, halvern, corrin = goals("NGR", "WMA"), goals("BRK", "HVT"), goals("CRB", "MBT")
+    assert [side for _, side in featured] == ["NGR", "WMA", "WMA"]
+    assert [side for _, side in halvern] == ["HVT"] and [side for _, side in corrin] == ["CRB"]
+    order = [featured[0][0], corrin[0][0], featured[1][0], halvern[0][0], featured[2][0]]
+    assert order == sorted(order)  # NGR lead, CRB lead, WMA level, HVT lead, WMA winner
 
 
 def test_events_are_ordered_and_uniquely_identified() -> None:

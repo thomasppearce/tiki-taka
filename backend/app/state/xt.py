@@ -162,7 +162,7 @@ def _prior(z: int) -> float:
 
 
 def _training_matches() -> list[tuple[list[MatchEvent], str]]:
-    """Unscripted (balanced) matches across all 24 clubs, separate from the demo matchday."""
+    """Unscripted (balanced) matches across the league's clubs, separate from the final day."""
     from app.generator.engine import MatchEngine
     from app.generator.storylines import STORYLINES
     from app.generator.world import build_world

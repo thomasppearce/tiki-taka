@@ -1,6 +1,6 @@
 # Coldforge FC (CFG)
 
-A fictional club in the Ironvale League. Formation: 4-3-3. Style: possession.
+A fictional club in the Meridian League. Formation: 4-3-3. Style: possession.
 
 ## How they play
 
@@ -26,19 +26,19 @@ They keep the ball patiently and can dominate possession without shooting.
 
 | No. | Player | Position | Role |
 |---|---|---|---|
-| 1 | Rafa Blackwood | Goalkeeper | Starter |
-| 2 | Soren Grimaldi-Shaw | Defender | Starter |
-| 5 | Santi Carrow | Defender | Starter |
-| 4 | Declan Glendinning | Defender | Starter |
-| 3 | Jules Fitzalan | Defender | Starter |
-| 6 | Milo Iwobi-Lane | Midfielder | Starter |
-| 8 | Luka Rosendahl | Midfielder | Starter |
-| 10 | Milo Wolfenden | Midfielder | Starter |
-| 9 | Yusuf Barraclough | Forward | Starter |
-| 11 | Omar Haverford | Forward | Starter |
-| 7 | Adrian Wilberforce | Forward | Starter |
-| 12 | Lior Dalgaard | Goalkeeper | Bench |
-| 13 | Isak Kallio | Defender | Bench |
-| 14 | Noah Danforth | Midfielder | Bench |
-| 15 | Anders Castellan | Midfielder | Bench |
-| 16 | Alvaro Delamere | Forward | Bench |
+| 1 | Tobias Rensburg | Goalkeeper | Starter |
+| 2 | Luca Jarrow | Defender | Starter |
+| 5 | Santi Clemenceau | Defender | Starter |
+| 4 | Lior Thornhill | Defender | Starter |
+| 3 | Joao Farquhar | Defender | Starter |
+| 6 | Theo Thackeray | Midfielder | Starter |
+| 8 | Soren Cheval | Midfielder | Starter |
+| 10 | Gabriel Underhill | Midfielder | Starter |
+| 9 | Hamza Desmarais | Forward | Starter |
+| 11 | Santi Ibekwe | Forward | Starter |
+| 7 | Silas Benedetti | Forward | Starter |
+| 12 | Adrian Kirkbride | Goalkeeper | Bench |
+| 13 | Isak Halloran | Defender | Bench |
+| 14 | Amadou Berrisford | Midfielder | Bench |
+| 15 | Kofi Lindgren | Midfielder | Bench |
+| 16 | Levi Jessop | Forward | Bench |
