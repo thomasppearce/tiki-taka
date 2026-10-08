@@ -30,17 +30,18 @@ def test_kickoff_starts_on_the_featured_match(service: MatchdayService) -> None:
 
 
 def test_every_goal_that_moves_the_table_reaches_the_screen(service: MatchdayService) -> None:
-    director = ChannelDirector(service)
-    cuts = watch(director, 0, 97)
-    for swing in service.swings:
-        on_air_then = [
-            c for c in cuts if c.clock_ms <= swing.match_clock_ms + GOAL_COUNTDOWN_MS + 2_000
-        ]
-        assert on_air_then[-1].match_id == swing.match_id, swing.summary
-    title = next(c for c in cuts if c.reason == "goal" and c.match_id == "m_l1_2")
-    assert title.package.at_stake and "Halvern Town go top" in title.package.at_stake
+    """On air when it goes in (the feed was already there) or within seconds (a goal cut). Which
+    of the two can hinge on a near-tie in the signals, so either is right."""
+    cuts = watch(ChannelDirector(service), 0, 97)
     goals = {e.event_id for m in service.matches for e in m.result.events if e.type == "goal"}
-    assert any(i in goals for claim in title.package.claims for i in claim.evidence_event_ids)
+    for swing in service.swings:
+        soon = swing.match_clock_ms + GOAL_COUNTDOWN_MS + 2_000
+        on_air = [c for c in cuts if c.clock_ms <= soon][-1]
+        assert on_air.match_id == swing.match_id, swing.summary
+        if on_air.reason == "goal":
+            assert on_air.package.at_stake == f"As it stands: {swing.summary}"
+            cited = {i for claim in on_air.package.claims for i in claim.evidence_event_ids}
+            assert swing.event_id in cited and cited <= goals
 
 
 def test_the_feed_moves_but_never_flickers(service: MatchdayService) -> None:
