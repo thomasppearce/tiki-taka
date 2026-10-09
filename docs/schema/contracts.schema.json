@@ -218,6 +218,17 @@
             "$ref": "#/$defs/MatchSignal"
           },
           "type": "array"
+        },
+        "log": {
+          "description": "What the Director, Watchers, and producer did.",
+          "items": {
+            "$ref": "#/$defs/ChannelLog"
+          },
+          "type": "array"
+        },
+        "agents": {
+          "description": "The Watcher and Director agents are connected.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -228,9 +239,53 @@
         "held",
         "pinned_match_id",
         "history",
-        "signals"
+        "signals",
+        "log",
+        "agents"
       ],
       "title": "Channel",
+      "type": "object"
+    },
+    "ChannelLog": {
+      "additionalProperties": false,
+      "description": "One line of the channel's log: who did what, when.",
+      "properties": {
+        "clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "agent": {
+          "enum": [
+            "director",
+            "watcher",
+            "checker",
+            "producer",
+            "code"
+          ],
+          "type": "string"
+        },
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clock_ms",
+        "agent",
+        "match_id",
+        "detail"
+      ],
+      "title": "ChannelLog",
       "type": "object"
     },
     "Claim": {

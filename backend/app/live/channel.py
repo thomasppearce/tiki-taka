@@ -10,7 +10,9 @@ doesn't flicker between games.
 Cuts are proposed with a short countdown and then taken automatically; the producer can take a
 cut early, cut to any match, hold automatic cuts, or pin the feed to one match. Every cut comes
 with a package (why we're here, what's at stake, the story so far), written here by code from
-cited events; the agent team rewrites it when it is connected (app/agents).
+cited events. When the agents are connected (app/agents/channel_runner.py), a Watcher per match
+keeps its story so far, and the Director agent chooses between the code's top candidates during
+the countdown and writes the package; whatever they don't deliver in time, the code's stands.
 
 Like the proposal desk, the channel only advances when someone asks for it (the channel stream
 or an API call), one second at a time, so its decisions don't depend on how often it is polled.
@@ -19,16 +21,20 @@ or an API call), one second at a time, so its decisions don't depend on how ofte
 import math
 import threading
 from bisect import bisect_left, bisect_right
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
+from app.agents.channel_brief import MatchBrief, match_brief
 from app.models import Claim, MatchEvent
 from app.models.channel import (
     Channel,
+    ChannelLog,
     Cut,
     CutPackage,
     CutReason,
     DecidedBy,
+    LogAgent,
     MatchSignal,
     PendingCut,
     SideSignal,
@@ -36,6 +42,7 @@ from app.models.channel import (
 from app.models.table import LeagueTable
 
 if TYPE_CHECKING:
+    from app.agents.schemas import CutDecision, DraftClaim, StoryUpdate
     from app.generator.matchday import ScheduledMatch
     from app.live.service import MatchdayService
 
@@ -63,6 +70,47 @@ REPLAY_CHANCE_XG = 0.08  # ...if there was one this good
 STAKE_BASE = 0.15  # a match with nothing at stake still deserves the screen when it's wild
 MAX_STAKE = 1.5
 
+CANDIDATES = 3  # the Director agent chooses between the code's top three
+LATE_DECISION_MS = 15_000  # a decision after the cut can still rewrite its package this long
+STORY_EVERY_MS = 15 * 60_000  # each Watcher retells its match at least this often...
+STORY_GAP_MS = 60_000  # ...and at most once a minute, unless there's a goal
+STORY_CHANCE_XG = 0.25  # a chance this big is worth a new story
+LOG = 50
+
+
+class ChannelAgents(Protocol):
+    """The Watcher and Director agents (app/agents/channel_runner.py). Never blocks."""
+
+    def request_story(
+        self, channel: "ChannelDirector", match_id: str, key: str, brief: MatchBrief
+    ) -> None: ...
+
+    def request_decision(
+        self,
+        channel: "ChannelDirector",
+        key: str,
+        reason: str,
+        on_air: str,
+        briefs: Sequence[MatchBrief],
+    ) -> None: ...
+
+
+@dataclass
+class _Story:
+    text: str
+    claims: list[Claim]
+    as_of_ms: int
+
+
+@dataclass
+class _Decision:
+    key: str
+    reason: CutReason
+    candidates: list[str]
+    by_director: bool = False
+    aired_ms: int = 0  # when its cut went on air (or the goal on air it is for)
+    goal_on_air: bool = False
+
 
 @dataclass
 class _State:
@@ -73,6 +121,8 @@ class _State:
     held_since: int | None = None
     pinned: str | None = None
     history: list[Cut] = field(default_factory=list)
+    decision: _Decision | None = None  # the Director agent's say on the pending cut
+    aired_decision: _Decision | None = None  # ...and on the cut on air, for late answers
 
 
 class ChannelDirector:
@@ -94,12 +144,18 @@ class ChannelDirector:
             key=lambda g: g[0],
         )
         self.goal_clocks = [clock for clock, _, _ in self.goals]
+        self.agents: ChannelAgents | None = None
+        self.stories: dict[str, _Story] = {}  # each match's latest Watcher story
+        self.story_asked: dict[str, int] = {}
+        self.log: list[ChannelLog] = []
 
     # --- Driving the channel -----------------------------------------------------------------
 
     def sync(self, clock_ms: int) -> None:
         with self.lock:
             s = self.state
+            if s is not None and clock_ms < s.clock_ms:  # the matchday started over
+                self.stories, self.story_asked, self.log = {}, {}, []
             if s is None or clock_ms < s.clock_ms or clock_ms - s.clock_ms > RESET_GAP_MS:
                 self._start(clock_ms)
                 return
@@ -123,6 +179,8 @@ class ChannelDirector:
                 pinned_match_id=s.pinned,
                 history=s.history,
                 signals=sorted(self.signals(s.clock_ms), key=lambda x: -x.score),
+                log=self.log,
+                agents=self.agents is not None,
             )
 
     # --- The producer ------------------------------------------------------------------------
@@ -136,11 +194,15 @@ class ChannelDirector:
             if match_id is None:
                 if s.pending:
                     p = s.pending
+                    self._log(
+                        "producer", p.match_id, f"Took the cut to {self._fixture(p.match_id)} early"
+                    )
                     self._take(p.match_id, p.reason, "producer", p.package, p.replay_event_id)
                 return
             if match_id not in self.service.by_id:
                 raise KeyError(match_id)
             if match_id != s.on_air.match_id:
+                self._log("producer", match_id, f"Cut to {self._fixture(match_id)}")
                 self._take(match_id, "manual", "producer", self._package(match_id, "manual"))
 
     def hold(self, clock_ms: int, held: bool) -> None:
@@ -152,6 +214,7 @@ class ChannelDirector:
             s.held_since = s.clock_ms if held else None
             if held:
                 s.pending = None
+            self._log("producer", None, "Held automatic cuts" if held else "Resumed automatic cuts")
             s.version += 1
 
     def pin(self, clock_ms: int, match_id: str | None) -> None:
@@ -164,6 +227,11 @@ class ChannelDirector:
                 raise KeyError(match_id)
             s.pinned = match_id
             s.pending = None
+            self._log(
+                "producer",
+                match_id,
+                f"Pinned the feed on {self._fixture(match_id)}" if match_id else "Released the pin",
+            )
             if match_id and match_id != s.on_air.match_id:
                 self._take(match_id, "manual", "producer", self._package(match_id, "manual"))
             s.version += 1
@@ -179,6 +247,9 @@ class ChannelDirector:
         package = self._package(match_id, "kickoff", clock_ms)
         cut = self._cut(clock_ms, match_id, "kickoff", "code", package)
         self.state = _State(clock_ms=clock_ms, on_air=cut, version=version)
+        for m in self.service.matches:  # every Watcher tells its story from here
+            if clock_ms < m.result.full_time_ms and m.match_id not in self.stories:
+                self._ask_story(m.match_id, f"{m.match_id}:join{clock_ms // 60_000}", clock_ms)
 
     def _tick(self, t: int) -> None:
         s = self.state
@@ -187,9 +258,16 @@ class ChannelDirector:
         if s.held_since is not None and t - s.held_since >= HOLD_LIMIT_MS:
             s.held_since = None
             s.version += 1
+        self._watch(t)
+        first = bisect_right(self.goal_clocks, t - STEP_MS)
+        new_goals = self.goals[first : bisect_right(self.goal_clocks, t)]
+        for _, match_id, goal in new_goals:
+            if match_id == s.on_air.match_id:
+                self._goal_on_air(goal, t)
         if s.pending and t >= s.pending.take_at_ms:
             p = s.pending
-            self._take(p.match_id, p.reason, "code", p.package, p.replay_event_id)
+            by = "director" if s.decision and s.decision.by_director else "code"
+            self._take(p.match_id, p.reason, by, p.package, p.replay_event_id)
             return
         automatic = s.held_since is None and s.pinned is None
         if not automatic:
@@ -207,8 +285,7 @@ class ChannelDirector:
         # Staying for the aftermath: a goal on air, or the final whistle.
         aftermath = t - last_goal < AFTER_GOAL_MS or 0 <= t - full_time < AFTER_FULL_TIME_MS
         # A goal elsewhere: cut to it now, unless we're in an aftermath and it changes nothing.
-        first = bisect_right(self.goal_clocks, t - STEP_MS)
-        for _, match_id, goal in self.goals[first : bisect_right(self.goal_clocks, t)]:
+        for _, match_id, goal in new_goals:
             already = s.pending is not None and s.pending.reason == "goal"  # first goal wins
             swing = any(x.event_id == goal.event_id for x in self.service.swings)
             if match_id != on_air.match_id and not already and (swing or not aftermath):
@@ -225,8 +302,18 @@ class ChannelDirector:
         current_score = current.score if current else 0.0
         settled = t - s.on_air.clock_ms - MIN_DWELL_MS
         margin = CUT_MARGIN * max(0.0, 1 - settled / STALE_MS)
+        others = sorted(
+            (x for x in signals.values() if x.match_id != s.on_air.match_id),
+            key=lambda x: -x.score,
+        )
         if best and best.score >= MIN_SCORE and best.score > current_score + margin:
-            self._propose(best.match_id, "pressure", t, CUT_COUNTDOWN_MS)
+            self._propose(
+                best.match_id,
+                "pressure",
+                t,
+                CUT_COUNTDOWN_MS,
+                candidates=[x.match_id for x in others[:CANDIDATES]],
+            )
         elif settled >= STALE_MS and current_score < MIN_SCORE:
             # Quiet everywhere: check in on the match we've seen least lately.
             seen = {c.match_id: c.clock_ms for c in reversed(s.history)}
@@ -242,7 +329,9 @@ class ChannelDirector:
                 default=None,
             )
             if pick:
-                self._propose(pick.match_id, "check_in", t, CUT_COUNTDOWN_MS)
+                rest = [x.match_id for x in others if x.match_id != pick.match_id]
+                candidates = [pick.match_id, *rest[: CANDIDATES - 1]]
+                self._propose(pick.match_id, "check_in", t, CUT_COUNTDOWN_MS, candidates=candidates)
 
     def _propose(
         self,
@@ -251,6 +340,7 @@ class ChannelDirector:
         t: int,
         countdown: int,
         goal: MatchEvent | None = None,
+        candidates: list[str] | None = None,
     ) -> None:
         s = self.state
         assert s
@@ -263,6 +353,17 @@ class ChannelDirector:
             replay_event_id=goal.event_id if goal else self._chance(match_id, t),
         )
         s.version += 1
+        candidates = [match_id, *[c for c in (candidates or []) if c != match_id]]
+        self._log("code", match_id, f"Proposed cutting to {self._fixture(match_id)} ({reason})")
+        s.decision = None
+        if self.agents:
+            key = f"{t}:{reason}:{'-'.join(candidates)}"
+            s.decision = _Decision(key, reason, candidates)
+            briefs = [self._brief(c, t) for c in candidates]
+            on_air = self._brief(s.on_air.match_id, t)
+            minutes = (t - s.on_air.clock_ms) // 60_000
+            line = f"{on_air.situation}, on air for {minutes} min"
+            self.agents.request_decision(self, key, reason, line, briefs)
 
     def _take(
         self,
@@ -276,7 +377,16 @@ class ChannelDirector:
         assert s
         s.history = [s.on_air, *s.history][:HISTORY]
         s.on_air = self._cut(s.clock_ms, match_id, reason, decided_by, package, replay_event_id)
-        s.pending = None
+        s.aired_decision = s.decision if s.pending and s.pending.match_id == match_id else None
+        if s.aired_decision:
+            s.aired_decision.aired_ms = s.clock_ms
+        s.pending, s.decision = None, None
+        if decided_by != "producer":
+            self._log(
+                "director" if decided_by == "director" else "code",
+                match_id,
+                f"Cut to {self._fixture(match_id)}",
+            )
         s.version += 1
 
     @staticmethod
@@ -312,6 +422,189 @@ class ChannelDirector:
         ]
         best = max(shots, key=lambda e: impacts[e.event_id].threat, default=None)
         return best.event_id if best else None
+
+    def _goal_on_air(self, goal: MatchEvent, t: int) -> None:
+        """A goal in the match on air: the package now says what it changed, in the code's words
+        at once and the Director's when they come. Same cut, so no stinger and no second replay."""
+        s = self.state
+        assert s
+        match_id = s.on_air.match_id
+        package = self._package(match_id, "goal", t, goal)
+        s.on_air = s.on_air.model_copy(update={"package": package})
+        s.version += 1
+        if self.agents:
+            key = f"{t}:goal:{match_id}"
+            s.aired_decision = _Decision(key, "goal", [match_id], aired_ms=t, goal_on_air=True)
+            brief = self._brief(match_id, t)
+            line = f"{brief.situation}, the goal is on air"
+            self.agents.request_decision(self, key, "goal", line, [brief])
+
+    # --- The agents ---------------------------------------------------------------------------
+
+    def _watch(self, t: int) -> None:
+        """Ask each Watcher for a new story when its match turns: a goal, a red card, a big
+        chance, or a quarter of an hour since the last."""
+        if not self.agents:
+            return
+        for m in self.service.matches:
+            if t >= m.result.full_time_ms + STEP_MS:
+                continue
+            clocks = self.clocks[m.match_id]
+            impacts = self.service.impacts[m.match_id]
+            turns = [
+                e
+                for e in m.result.events[
+                    bisect_right(clocks, t - STEP_MS) : bisect_right(clocks, t)
+                ]
+                if e.type == "goal"
+                or (e.type == "card" and e.attributes.card_color == "red")
+                or (e.type == "shot" and impacts[e.event_id].threat >= STORY_CHANCE_XG)
+            ]
+            last = self.story_asked.get(m.match_id, -STORY_EVERY_MS)
+            goal = any(e.type == "goal" for e in turns)
+            if turns and (goal or t - last >= STORY_GAP_MS):
+                self._ask_story(m.match_id, f"{m.match_id}:{turns[-1].event_id}", t)
+            elif t - last >= STORY_EVERY_MS:
+                self._ask_story(m.match_id, f"{m.match_id}:m{t // 60_000}", t)
+
+    def _ask_story(self, match_id: str, key: str, t: int) -> None:
+        if not self.agents:
+            return
+        self.story_asked[match_id] = t
+        self.agents.request_story(self, match_id, key, self._brief(match_id, t))
+
+    def _brief(self, match_id: str, t: int) -> MatchBrief:
+        story = self.stories.get(match_id)
+        return match_brief(self.service, match_id, t, story.text if story else None)
+
+    def story_ready(
+        self,
+        match_id: str,
+        key: str,
+        update: "StoryUpdate",
+        seconds: float,
+        tokens: int,
+        cached: bool,
+        sent_back: Sequence[str] = (),
+    ) -> None:
+        """A Watcher's checked story: it becomes the match's story so far, on air too."""
+        with self.lock:
+            s = self.state
+            if s is None:
+                return
+            old = self.stories.get(match_id)
+            story = _Story(update.story, _claims(update.claims), s.clock_ms)
+            self.stories[match_id] = story
+            note = f"{seconds:.1f} s, {tokens} tokens" + (", cached" if cached else "")
+            self._log_sent_back("Watcher's story", match_id, sent_back)
+            self._log("watcher", match_id, f"{update.story} ({note})")
+            if s.on_air.match_id == match_id:
+                package = _restory(s.on_air.package, old, story)
+                s.on_air = s.on_air.model_copy(update={"package": package})
+            if s.pending and s.pending.match_id == match_id:
+                package = _restory(s.pending.package, old, story)
+                s.pending = s.pending.model_copy(update={"package": package})
+            s.version += 1
+
+    def story_failed(self, match_id: str, key: str, reason: str) -> None:
+        with self.lock:
+            agent: LogAgent = "checker" if reason.startswith("checker") else "watcher"
+            self._log(agent, match_id, f"Story not updated ({reason}); the last one stands")
+
+    def decision_ready(
+        self,
+        key: str,
+        decision: "CutDecision",
+        seconds: float,
+        tokens: int,
+        cached: bool,
+        sent_back: Sequence[str] = (),
+    ) -> None:
+        """The Director agent's choice and words: in time, it decides the pending cut; a little
+        late, it can still rewrite the package of the cut it was for."""
+        with self.lock:
+            s = self.state
+            if s is None:
+                return
+            note = f"{seconds:.1f} s, {tokens} tokens" + (", cached" if cached else "")
+            self._log_sent_back("Director's answer", decision.match_id, sent_back)
+            d = s.decision
+            if d and d.key == key and s.pending:
+                chosen = decision.match_id
+                if chosen != s.pending.match_id:
+                    passed = self._fixture(s.pending.match_id)
+                    t = s.pending.proposed_ms
+                    s.pending = s.pending.model_copy(
+                        update={
+                            "match_id": chosen,
+                            "package": self._package(chosen, d.reason, t),
+                            "replay_event_id": self._chance(chosen, t),
+                        }
+                    )
+                    choice = f"Chose {self._fixture(chosen)} over {passed}"
+                else:
+                    choice = f"Agreed: {self._fixture(chosen)}"
+                package = self._worded(s.pending.package, decision, chosen)
+                s.pending = s.pending.model_copy(update={"package": package})
+                d.by_director = True
+                self._log("director", chosen, f"{choice}. {decision.why} ({note})")
+            elif (
+                (aired := s.aired_decision)
+                and aired.key == key
+                and decision.match_id == s.on_air.match_id
+                and s.clock_ms - aired.aired_ms <= LATE_DECISION_MS
+            ):
+                package = self._worded(s.on_air.package, decision, s.on_air.match_id)
+                s.on_air = s.on_air.model_copy(update={"package": package})
+                when = "for the goal" if aired.goal_on_air else "just after the cut"
+                self._log(
+                    "director",
+                    s.on_air.match_id,
+                    f"Rewrote the package {when}: {decision.why} ({note})",
+                )
+            else:
+                self._log("director", decision.match_id, f"Answered too late to use ({note})")
+            s.version += 1
+
+    def decision_failed(self, key: str, reason: str) -> None:
+        with self.lock:
+            s = self.state
+            agent: LogAgent = "checker" if reason.startswith("checker") else "director"
+            self._log(agent, None, f"No decision ({reason}); the code's pick stands")
+            if s:
+                s.version += 1
+
+    def _worded(self, package: CutPackage, decision: "CutDecision", match_id: str) -> CutPackage:
+        """The package with the Director's words, keeping the Watcher's story."""
+        story = self.stories.get(match_id)
+        claims = _claims(decision.claims) + (story.claims if story else [])
+        return package.model_copy(
+            update={
+                "why": decision.why,
+                "at_stake": decision.at_stake or package.at_stake,
+                "claims": claims,
+                "written_by": (
+                    ["watcher", "director", "checker"] if story else ["director", "checker"]
+                ),
+            }
+        )
+
+    def _log_sent_back(self, what: str, match_id: str, problems: Sequence[str]) -> None:
+        """The checker's first look, when it sent a draft back and the redraft passed."""
+        if problems:
+            more = f" (and {len(problems) - 1} more)" if len(problems) > 1 else ""
+            self._log("checker", match_id, f"Sent the {what} back: {problems[0]}{more}")
+
+    def _log(self, agent: LogAgent, match_id: str | None, detail: str) -> None:
+        t = self.state.clock_ms if self.state else 0
+        entry = ChannelLog(clock_ms=t, agent=agent, match_id=match_id, detail=detail)
+        self.log = [entry, *self.log][:LOG]
+
+    def _fixture(self, match_id: str | None) -> str:
+        if not match_id:
+            return ""
+        m = self.service.by_id[match_id]
+        return f"{m.home.name} v {m.away.name}"
 
     # --- Signals -----------------------------------------------------------------------------
 
@@ -380,7 +673,11 @@ class ChannelDirector:
         home, away = m.result.score_at(at)
         scoreline = f"{m.home.name} {home}-{away} {m.away.name}, {_minute(at)}."
         story = scoreline
-        if goals:
+        told = self.stories.get(match_id)
+        if told:  # the Watcher's story so far
+            story = told.text
+            claims += told.claims
+        elif goals:
             scorers = ", ".join(
                 f"{service.surname(e.player_id)} {_minute(e.match_clock_ms)}" for e in goals
             )
@@ -453,9 +750,29 @@ class ChannelDirector:
                     club = service.club(staked.club_id).name
                     at_stake = f"A goal for {club}: {staked.stake_summary}"
         return CutPackage(
-            why=why, at_stake=at_stake, story=story, claims=claims, written_by=["code"]
+            why=why,
+            at_stake=at_stake,
+            story=story,
+            claims=claims,
+            written_by=["watcher"] if told else ["code"],
         )
 
 
 def _minute(clock_ms: int) -> str:
     return f"{clock_ms // 60_000 + 1}'"
+
+
+def _claims(claims: "Sequence[DraftClaim]") -> list[Claim]:
+    return [
+        Claim(text=c.text, evidence_event_ids=c.evidence_event_ids)
+        for c in claims
+        if c.evidence_event_ids
+    ]
+
+
+def _restory(package: CutPackage, old: _Story | None, new: _Story) -> CutPackage:
+    """A package with a newer story so far (and its claims in place of the old story's)."""
+    claims = [c for c in package.claims if not (old and c in old.claims)] + new.claims
+    written = [w for w in package.written_by if w != "code"]
+    written = ["watcher", *[w for w in written if w != "watcher"]]
+    return package.model_copy(update={"story": new.text, "claims": claims, "written_by": written})

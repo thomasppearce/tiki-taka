@@ -59,3 +59,21 @@ class Localized(BaseModel):
     casual_body_en: str
     casual_headline_es: str
     casual_body_es: str
+
+
+class StoryUpdate(BaseModel):
+    """A Watcher's story of its match so far, for a viewer cutting in."""
+
+    story: str = Field(description="At most 35 words: the story of this match so far.")
+    claims: list[DraftClaim] = Field(description="Every factual statement, each with its evidence.")
+
+
+class CutDecision(BaseModel):
+    """The Director's choice of where to cut, and what to say as we arrive."""
+
+    match_id: str = Field(description="The id of the candidate to cut to.")
+    why: str = Field(description="At most 18 words: why we are going there right now.")
+    at_stake: str | None = Field(
+        description="At most 25 words, from that candidate's AT STAKE lines; null if none."
+    )
+    claims: list[DraftClaim] = Field(description="Every factual statement, each with its evidence.")

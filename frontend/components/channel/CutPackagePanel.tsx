@@ -55,8 +55,8 @@ export function CutPackagePanel({
         </div>
         {receipts > 0 && (
           <p className="flex items-center gap-1.5 text-xs text-ink-3">
-            <Receipt size={14} />
-            Backed by {receipts} match {receipts === 1 ? "event" : "events"}
+            <Receipt size={14} className="shrink-0" />
+            {credit(cut.package.written_by, receipts)}
           </p>
         )}
       </div>
@@ -112,6 +112,17 @@ export function TableMoves({ swings }: { swings: TableSwing[] }) {
       )}
     </Panel>
   );
+}
+
+/** Who wrote the package, and what it was checked against. */
+function credit(writtenBy: string[], receipts: number): string {
+  const events = `${receipts} match ${receipts === 1 ? "event" : "events"}`;
+  const agents = ["Watcher", "Director"].filter((a) =>
+    writtenBy.includes(a.toLowerCase()),
+  );
+  if (!agents.length) return `Backed by ${events}`;
+  const plural = agents.length > 1 ? "agents" : "agent";
+  return `Written by the ${agents.join(" and ")} ${plural}, checked against ${events}`;
 }
 
 function minute(clockMs: number): string {

@@ -58,6 +58,18 @@ class PendingCut(Contract):
     replay_event_id: str | None = None
 
 
+LogAgent = Literal["director", "watcher", "checker", "producer", "code"]
+
+
+class ChannelLog(Contract):
+    """One line of the channel's log: who did what, when."""
+
+    clock_ms: int = Field(ge=0)
+    agent: LogAgent
+    match_id: str | None = None
+    detail: str
+
+
 class Channel(Contract):
     clock_ms: int = Field(ge=0)
     version: int = Field(ge=0)
@@ -67,6 +79,8 @@ class Channel(Contract):
     pinned_match_id: str | None = Field(description="The producer has fixed the feed on a match.")
     history: list[Cut] = Field(description="Earlier cuts, newest first.")
     signals: list[MatchSignal] = Field(description="Every live match, most deserving first.")
+    log: list[ChannelLog] = Field(description="What the Director, Watchers, and producer did.")
+    agents: bool = Field(description="The Watcher and Director agents are connected.")
 
 
 class TakeRequest(Contract):

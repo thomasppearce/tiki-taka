@@ -12,6 +12,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
+from app.agents.channel_runner import ChannelRunner
+from app.agents.channel_team import ChannelTeam
 from app.agents.runner import AgentRunner
 from app.agents.team import AgentTeam
 from app.generator.matchday import ScheduledMatch
@@ -38,21 +40,29 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # The agent team runs on Microsoft Foundry when a project is configured (backend/.env);
     # otherwise, and in tests (MATCHDESK_AGENTS=off), every match uses the scripted producer.
     runner: AgentRunner | None = None
+    channel: ChannelRunner | None = None
     if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
         cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
         team = AgentTeam.from_env()
         await team.connect()  # the knowledge base over MCP, when AI Search is configured
         runner = AgentRunner(team, cache_dir=cache)
         runner.start()
+        # The channel's Watchers and Director share the team's Foundry client.
+        channel = ChannelRunner(ChannelTeam(team), cache_dir=cache)
+        channel.start()
     app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
-    app.state.matchday = MatchdayService(agents=runner)
+    service = MatchdayService(agents=runner)
+    service.channel.agents = channel
+    app.state.matchday = service
     yield
+    if channel:
+        await channel.stop()
     if runner:
         await runner.stop()
 
 
-app = FastAPI(title="Match Desk API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Tiki-Taka API", version="0.3.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

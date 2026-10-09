@@ -81,6 +81,14 @@ export interface Channel {
    * Every live match, most deserving first.
    */
   signals: MatchSignal[];
+  /**
+   * What the Director, Watchers, and producer did.
+   */
+  log: ChannelLog[];
+  /**
+   * The Watcher and Director agents are connected.
+   */
+  agents: boolean;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -178,6 +186,18 @@ export interface SideSignal {
    */
   stake: number;
   stake_summary: string | null;
+}
+/**
+ * One line of the channel's log: who did what, when.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ChannelLog".
+ */
+export interface ChannelLog {
+  clock_ms: number;
+  agent: "director" | "watcher" | "checker" | "producer" | "code";
+  match_id: string | null;
+  detail: string;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema

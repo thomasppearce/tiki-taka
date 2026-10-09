@@ -4,6 +4,7 @@ import { MotionConfig } from "motion/react";
 import Link from "next/link";
 import { useCallback, useMemo } from "react";
 
+import { CrewLog } from "@/components/channel/CrewLog";
 import { CutControls } from "@/components/channel/CutControls";
 import {
   CutPackagePanel,
@@ -116,7 +117,10 @@ export function ChannelPage() {
               </p>
             )}
           </div>
-          <aside className="grid min-w-0 gap-3 xl:sticky xl:top-3">
+          {/* The producer's column also holds the crew log, too tall to stay pinned. */}
+          <aside
+            className={`grid min-w-0 gap-3 ${producer ? "" : "xl:sticky xl:top-3"}`}
+          >
             {table && (
               <LeagueTable
                 table={table}
@@ -124,6 +128,7 @@ export function ChannelPage() {
                 onAirMatchId={channel.on_air.match_id}
               />
             )}
+            {producer && <CrewLog channel={channel} fixtureOf={fixtureOf} />}
           </aside>
         </main>
       </div>
