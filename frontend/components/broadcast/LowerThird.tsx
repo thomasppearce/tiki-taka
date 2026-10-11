@@ -25,7 +25,7 @@ export function LowerThird({
   const { home, away } = useMatch();
   return (
     <motion.div
-      className="absolute bottom-[4.5cqw] left-[3.5cqw] w-max max-w-[86cqw] min-w-[48cqw] font-broadcast text-ink uppercase"
+      className="absolute bottom-[var(--lower-third-bottom,4.5cqw)] left-[3.5cqw] w-max max-w-[86cqw] min-w-[48cqw] font-broadcast text-ink uppercase"
       initial={{ clipPath: "inset(0 100% 0 0)" }}
       animate={{ clipPath: "inset(0 0% 0 0)" }}
       exit={{

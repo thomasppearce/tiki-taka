@@ -13,7 +13,7 @@ import {
   solveHomography,
 } from "@/lib/camera";
 import type { TrackingFrame } from "@/lib/contracts.generated";
-import { sideOf, useMatch } from "@/lib/match";
+import { sideOf, surname, useMatch } from "@/lib/match";
 import { PITCH, toPitch } from "@/lib/pitch";
 
 const W = 1600;
@@ -22,6 +22,7 @@ const STANDS = 0.17 * H;
 const { length: L, width: PW } = PITCH;
 const MID = PW / 2;
 const STRIPES = 12;
+const ON_THE_BALL_M = 2.5; // the player this close to the ball is named under the picture
 
 /**
  * The main camera aimed at pitch x = `centre` (meters). Both edges are centered on the aim point
@@ -81,19 +82,23 @@ export type CameraTag = { id: string; playerId: string; line: string };
  * The program monitor's camera on the synthetic match. Real footage is off-limits, so it renders
  * the tracking frame through a broadcast camera model aimed at `aimX` (pitch x, 0-100), which
  * the caller smooths so the camera follows play rather than every pass. An on-air player tag
- * rides above its player as they move.
+ * rides above its player as they move; otherwise the player on the ball is named, small, so the
+ * picture says who is doing what.
  */
 export function LiveCamera({
   frame,
   aimX,
   tag,
   focusPlayerId = null,
+  ringed,
 }: {
   frame: TrackingFrame;
   aimX: number;
   tag: CameraTag | null;
   /** A player the viewer follows: ringed at their feet. */
   focusPlayerId?: string | null;
+  /** More players to ring (a fan's fantasy XI). */
+  ringed?: ReadonlySet<string>;
 }) {
   const info = useMatch();
   const centre = clampCentre((aimX / 100) * L);
@@ -106,6 +111,18 @@ export function LiveCamera({
   // A tag only makes sense while its player is in shot; the margin stops it flickering when
   // the player hovers at the frame edge.
   const inShot = head !== null && head.x > -6 && head.x < 106;
+  const ball = toPitch(frame.ball);
+  const carrier = tag
+    ? null
+    : players.reduce<(typeof players)[number] | null>((best, p) => {
+        const d = Math.hypot(p.at.x - ball.x, p.at.y - ball.y);
+        const bestD = best
+          ? Math.hypot(best.at.x - ball.x, best.at.y - ball.y)
+          : Infinity;
+        return d < ON_THE_BALL_M && d < bestD ? p : best;
+      }, null);
+  const carrierRef = carrier ? info.players.get(carrier.player_id) : undefined;
+  const carrierHead = carrier ? headPosition(camera, carrier.at) : null;
 
   return (
     <>
@@ -150,13 +167,25 @@ export function LiveCamera({
             camera={camera}
             at={player.at}
             home={sideOf(info, player.team_id) === "home"}
-            focused={player.player_id === focusPlayerId}
+            focused={
+              player.player_id === focusPlayerId ||
+              (ringed?.has(player.player_id) ?? false)
+            }
           />
         ))}
 
         <BallMarker camera={camera} at={toPitch(frame.ball)} />
       </svg>
 
+      {carrierRef && carrierHead && (
+        <p
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-full bg-page/80 px-[0.8cqw] py-[0.35cqw] font-broadcast text-[1.6cqw] leading-none font-semibold whitespace-nowrap text-ink uppercase"
+          style={{ left: `${carrierHead.x}%`, top: `${carrierHead.y - 1.2}%` }}
+        >
+          <span className="text-ink-3">{carrierRef.number}</span>{" "}
+          {surname(carrierRef.name)}
+        </p>
+      )}
       <AnimatePresence>
         {tag && head && inShot && (
           <PlayerTag

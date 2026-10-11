@@ -15,14 +15,23 @@ const LABEL: Record<Cut["reason"], string> = {
 };
 
 /**
- * The cut package on air: why we cut here, and what's at stake. Same plate as the lower third
- * (the air spine, condensed caps), wiping in as the stinger clears.
+ * The cut package on air: why we cut here, what it means for this fan (on their own
+ * whip-around), and what's at stake. Same plate as the lower third (the air spine, condensed
+ * caps), wiping in as the stinger clears.
  */
-export function CutBanner({ cut, fixture }: { cut: Cut; fixture: string }) {
-  const { why, at_stake: atStake } = cut.package;
+export function CutBanner({
+  cut,
+  fixture,
+  forWhom = null,
+}: {
+  cut: Cut;
+  fixture: string;
+  forWhom?: string | null;
+}) {
+  const { why, at_stake: atStake, for_you: forYou } = cut.package;
   return (
     <motion.div
-      className="absolute bottom-[4.5cqw] left-[3.5cqw] w-max max-w-[88cqw] min-w-[52cqw] font-broadcast text-ink"
+      className="absolute bottom-[var(--lower-third-bottom,4.5cqw)] left-[3.5cqw] w-max max-w-[88cqw] min-w-[52cqw] font-broadcast text-ink"
       initial={{ clipPath: "inset(0 100% 0 0)" }}
       animate={{ clipPath: "inset(0 0% 0 0)" }}
       exit={{
@@ -46,6 +55,16 @@ export function CutBanner({ cut, fixture }: { cut: Cut; fixture: string }) {
           </p>
         </div>
       </div>
+      {forWhom && forYou && (
+        <div className="ml-[0.7cqw] flex items-stretch">
+          <span className="flex shrink-0 items-center bg-air px-[1.6cqw] text-[1.7cqw] font-semibold tracking-wider text-ink-on-fill uppercase">
+            For {forWhom}
+          </span>
+          <p className="flex-1 bg-page/95 px-[1.8cqw] py-[1.1cqw] text-[2.3cqw] leading-tight font-semibold text-ink">
+            {forYou}
+          </p>
+        </div>
+      )}
       {atStake && (
         <p className="ml-[0.7cqw] bg-raised/95 px-[2.2cqw] py-[1.2cqw] text-[2.2cqw] leading-tight font-semibold text-ink-2">
           {atStake}

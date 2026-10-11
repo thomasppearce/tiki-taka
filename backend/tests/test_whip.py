@@ -46,6 +46,8 @@ def test_a_club_fan_hears_what_each_match_means_to_them(service: MatchdayService
     )
     assert "Westmere Athletic's match" in (whip.lens.for_you("m_l1_1", t) or "")
     assert whip.lens.for_you("m_l1_2", t) is None  # the title race doesn't move Westmere
+    late = whip.lens.for_you("m_l1_1", 95 * 60_000)  # after Desai's winner
+    assert late and late.endswith("17th, out of the relegation zone.")
     signal = next(x for x in whip.signals(t) if x.match_id == "m_l1_3")
     assert signal.away.stake == 1.0 and signal.home.stake == 0.0
 

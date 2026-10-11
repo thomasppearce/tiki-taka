@@ -29,6 +29,11 @@ MAX_PLACES = 3  # ...up to three places
 SCORING_ROLE = {"fwd": 0.6, "mid": 0.4, "def": 0.0, "gk": 0.0}  # could score (defenders: see below)
 CLEAN_SHEET_AT_RISK = 0.3  # your keeper or defender could concede (their goals still cut)
 MAX_STAKE = 1.5
+OUT_OF = {
+    "champions": "off the top",
+    "continental": "out of the top four",
+    "relegation": "out of the relegation zone",
+}
 ZONE_WORDS = {
     "continental": "in the continental cup places",
     "relegation": "in the relegation zone",
@@ -134,6 +139,19 @@ class ClubLens:
                 where = "top"
             elif here.zone:
                 where += f", {ZONE_WORDS[here.zone]}"
+            else:  # out of a zone they were in today: that's the news
+                left = next(
+                    (
+                        c
+                        for swing in reversed(self.service.swings)
+                        if swing.match_clock_ms <= t
+                        for c in swing.changes
+                        if c.club_id == self.club_id
+                    ),
+                    None,
+                )
+                if left and left.from_zone and not left.to_zone:
+                    where += f", {OUT_OF[left.from_zone]}"
             return f"{self.name}'s match. As it stands, {self.name} are {where}."
         m = self.service.by_id[match_id]
         table = self.service._table(t // 1000)

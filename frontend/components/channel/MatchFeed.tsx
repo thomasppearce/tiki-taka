@@ -37,10 +37,13 @@ export function MatchFeed({
   graphics,
   replayEventId,
   onReplay,
+  ringed,
 }: {
   matchId: string;
   fixture: string;
   view: FeedView;
+  /** Players to ring on the pitch (a fan's fantasy XI). */
+  ringed?: ReadonlySet<string>;
   /** False while the cut package is on screen, so two lower thirds never overlap. */
   graphics: boolean;
   /** Open with a replay of this goal or chance (the cut's), before going live. */
@@ -61,6 +64,7 @@ export function MatchFeed({
         graphics={graphics}
         replayEventId={replayEventId}
         onReplay={onReplay}
+        ringed={ringed}
       />
     </MatchContext>
   );
@@ -75,6 +79,7 @@ function Picture({
   graphics,
   replayEventId,
   onReplay,
+  ringed,
 }: {
   live: LiveMatch;
   info: MatchInfo;
@@ -84,6 +89,7 @@ function Picture({
   graphics: boolean;
   replayEventId: string | null;
   onReplay: (active: boolean) => void;
+  ringed?: ReadonlySet<string>;
 }) {
   const frame = useMatchFrame(live.source);
   const clockMs = usePlaybackClock(live.source.getClockMs);
@@ -119,6 +125,7 @@ function Picture({
           aimX={cameraAim(live.source, frame)}
           tag={tag}
           focusPlayerId={null}
+          ringed={ringed}
         />
       ) : (
         <Placeholder fixture={fixture} />

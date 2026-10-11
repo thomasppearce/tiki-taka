@@ -758,7 +758,9 @@ class ChannelDirector:
                 if signal
                 else None
             )
-            if reason == "pressure" and side:
+            # Joining a day under way reads like a pressure cut when someone is pushing.
+            joining = reason == "kickoff" and at >= 60_000 and side and side.pressure >= 0.2
+            if (reason == "pressure" or joining) and side:
                 club = service.club(side.club_id).name
                 shots = [
                     e

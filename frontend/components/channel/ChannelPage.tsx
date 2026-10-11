@@ -6,14 +6,15 @@ import { useCallback, useMemo, useState } from "react";
 
 import { CrewLog } from "@/components/channel/CrewLog";
 import { CutControls } from "@/components/channel/CutControls";
-import {
-  CutPackagePanel,
-  TableMoves,
-} from "@/components/channel/CutPackagePanel";
 import { FantasyXi } from "@/components/channel/FantasyXi";
 import { LeagueTable } from "@/components/channel/LeagueTable";
 import { Multiview } from "@/components/channel/Multiview";
 import { OnAirPanel } from "@/components/channel/OnAirPanel";
+import {
+  EarlierCuts,
+  StoryCard,
+  TableMoves,
+} from "@/components/channel/StoryCard";
 import { WhipControls, WhipNudge } from "@/components/channel/WhipControls";
 import { XiPicker } from "@/components/channel/XiPicker";
 import { FeedState } from "@/components/match/FeedState";
@@ -146,15 +147,17 @@ export function ChannelPage() {
               fixtureOf={fixtureOf}
               serverClockMs={live.serverClockMs}
               view={view}
+              title={own ? `Your whip-around: ${forWhom}` : "On air"}
+              forWhom={forWhom}
+              lens={channel.lens}
             />
-            <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start">
-              <CutPackagePanel
-                channel={channel}
-                fixtureOf={fixtureOf}
-                forWhom={forWhom}
-              />
-              <TableMoves swings={table?.swings ?? []} />
-            </div>
+            {/* Below xl the rail stacks under everything: tell the story right here. */}
+            <StoryCard
+              channel={channel}
+              fixtureOf={fixtureOf}
+              forWhom={forWhom}
+              className="xl:hidden"
+            />
             <Multiview
               cards={cards}
               signals={live.signals}
@@ -167,6 +170,10 @@ export function ChannelPage() {
               onCut={(id) => void live.controls.take(id)}
               onPin={(id) => void live.controls.pin(id)}
             />
+            <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start">
+              <TableMoves swings={table?.swings ?? []} />
+              <EarlierCuts history={channel.history} fixtureOf={fixtureOf} />
+            </div>
             {producer && (
               <p className="text-sm text-ink-3">
                 Graphics for the title decider are approved in its{" "}
@@ -180,14 +187,14 @@ export function ChannelPage() {
               </p>
             )}
           </div>
-          {/* The producer's and the fantasy fan's columns are too tall to stay pinned. */}
-          <aside
-            className={`grid min-w-0 gap-3 ${
-              producer || channel.lens.kind === "fantasy"
-                ? ""
-                : "xl:sticky xl:top-3"
-            }`}
-          >
+          {/* The rail: why we're here, then the fan's XI, the table, and the crew. */}
+          <aside className="grid min-w-0 gap-3">
+            <StoryCard
+              channel={channel}
+              fixtureOf={fixtureOf}
+              forWhom={forWhom}
+              className="hidden xl:block"
+            />
             {channel.lens.kind === "fantasy" && (
               <FantasyXi
                 lens={channel.lens}
