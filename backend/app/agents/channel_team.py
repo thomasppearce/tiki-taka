@@ -1,6 +1,11 @@
 """The channel's agents: a Watcher per match and the Director, on the same Foundry client as the
 graphics team (app/agents/team.py).
 
+Each agent gets the model that fits its job: the Watchers have no deadline, so they can use a
+slower, more accurate model (gpt-6-luna); the Director must answer inside a five-second
+countdown, so it uses the fast one (gpt-5.4-mini). Measured on the same briefs: luna passed the
+checker first time on 39 of 40 stories (gpt-5.4-mini 33) but took a median 7.7 s per decision.
+
 - Watcher (model): the story of its match so far on the pitch, for a viewer the channel is about
   to cut to. It never sees the table: models reasoning about who goes up or down got it wrong.
 - Director (model): where to cut, from the code's top candidates, weighing how hard a side is
@@ -18,7 +23,7 @@ from app.agents.channel_checker import check_decision, check_story
 from app.agents.schemas import CutDecision, StoryUpdate
 from app.agents.team import AgentTeam
 
-CHANNEL_PROMPT_VERSION = "c10"  # bump when prompts or runs change: cached runs regenerate
+CHANNEL_PROMPT_VERSION = "c11"  # bump when prompts or runs change: cached runs regenerate
 
 CHANNEL = """Tiki-Taka is a live channel covering the final day of a fictional football league:
 ten matches at once, with the title, the last relegation place, and fourth place still to be
@@ -29,8 +34,10 @@ happened on the pitch: each one cites the ids of the brief's events that prove i
 minute, and the AS IT STANDS, AT STAKE, and TABLE MOVES lines are context, written by code: use
 them in your text, but never list them as claims. A goal changes the table only as its TABLE MOVES
 line says; AT STAKE is about the next goal, not one already scored. PRESSURE NOW is for your
-judgment. Numbers only from the brief, and minutes written as the brief writes them (33'); a
-side that leads says its own goals first (Lanterne Port FC lead 2-1, never 1-2).
+judgment. GOALS SO FAR says what each goal did (an opener, an equaliser, a side back in front):
+use it, and never describe how the lead changed hands any other way. Numbers only from the
+brief, and minutes written as the brief writes them (33'); a side that leads says its own goals
+first (Lanterne Port FC lead 2-1, never 1-2).
 Never work anything out that the brief doesn't say: no points gaps, no goal differences, no
 consequences of your own. Present tense, broadcast tone, no exclamation marks; names (players,
 clubs) capitalized as in the brief, and clubs by name, never by their three-letter codes."""
@@ -66,9 +73,10 @@ Set match_id to the match's id.
 
 
 class ChannelTeam:
-    def __init__(self, team: AgentTeam) -> None:
-        self.team = team
-        self.model = team.model
+    def __init__(self, team: AgentTeam, watchers: AgentTeam | None = None) -> None:
+        self.team = team  # the Director's
+        self.watchers = watchers or team
+        self.model = team.model if self.watchers is team else f"{team.model}+{self.watchers.model}"
 
     async def story(
         self, brief: MatchBrief
@@ -76,11 +84,11 @@ class ChannelTeam:
         """The Watcher's story, checked; None if it fails the checker twice. Also what the checker
         found in the first draft, if it sent it back."""
         prompt = brief.text(watcher=True)
-        update, tokens = await self.team.ask("Watcher", WATCHER, prompt, StoryUpdate)
+        update, tokens = await self.watchers.ask("Watcher", WATCHER, prompt, StoryUpdate)
         update = _receipts_only(update)
         problems = sent_back = check_story(update, brief)
         if problems:
-            update, more = await self.team.ask(
+            update, more = await self.watchers.ask(
                 "Watcher", WATCHER, _redo(prompt, update.model_dump_json(), problems), StoryUpdate
             )
             tokens += more

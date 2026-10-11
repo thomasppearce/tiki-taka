@@ -48,8 +48,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await team.connect()  # the knowledge base over MCP, when AI Search is configured
         runner = AgentRunner(team, cache_dir=cache)
         runner.start()
-        # The channel's Watchers and Director share the team's Foundry client.
-        channel = ChannelRunner(ChannelTeam(team), cache_dir=cache)
+        # The channel's Director shares the team's fast deployment; the Watchers, with no
+        # deadline, use the more accurate one when it is configured (FOUNDRY_WATCHER_MODEL).
+        watchers = AgentTeam.from_env("FOUNDRY_WATCHER_MODEL", knowledge=False)
+        channel = ChannelRunner(ChannelTeam(team, watchers), cache_dir=cache)
         channel.start()
     app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.

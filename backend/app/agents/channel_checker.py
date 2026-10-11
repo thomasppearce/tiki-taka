@@ -21,6 +21,13 @@ TABLE_TALK = re.compile(
     re.IGNORECASE,
 )
 SCORELINE = re.compile(r"\b(\d+)\s*[-–]\s*(\d+)\b")
+# How a lead changed hands: only true if the brief's GOALS SO FAR says so.
+BACK_IN_FRONT = re.compile(
+    r"\b(?:(?:ahead|in front|lead|leads|led)\s+again|back in front|restor\w* (?:the|their) lead|"
+    r"regain\w*(?: the)? lead)\b",
+    re.IGNORECASE,
+)
+EQUALISER = re.compile(r"\bequali[sz]\w*", re.IGNORECASE)
 
 
 def check_story(update: StoryUpdate, brief: MatchBrief) -> list[str]:
@@ -74,7 +81,18 @@ def _check(brief: MatchBrief, claims: list[DraftClaim], text: dict[str, str]) ->
                 )
     allowed = brief.numbers
     involved = brief.involved
+    history = " ".join(brief.goals)
     for field, value in text.items():
+        again = BACK_IN_FRONT.search(value)
+        if again and "back in front" not in history:
+            problems.append(
+                f'The {field} says "{again.group(0)}", but nobody has gone back in front in this '
+                "match: see GOALS SO FAR."
+            )
+        if EQUALISER.search(value) and "equaliser" not in history:
+            problems.append(
+                f"The {field} mentions an equaliser, but there hasn't been one: see GOALS SO FAR."
+            )
         for number in sorted(numbers_in(value)):
             if not is_close(number, allowed):
                 problems.append(f"The {field} says {_fmt(number)}, which isn't in the brief.")

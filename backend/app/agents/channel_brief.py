@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 from app.agents.brief import EventFact, _fact, numbers_in
 
 if TYPE_CHECKING:
+    from app.generator.matchday import ScheduledMatch
     from app.live.service import MatchdayService
+    from app.models.events import MatchEvent
 
 BIG_CHANCE_XG = 0.1
 RECENT_MS = 5 * 60_000
@@ -34,6 +36,7 @@ class MatchBrief:
     story: str | None
     surnames: frozenset[str]  # every player in the match
     scores: tuple[tuple[int, int], ...]  # every scoreline so far (home, away), the last is now
+    goals: tuple[str, ...] = ()  # each goal, its scoreline, and what it did (code-written)
 
     @property
     def citable(self) -> dict[str, EventFact]:
@@ -52,6 +55,7 @@ class MatchBrief:
         if table:
             lines.append(f"AS IT STANDS NOW: {self.standing}")
         lines.append(f"PRESSURE NOW: {self.pressure}")
+        lines.append("GOALS SO FAR: " + (" | ".join(self.goals) or "none"))
         if table:
             lines.append(
                 "AT STAKE, IF EITHER SIDE SCORES NEXT: "
@@ -99,10 +103,14 @@ def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | 
     facts = tuple(_fact(e, ctx, players) for e in worth[-MAX_FACTS:])
     home, away = m.result.score_at(at)
     scores = [(0, 0)]
+    goals: list[str] = []
+    led: set[str] = set()  # sides that have been in front at some point
     for e in seen:
-        if e.type == "goal":
-            h, a = scores[-1]
-            scores.append((h + 1, a) if e.team_id == m.home.club_id else (h, a + 1))
+        if e.type != "goal":
+            continue
+        h, a = scores[-1]
+        scores.append((h + 1, a) if e.team_id == m.home.club_id else (h, a + 1))
+        goals.append(_goal_line(e, scores[-2], scores[-1], m, players, led))
     minute = at // 60_000 + 1
     half = (
         "full time" if at >= m.result.full_time_ms else ("1st half" if minute <= 45 else "2nd half")
@@ -149,7 +157,40 @@ def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | 
         story=story,
         surnames=frozenset(name.split(" (")[0] for name in players.values()),
         scores=tuple(scores),
+        goals=tuple(goals),
     )
+
+
+def _goal_line(
+    goal: "MatchEvent",
+    before: tuple[int, int],
+    after: tuple[int, int],
+    m: "ScheduledMatch",
+    players: dict[str, str],
+    led: set[str],
+) -> str:
+    """One goal as the brief gives it: who, the score it made, and what it did, worked out by
+    code so the model never has to (it got "ahead again" and who equalised wrong)."""
+    home = goal.team_id == m.home.club_id
+    side = m.home.name if home else m.away.name
+    ours = (after[0], after[1]) if home else (after[1], after[0])
+    ours_before = (before[0], before[1]) if home else (before[1], before[0])
+    if ours[0] == ours[1]:
+        what = f"equaliser for {side}"
+    elif ours[0] < ours[1]:
+        what = f"{side} pull one back"
+    elif ours_before[0] > ours_before[1]:
+        what = f"{side} extend their lead"
+    elif before == (0, 0):
+        what = f"the opener, {side} lead"
+    elif side in led:
+        what = f"{side} back in front"
+    else:
+        what = f"{side} lead for the first time"
+    if ours[0] > ours[1]:
+        led.add(side)
+    scorer = players.get(goal.player_id or "", "?").split(" (")[0]
+    return f"{goal.minute + 1}' {scorer} ({side}): {after[0]}-{after[1]}, {what}"
 
 
 def _ordinal(n: int) -> str:

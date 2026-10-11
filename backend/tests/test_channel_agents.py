@@ -179,3 +179,23 @@ def test_a_goal_on_air_rewrites_the_package(service: MatchdayService) -> None:
     assert director.state.on_air.package.why == "The winner."
     assert director.state.on_air.cut_id == cut_id  # same cut: no stinger, no second replay
     assert "for the goal" in director.log[0].detail
+
+
+def test_the_checker_knows_how_the_lead_changed_hands(service: MatchdayService) -> None:
+    from app.agents.channel_brief import match_brief
+
+    decider = match_brief(service, "m_l1_1", 97 * 60_000, None)
+    assert "Westmere Athletic lead for the first time" in decider.goals[-1]
+    slip = CutDecision(
+        match_id="m_l1_1",
+        why="Desai puts Westmere Athletic ahead again at the death.",
+        at_stake=None,
+        claims=[],
+    )
+    assert "back in front" in check_decision(slip, [decider])[0]
+    swings = match_brief(service, "m_l1_6", 70 * 60_000, None)  # 1-0, 1-1, then 2-1 at 67'
+    back = StoryUpdate(story="Porthallow Athletic are back in front, 2-1.", claims=[])
+    assert check_story(back, swings) == []
+    one_way = match_brief(service, "m_l1_10", 70 * 60_000, None)  # Elmswick were never caught
+    level = StoryUpdate(story="Elmswick Rangers lead 3-1 after an early equaliser.", claims=[])
+    assert any("equaliser" in p for p in check_story(level, one_way))

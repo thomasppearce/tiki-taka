@@ -23,12 +23,20 @@ param name string = 'matchdesk'
 @description('Object ID of the developer (az ad signed-in-user show --query id -o tsv), granted access to Foundry and AI Search.')
 param developerPrincipalId string
 
-@description('The model the agents use, and how it is deployed. Swap for gpt-6-luna once quota allows.')
+@description('The model for agents with a deadline (the Director, the graphics team): fast.')
 param agentModel object = {
   name: 'gpt-5.4-mini'
   version: '2026-03-17'
   sku: 'DataZoneStandard'
   capacity: 100 // thousands of tokens per minute
+}
+
+@description('The model for agents without a deadline (the Watchers): slower, more accurate, cheaper.')
+param watcherModel object = {
+  name: 'gpt-6-luna'
+  version: '2026-09-22'
+  sku: 'DataZoneStandard'
+  capacity: 100
 }
 
 @description('The embedding model for the knowledge base.')
@@ -116,6 +124,24 @@ resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2
   dependsOn: [agentDeployment] // deployments on one account must be created one at a time
 }
 
+resource watcherDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-07-01' = {
+  parent: foundry
+  name: 'agents-luna'
+  sku: {
+    name: watcherModel.sku
+    capacity: watcherModel.capacity
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: watcherModel.name
+      version: watcherModel.version
+    }
+    versionUpgradeOption: 'NoAutoUpgrade'
+  }
+  dependsOn: [embeddingDeployment]
+}
+
 resource search 'Microsoft.Search/searchServices@2025-05-01' = {
   name: '${name}-search-${suffix}'
   location: location
@@ -187,5 +213,6 @@ output projectEndpoint string = 'https://${foundry.properties.customSubDomainNam
 output openAiEndpoint string = 'https://${foundry.properties.customSubDomainName}.openai.azure.com/'
 output agentDeploymentName string = agentDeployment.name
 output embeddingDeploymentName string = embeddingDeployment.name
+output watcherDeploymentName string = watcherDeployment.name
 output searchName string = search.name
 output searchEndpoint string = 'https://${search.name}.search.windows.net'

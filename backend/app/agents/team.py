@@ -176,7 +176,9 @@ class AgentTeam:
             await self.knowledge.close()
 
     @classmethod
-    def from_env(cls) -> "AgentTeam":
+    def from_env(cls, model_env: str = "FOUNDRY_MODEL", knowledge: bool = True) -> "AgentTeam":
+        """A team on the deployment named by `model_env` (FOUNDRY_MODEL, or the Watchers'
+        FOUNDRY_WATCHER_MODEL, falling back to FOUNDRY_MODEL)."""
         # In Azure (Container Apps) the backend has a managed identity; locally, `az login`.
         credential: TokenCredential = (
             ManagedIdentityCredential(client_id=os.environ.get("AZURE_CLIENT_ID"))
@@ -185,9 +187,9 @@ class AgentTeam:
         )
         return cls(
             os.environ["FOUNDRY_PROJECT_ENDPOINT"],
-            os.environ["FOUNDRY_MODEL"],
+            os.environ.get(model_env) or os.environ["FOUNDRY_MODEL"],
             credential,
-            search_endpoint=os.environ.get("AZURE_SEARCH_ENDPOINT"),
+            search_endpoint=os.environ.get("AZURE_SEARCH_ENDPOINT") if knowledge else None,
         )
 
     async def ask(
