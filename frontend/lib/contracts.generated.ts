@@ -89,6 +89,7 @@ export interface Channel {
    * The Watcher and Director agents are connected.
    */
   agents: boolean;
+  lens: Lens;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -130,6 +131,10 @@ export interface CutPackage {
    * 'code', or the agents that wrote it.
    */
   written_by: string[];
+  /**
+   * On a personal whip-around: what this match means to you.
+   */
+  for_you: string | null;
 }
 /**
  * A factual statement made by a proposal. Every claim cites the events that support it.
@@ -198,6 +203,53 @@ export interface ChannelLog {
   agent: "director" | "watcher" | "checker" | "producer" | "code";
   match_id: string | null;
   detail: string;
+}
+/**
+ * Whose whip-around this is: everyone's channel, a fan's club, or a fan's fantasy XI.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Lens".
+ */
+export interface Lens {
+  kind: "channel" | "club" | "fantasy";
+  club_id: string | null;
+  /**
+   * With live points.
+   */
+  xi: FantasyPlayer[];
+  /**
+   * The fantasy XI's total, as it stands.
+   */
+  points: number;
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "FantasyPlayer".
+ */
+export interface FantasyPlayer {
+  player_id: string;
+  name: string;
+  number: number;
+  role: "gk" | "def" | "mid" | "fwd";
+  club_id: string;
+  match_id: string;
+  /**
+   * On the pitch now (or at full time).
+   */
+  on_pitch: boolean;
+  points: number;
+  items: FantasyItem[];
+}
+/**
+ * One line of a fantasy player's score, with the events that earned it.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "FantasyItem".
+ */
+export interface FantasyItem {
+  label: string;
+  points: number;
+  event_ids: string[];
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
@@ -723,6 +775,20 @@ export interface TrackingFrame {
    * @minItems 1
    */
   players: [PlayerPosition, ...PlayerPosition[]];
+}
+/**
+ * Every player in the league, for picking a fantasy XI, and a suggested XI.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Squads".
+ */
+export interface Squads {
+  players: PlayerRef[];
+  suggested_xi: string[];
+  /**
+   * How fantasy points are scored, one rule per line.
+   */
+  rules: string[];
 }
 /**
  * Take the pending cut now (no match_id), or cut straight to a match.

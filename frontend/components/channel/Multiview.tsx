@@ -22,8 +22,9 @@ const STAKE_LABEL: Record<Zone, string> = {
 
 /**
  * Every match at a glance, like a gallery's multiviewer: the score, how hard each side is
- * pushing, and what a goal would decide. The producer cuts or pins from here; viewers open the
- * match.
+ * pushing, and what a goal would decide. Whoever controls the feed (the producer, or a fan on
+ * their own whip-around) cuts or pins from here; everyone else opens the match. `tags` marks the
+ * matches that are a fan's own: their club's, or where their fantasy XI is playing.
  */
 export function Multiview({
   cards,
@@ -32,7 +33,8 @@ export function Multiview({
   onAirMatchId,
   pendingMatchId,
   pinnedMatchId,
-  producer,
+  canCut,
+  tags,
   onCut,
   onPin,
 }: {
@@ -42,7 +44,8 @@ export function Multiview({
   onAirMatchId: string;
   pendingMatchId: string | null;
   pinnedMatchId: string | null;
-  producer: boolean;
+  canCut: boolean;
+  tags?: Map<string, string>;
   onCut: (matchId: string) => void;
   onPin: (matchId: string | null) => void;
 }) {
@@ -52,7 +55,7 @@ export function Multiview({
       title="All ten matches"
       aside={
         <span className="text-xs text-ink-3">
-          {producer ? "Click a match to cut to it" : "Open any match"}
+          {canCut ? "Click a match to cut to it" : "Open any match"}
         </span>
       }
     >
@@ -66,7 +69,8 @@ export function Multiview({
             onAir={card.match_id === onAirMatchId}
             next={card.match_id === pendingMatchId}
             pinned={card.match_id === pinnedMatchId}
-            producer={producer}
+            canCut={canCut}
+            tag={tags?.get(card.match_id) ?? null}
             onCut={onCut}
             onPin={onPin}
           />
@@ -83,7 +87,8 @@ function Tile({
   onAir,
   next,
   pinned,
-  producer,
+  canCut,
+  tag,
   onCut,
   onPin,
 }: {
@@ -93,7 +98,8 @@ function Tile({
   onAir: boolean;
   next: boolean;
   pinned: boolean;
-  producer: boolean;
+  canCut: boolean;
+  tag: string | null;
   onCut: (matchId: string) => void;
   onPin: (matchId: string | null) => void;
 }) {
@@ -103,8 +109,10 @@ function Tile({
       : `${Math.floor(card.clock_ms / 60_000) + 1}'`;
   const body = (
     <>
-      <div className="flex items-center justify-between gap-2 text-xs">
+      <div className="flex items-center gap-2 text-xs">
         <span className="font-mono text-ink-3 tabular-nums">{minute}</span>
+        {tag && <span className="min-w-0 truncate text-ink-2">{tag}</span>}
+        <span className="ml-auto" />
         {onAir ? (
           <span className="rounded-sm bg-air px-1.5 py-0.5 font-medium text-ink-on-fill">
             On air
@@ -141,7 +149,7 @@ function Tile({
   }`;
   return (
     <li className="relative">
-      {producer ? (
+      {canCut ? (
         <button
           type="button"
           className={frame}
@@ -156,7 +164,7 @@ function Tile({
           {body}
         </Link>
       )}
-      {producer && (
+      {canCut && (
         <button
           type="button"
           onClick={() => onPin(pinned ? null : card.match_id)}

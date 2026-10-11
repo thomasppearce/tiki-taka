@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from app.models.common import Contract, UnitInterval
+from app.models.matchday import PlayerRef, Role
 from app.models.proposals import Claim
 
 CutReason = Literal["kickoff", "goal", "pressure", "check_in", "manual"]
@@ -33,6 +34,9 @@ class CutPackage(Contract):
     story: str = Field(description="The story of this match so far.")
     claims: list[Claim]
     written_by: list[str] = Field(description="'code', or the agents that wrote it.")
+    for_you: str | None = Field(
+        default=None, description="On a personal whip-around: what this match means to you."
+    )
 
 
 class Cut(Contract):
@@ -70,6 +74,46 @@ class ChannelLog(Contract):
     detail: str
 
 
+LensKind = Literal["channel", "club", "fantasy"]
+
+
+class FantasyItem(Contract):
+    """One line of a fantasy player's score, with the events that earned it."""
+
+    label: str
+    points: int
+    event_ids: list[str]
+
+
+class FantasyPlayer(Contract):
+    player_id: str
+    name: str
+    number: int
+    role: Role
+    club_id: str
+    match_id: str
+    on_pitch: bool = Field(description="On the pitch now (or at full time).")
+    points: int
+    items: list[FantasyItem]
+
+
+class Lens(Contract):
+    """Whose whip-around this is: everyone's channel, a fan's club, or a fan's fantasy XI."""
+
+    kind: LensKind
+    club_id: str | None = None
+    xi: list[FantasyPlayer] = Field(default_factory=list, description="With live points.")
+    points: int = Field(default=0, description="The fantasy XI's total, as it stands.")
+
+
+class Squads(Contract):
+    """Every player in the league, for picking a fantasy XI, and a suggested XI."""
+
+    players: list[PlayerRef]
+    suggested_xi: list[str]
+    rules: list[str] = Field(description="How fantasy points are scored, one rule per line.")
+
+
 class Channel(Contract):
     clock_ms: int = Field(ge=0)
     version: int = Field(ge=0)
@@ -81,6 +125,7 @@ class Channel(Contract):
     signals: list[MatchSignal] = Field(description="Every live match, most deserving first.")
     log: list[ChannelLog] = Field(description="What the Director, Watchers, and producer did.")
     agents: bool = Field(description="The Watcher and Director agents are connected.")
+    lens: Lens
 
 
 class TakeRequest(Contract):

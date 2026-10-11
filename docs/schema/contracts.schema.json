@@ -229,6 +229,9 @@
         "agents": {
           "description": "The Watcher and Director agents are connected.",
           "type": "boolean"
+        },
+        "lens": {
+          "$ref": "#/$defs/Lens"
         }
       },
       "required": [
@@ -241,7 +244,8 @@
         "history",
         "signals",
         "log",
-        "agents"
+        "agents",
+        "lens"
       ],
       "title": "Channel",
       "type": "object"
@@ -430,6 +434,18 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "for_you": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "On a personal whip-around: what this match means to you."
         }
       },
       "required": [
@@ -437,7 +453,8 @@
         "at_stake",
         "story",
         "claims",
-        "written_by"
+        "written_by",
+        "for_you"
       ],
       "title": "CutPackage",
       "type": "object"
@@ -678,6 +695,86 @@
       "title": "EventImpact",
       "type": "object"
     },
+    "FantasyItem": {
+      "additionalProperties": false,
+      "description": "One line of a fantasy player's score, with the events that earned it.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "points": {
+          "type": "integer"
+        },
+        "event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "label",
+        "points",
+        "event_ids"
+      ],
+      "title": "FantasyItem",
+      "type": "object"
+    },
+    "FantasyPlayer": {
+      "additionalProperties": false,
+      "properties": {
+        "player_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "role": {
+          "enum": [
+            "gk",
+            "def",
+            "mid",
+            "fwd"
+          ],
+          "type": "string"
+        },
+        "club_id": {
+          "type": "string"
+        },
+        "match_id": {
+          "type": "string"
+        },
+        "on_pitch": {
+          "description": "On the pitch now (or at full time).",
+          "type": "boolean"
+        },
+        "points": {
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/FantasyItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "player_id",
+        "name",
+        "number",
+        "role",
+        "club_id",
+        "match_id",
+        "on_pitch",
+        "points",
+        "items"
+      ],
+      "title": "FantasyPlayer",
+      "type": "object"
+    },
     "HoldRequest": {
       "additionalProperties": false,
       "properties": {
@@ -813,6 +910,51 @@
         "stakes"
       ],
       "title": "LeagueTable",
+      "type": "object"
+    },
+    "Lens": {
+      "additionalProperties": false,
+      "description": "Whose whip-around this is: everyone's channel, a fan's club, or a fan's fantasy XI.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "channel",
+            "club",
+            "fantasy"
+          ],
+          "type": "string"
+        },
+        "club_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "xi": {
+          "description": "With live points.",
+          "items": {
+            "$ref": "#/$defs/FantasyPlayer"
+          },
+          "type": "array"
+        },
+        "points": {
+          "default": 0,
+          "description": "The fantasy XI's total, as it stands.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "club_id",
+        "xi",
+        "points"
+      ],
+      "title": "Lens",
       "type": "object"
     },
     "LiveEvent": {
@@ -1869,6 +2011,38 @@
         "stake_summary"
       ],
       "title": "SideSignal",
+      "type": "object"
+    },
+    "Squads": {
+      "additionalProperties": false,
+      "description": "Every player in the league, for picking a fantasy XI, and a suggested XI.",
+      "properties": {
+        "players": {
+          "items": {
+            "$ref": "#/$defs/PlayerRef"
+          },
+          "type": "array"
+        },
+        "suggested_xi": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rules": {
+          "description": "How fantasy points are scored, one rule per line.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "players",
+        "suggested_xi",
+        "rules"
+      ],
+      "title": "Squads",
       "type": "object"
     },
     "Stake": {

@@ -2,7 +2,7 @@
 
 import { MotionConfig } from "motion/react";
 import Link from "next/link";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { CrewLog } from "@/components/channel/CrewLog";
 import { CutControls } from "@/components/channel/CutControls";
@@ -10,28 +10,44 @@ import {
   CutPackagePanel,
   TableMoves,
 } from "@/components/channel/CutPackagePanel";
+import { FantasyXi } from "@/components/channel/FantasyXi";
 import { LeagueTable } from "@/components/channel/LeagueTable";
 import { Multiview } from "@/components/channel/Multiview";
 import { OnAirPanel } from "@/components/channel/OnAirPanel";
+import { WhipControls, WhipNudge } from "@/components/channel/WhipControls";
+import { XiPicker } from "@/components/channel/XiPicker";
 import { FeedState } from "@/components/match/FeedState";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FEATURED_MATCH_ID } from "@/lib/api";
-import type { MatchCard } from "@/lib/contracts.generated";
+import type {
+  Channel,
+  ClubRef,
+  MatchCard,
+  MatchSignal,
+} from "@/lib/contracts.generated";
 import { useChannel } from "@/lib/live/useChannel";
 import { useMatchday } from "@/lib/live/useMatchday";
+import { useSquads } from "@/lib/live/useSquads";
 import { GUEST_PREFS, useFanPrefs, useRole } from "@/lib/role";
+import { lensOf, useWhip } from "@/lib/whip";
 
 /**
  * Tiki-Taka: the final day as one channel. The Director cuts between the ten matches and says
  * why; the table moves as it stands; every match is a click away. The producer gets the cut
- * controls; viewers get the channel.
+ * controls; guests get the channel; a signed-in fan can make it their own, cut by what matters
+ * to their club or by their fantasy XI.
  */
 export function ChannelPage() {
   const [role] = useRole();
   const [prefs] = useFanPrefs();
-  const live = useChannel();
-  const { matchday } = useMatchday();
+  const [whip, setWhip] = useWhip();
+  const fan = role === "fan";
   const producer = role === "producer";
+  const lens = fan ? lensOf(whip) : null;
+  const live = useChannel(lens);
+  const { matchday } = useMatchday();
+  const squads = useSquads();
+  const [picking, setPicking] = useState(false);
 
   const cards = useMemo(
     () => matchday?.leagues.flatMap((l) => l.matches) ?? [],
@@ -39,6 +55,16 @@ export function ChannelPage() {
   );
   const byId = useMemo(
     () => new Map<string, MatchCard>(cards.map((c) => [c.match_id, c])),
+    [cards],
+  );
+  const clubs = useMemo(
+    () =>
+      new Map<string, ClubRef>(
+        cards.flatMap((c) => [
+          [c.home.club_id, c.home],
+          [c.away.club_id, c.away],
+        ]),
+      ),
     [cards],
   );
   const fixtureOf = useCallback(
@@ -50,15 +76,37 @@ export function ChannelPage() {
   );
 
   const { channel, table } = live;
+  const picker = fan && squads && (
+    <XiPicker
+      open={picking}
+      squads={squads}
+      clubs={clubs}
+      initial={whip.xi}
+      onClose={() => setPicking(false)}
+      onSave={(xi) => {
+        setWhip({ ...whip, mode: "fantasy", xi });
+        setPicking(false);
+      }}
+    />
+  );
   if (!channel)
     return (
       <div className="flex min-h-dvh flex-col bg-page">
         <SiteHeader />
         <FeedState status={live.status} what="the final day" />
+        {picker}
       </div>
     );
-  const view = role === "fan" ? prefs : GUEST_PREFS;
+  const view = fan ? prefs : GUEST_PREFS;
   const minute = Math.floor(channel.clock_ms / 60_000) + 1;
+  const own = channel.lens.kind !== "channel"; // a fan's own whip-around: theirs to steer
+  const fanClub = channel.lens.club_id ? clubs.get(channel.lens.club_id) : null;
+  const forWhom =
+    channel.lens.kind === "club"
+      ? (fanClub?.name ?? null)
+      : channel.lens.kind === "fantasy"
+        ? "your XI"
+        : null;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -80,6 +128,16 @@ export function ChannelPage() {
                 serverClockMs={live.serverClockMs}
               />
             )}
+            {fan && (
+              <WhipControls
+                whip={whip}
+                setWhip={setWhip}
+                clubs={clubs}
+                lens={channel.lens}
+                onEditXi={() => setPicking(true)}
+              />
+            )}
+            {role === "guest" && <WhipNudge />}
             <OnAirPanel
               cut={channel.on_air}
               pending={
@@ -90,7 +148,11 @@ export function ChannelPage() {
               view={view}
             />
             <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start">
-              <CutPackagePanel channel={channel} fixtureOf={fixtureOf} />
+              <CutPackagePanel
+                channel={channel}
+                fixtureOf={fixtureOf}
+                forWhom={forWhom}
+              />
               <TableMoves swings={table?.swings ?? []} />
             </div>
             <Multiview
@@ -100,7 +162,8 @@ export function ChannelPage() {
               onAirMatchId={channel.on_air.match_id}
               pendingMatchId={channel.pending?.match_id ?? null}
               pinnedMatchId={channel.pinned_match_id}
-              producer={producer}
+              canCut={producer || own}
+              tags={tagsFor(channel, live.signals)}
               onCut={(id) => void live.controls.take(id)}
               onPin={(id) => void live.controls.pin(id)}
             />
@@ -117,21 +180,62 @@ export function ChannelPage() {
               </p>
             )}
           </div>
-          {/* The producer's column also holds the crew log, too tall to stay pinned. */}
+          {/* The producer's and the fantasy fan's columns are too tall to stay pinned. */}
           <aside
-            className={`grid min-w-0 gap-3 ${producer ? "" : "xl:sticky xl:top-3"}`}
+            className={`grid min-w-0 gap-3 ${
+              producer || channel.lens.kind === "fantasy"
+                ? ""
+                : "xl:sticky xl:top-3"
+            }`}
           >
+            {channel.lens.kind === "fantasy" && (
+              <FantasyXi
+                lens={channel.lens}
+                clubs={clubs}
+                onAirMatchId={channel.on_air.match_id}
+                onEdit={() => setPicking(true)}
+              />
+            )}
             {table && (
               <LeagueTable
                 table={table}
                 cards={byId}
                 onAirMatchId={channel.on_air.match_id}
+                clubId={channel.lens.club_id ?? null}
               />
             )}
             {producer && <CrewLog channel={channel} fixtureOf={fixtureOf} />}
           </aside>
         </main>
+        {picker}
       </div>
     </MotionConfig>
   );
+}
+
+/** On a fan's own whip-around, which matches are theirs, and why. */
+function tagsFor(
+  channel: Channel,
+  signals: MatchSignal[],
+): Map<string, string> | undefined {
+  const { lens } = channel;
+  if (lens.kind === "fantasy") {
+    const counts = new Map<string, number>();
+    for (const p of lens.xi)
+      counts.set(p.match_id, (counts.get(p.match_id) ?? 0) + 1);
+    return new Map(
+      [...counts].map(([matchId, n]) => [matchId, `${n} of your XI`]),
+    );
+  }
+  if (lens.kind === "club") {
+    const tags = new Map<string, string>();
+    for (const s of signals) {
+      if ([s.home.club_id, s.away.club_id].includes(lens.club_id ?? ""))
+        tags.set(s.match_id, "Your match");
+      else if (s.home.stake_summary || s.away.stake_summary)
+        tags.set(s.match_id, "Matters to you");
+    }
+    return tags;
+  }
+  return undefined;
 }

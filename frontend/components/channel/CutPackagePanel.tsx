@@ -26,12 +26,21 @@ const REASON: Record<Cut["reason"], string> = {
 export function CutPackagePanel({
   channel,
   fixtureOf,
+  forWhom = null,
 }: {
   channel: Channel;
   fixtureOf: (matchId: string) => string;
+  /** On a fan's own whip-around: whose ("Westmere Athletic", "your XI"). */
+  forWhom?: string | null;
 }) {
   const cut = channel.on_air;
-  const { why, at_stake: atStake, story, claims } = cut.package;
+  const {
+    why,
+    at_stake: atStake,
+    story,
+    claims,
+    for_you: forYou,
+  } = cut.package;
   const receipts = new Set(claims.flatMap((c) => c.evidence_event_ids)).size;
   return (
     <Panel
@@ -48,6 +57,12 @@ export function CutPackagePanel({
           <p className="text-xs text-ink-3">{fixtureOf(cut.match_id)}</p>
           <p className="mt-1 text-base leading-snug text-ink">{why}</p>
         </div>
+        {forWhom && forYou && (
+          <div className="border-l-2 border-air pl-2.5">
+            <h3 className="text-xs text-ink-3">For {forWhom}</h3>
+            <p className="mt-0.5 text-sm text-ink">{forYou}</p>
+          </div>
+        )}
         {atStake && <p className="text-sm text-ink-2">{atStake}</p>}
         <div className="border-t border-line pt-3">
           <h3 className="text-xs text-ink-3">Story so far</h3>

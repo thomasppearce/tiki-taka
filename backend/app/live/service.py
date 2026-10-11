@@ -4,16 +4,20 @@ Built once at startup. Every view is computed for "now" on the clock, so the mat
 match page always agree, and nothing after the current minute leaks out.
 """
 
+import threading
+from collections import OrderedDict
 from functools import lru_cache
 
 from app.generator.matchday import ScheduledMatch, build_matchday
-from app.generator.season import table_before_final_day
+from app.generator.season import TEAM_OF_THE_SEASON, table_before_final_day
 from app.generator.world import Club
 from app.live.channel import ChannelDirector
 from app.live.clock import MatchdayClock
 from app.live.copy import CopyContext
 from app.live.desk import AgentBridge, ProposalDesk
+from app.live.lens import lens_for
 from app.live.replay import window
+from app.models.channel import Squads
 from app.models.desk import Desk
 from app.models.insight import EventImpact, KeyMoment
 from app.models.matchday import (
@@ -27,9 +31,11 @@ from app.models.matchday import (
 from app.models.replay import Replay
 from app.models.table import LeagueTable, Stake, TableRow, TableSwing, ZoneChange
 from app.state.aggregator import event_impacts, key_moments, momentum, team_stats
+from app.state.fantasy import RULES, FantasyScorer
 from app.state.table import Change, Scores, standings, summarize, weight, zone_changes
 
 RECENT_EVENTS = 40
+MAX_WHIPS = 200  # fans' own whip-arounds kept in memory, least recently watched dropped first
 REPLAY_FRAME_MS = 250  # replays carry frames at the live stream's 4 Hz
 
 
@@ -59,8 +65,39 @@ class MatchdayService:
         self.clock = clock or MatchdayClock(cycle)
         # The featured match has a human producer; every other match airs on autopilot.
         self.desks = {m.match_id: self._build_desk(m) for m in self.matches}
-        # The whip-around: one feed across all ten matches.
+        # The whip-around: one feed across all ten matches, and each signed-in fan's own.
+        self.fantasy = FantasyScorer(self.matches)
         self.channel = ChannelDirector(self)
+        self._whips: OrderedDict[str, ChannelDirector] = OrderedDict()
+        self._whips_lock = threading.Lock()
+
+    def whip(self, lens: str | None) -> ChannelDirector:
+        """The channel, or a fan's own whip-around: `club:<club_id>` or `xi:<11 player ids>`.
+        Raises ValueError for a lens that isn't valid (an unknown club, an XI that breaks the
+        rules)."""
+        if not lens or lens == "channel":
+            return self.channel
+        made = lens_for(self, lens)
+        with self._whips_lock:
+            director = self._whips.get(made.key)
+            if director is None:
+                director = ChannelDirector(self, lens=made, shared=self.channel)
+                self._whips[made.key] = director
+                while len(self._whips) > MAX_WHIPS:
+                    self._whips.popitem(last=False)
+            self._whips.move_to_end(made.key)
+            return director
+
+    def squads(self) -> Squads:
+        """Every player, for picking a fantasy XI, with the team of the season to start from."""
+        players = [
+            PlayerRef(
+                player_id=p.player_id, club_id=c.club_id, name=p.name, number=p.number, role=p.role
+            )
+            for c in sorted(self.clubs.values(), key=lambda c: c.name)
+            for p in c.squad
+        ]
+        return Squads(players=players, suggested_xi=list(TEAM_OF_THE_SEASON), rules=RULES)
 
     def surname(self, player_id: str | None) -> str:
         return self.surnames.get(player_id or "", "?")

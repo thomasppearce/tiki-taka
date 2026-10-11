@@ -53,6 +53,25 @@ _TABLE: tuple[tuple[str, int, int, int, int, int], ...] = (
 )
 
 
+# The team of the season, picked before the final day: the fantasy XI a fan starts from (4-3-3,
+# at most three from a club). Part of the story like the table above: the forwards who carried
+# their clubs (Westmere's Desai and Sato in the drop fight), Halvern's title-race defence, and
+# the keeper who kept Dunhallow in games all season.
+TEAM_OF_THE_SEASON: tuple[str, ...] = (
+    "p_dhu_01",
+    "p_hvt_02",
+    "p_hvt_05",
+    "p_crb_04",
+    "p_sct_02",
+    "p_ivu_07",
+    "p_wma_08",
+    "p_asm_06",
+    "p_wma_09",
+    "p_elr_11",
+    "p_lpt_09",
+)
+
+
 @dataclass(frozen=True)
 class Record:
     club_id: str

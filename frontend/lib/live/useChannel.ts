@@ -6,6 +6,7 @@ import { API_URL, getJson, postJson } from "@/lib/api";
 import type {
   Channel,
   LeagueTable,
+  Lens,
   MatchSignal,
 } from "@/lib/contracts.generated";
 import type { LiveStatus } from "@/lib/live/useLiveMatch";
@@ -31,33 +32,54 @@ export type LiveChannel = {
  * The whip-around, live: the channel (what's on air, the Director's next cut), every match's
  * signals (every 2 s), and the table as it stands (every 5 s), from one SSE stream. The match on
  * air is followed through its own stream (useLiveMatch) by whoever renders it.
+ *
+ * `lens` picks whose whip-around: null for the main channel, or a signed-in fan's own (their
+ * club or their fantasy XI, see lib/whip.ts), whose XI points also arrive every 2 s.
  */
-export function useChannel(): LiveChannel {
-  const [channel, setChannelState] = useState<Channel | null>(null);
+export function useChannel(lens: string | null = null): LiveChannel {
+  const query = lens ? `?lens=${encodeURIComponent(lens)}` : "";
+  // Snapshots are kept with the whip-around they belong to: after a switch, the old one reads
+  // as nothing yet (another Director's versions aren't comparable).
+  const [held, setHeld] = useState<{ query: string; channel: Channel } | null>(
+    null,
+  );
   const [signals, setSignals] = useState<MatchSignal[]>([]);
   const [table, setTable] = useState<LeagueTable | null>(null);
-  const [status, setStatus] = useState<LiveStatus>("connecting");
+  const [statusOf, setStatusOf] = useState<{
+    query: string;
+    status: LiveStatus;
+  }>({ query, status: "connecting" });
   const synced = useRef({ clockMs: 0, at: 0 });
+  const channel = held?.query === query ? held.channel : null;
+  const status = statusOf.query === query ? statusOf.status : "connecting";
 
-  const setChannel = useCallback((next: Channel) => {
-    synced.current = { clockMs: next.clock_ms, at: performance.now() };
-    // A response can race the stream: keep the newer snapshot unless the day started over.
-    setChannelState((current) =>
-      current &&
-      next.version < current.version &&
-      next.clock_ms >= current.clock_ms
-        ? current
-        : next,
-    );
-    setSignals(next.signals);
-  }, []);
+  const setChannel = useCallback(
+    (next: Channel) => {
+      synced.current = { clockMs: next.clock_ms, at: performance.now() };
+      // A response can race the stream: keep the newer snapshot unless the day started over.
+      setHeld((current) =>
+        current?.query === query &&
+        next.version < current.channel.version &&
+        next.clock_ms >= current.channel.clock_ms
+          ? current
+          : { query, channel: next },
+      );
+      setSignals(next.signals);
+    },
+    [query],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    getJson<Channel>("/api/channel")
+    const setStatus = (status: LiveStatus | ((s: LiveStatus) => LiveStatus)) =>
+      setStatusOf((current) => ({
+        query,
+        status: typeof status === "function" ? status(current.status) : status,
+      }));
+    getJson<Channel>(`/api/channel${query}`)
       .then((c) => !cancelled && setChannel(c))
       .catch(() => !cancelled && setStatus("offline"));
-    const source = new EventSource(`${API_URL}/api/channel/stream`);
+    const source = new EventSource(`${API_URL}/api/channel/stream${query}`);
     source.onerror = () =>
       setStatus((s) => (s === "live" ? "reconnecting" : "offline"));
     source.addEventListener("channel", (e) => {
@@ -66,6 +88,14 @@ export function useChannel(): LiveChannel {
     });
     source.addEventListener("signals", (e) => {
       setSignals(JSON.parse((e as MessageEvent<string>).data) as MatchSignal[]);
+    });
+    source.addEventListener("lens", (e) => {
+      const next = JSON.parse((e as MessageEvent<string>).data) as Lens;
+      setHeld((current) =>
+        current?.query === query
+          ? { query, channel: { ...current.channel, lens: next } }
+          : current,
+      );
     });
     source.addEventListener("table", (e) => {
       const next = JSON.parse((e as MessageEvent<string>).data) as LeagueTable;
@@ -77,7 +107,7 @@ export function useChannel(): LiveChannel {
       cancelled = true;
       source.close();
     };
-  }, [setChannel]);
+  }, [setChannel, query]);
 
   const serverClockMs = useCallback(
     () => synced.current.clockMs + (performance.now() - synced.current.at),
@@ -86,10 +116,10 @@ export function useChannel(): LiveChannel {
 
   const send = useCallback(
     (path: string, body: unknown) =>
-      postJson<Channel>(path, body)
+      postJson<Channel>(`${path}${query}`, body)
         .then(setChannel)
         .catch(() => undefined),
-    [setChannel],
+    [setChannel, query],
   );
 
   const controls: ChannelControls = {

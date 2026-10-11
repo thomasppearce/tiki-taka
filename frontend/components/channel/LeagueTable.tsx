@@ -23,16 +23,19 @@ const RESULT_INK: Record<TableRow["result"], string> = {
 
 /**
  * The league as it stands: the season so far plus today's scores. Rows slide when a goal moves
- * a club; the clubs in the match on air are marked with the on-air spine.
+ * a club; the clubs in the match on air are marked with the on-air spine, and a fan's own club
+ * is named in full ink with a "You" tag.
  */
 export function LeagueTable({
   table,
   cards,
   onAirMatchId,
+  clubId = null,
 }: {
   table: Table;
   cards: ReadonlyMap<string, MatchCard>;
   onAirMatchId: string;
+  clubId?: string | null;
 }) {
   return (
     <Panel
@@ -69,6 +72,7 @@ export function LeagueTable({
               row={row}
               card={cards.get(row.match_id)}
               onAir={row.match_id === onAirMatchId}
+              mine={row.club.club_id === clubId}
             />
           ))}
         </tbody>
@@ -84,10 +88,12 @@ function Row({
   row,
   card,
   onAir,
+  mine,
 }: {
   row: TableRow;
   card: MatchCard | undefined;
   onAir: boolean;
+  mine: boolean;
 }) {
   const moved = row.start_position - row.position;
   const home = card?.home.club_id === row.club.club_id;
@@ -134,9 +140,16 @@ function Row({
       <th scope="row" className="py-1 text-left font-normal">
         <span className="flex min-w-0 items-center gap-2">
           <Crest club={row.club} size={18} />
-          <span className={`truncate ${onAir ? "text-ink" : "text-ink-2"}`}>
+          <span
+            className={`truncate ${onAir || mine ? "text-ink" : "text-ink-2"} ${mine ? "font-medium" : ""}`}
+          >
             {row.club.name}
           </span>
+          {mine && (
+            <span className="shrink-0 rounded-sm border border-line-strong px-1 text-[11px] text-ink-2">
+              You
+            </span>
+          )}
         </span>
       </th>
       <td

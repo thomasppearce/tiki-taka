@@ -17,9 +17,10 @@ from app.agents.channel_team import ChannelTeam
 from app.agents.runner import AgentRunner
 from app.agents.team import AgentTeam
 from app.generator.matchday import ScheduledMatch
+from app.live.channel import ChannelDirector
 from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
-from app.models.channel import Channel, HoldRequest, PinRequest, TakeRequest
+from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
 from app.models.desk import ApproveRequest, Desk
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
@@ -105,63 +106,91 @@ def league_table(request: Request) -> LeagueTable:
     return _service(request).table()
 
 
+LENS = Query(
+    default=None,
+    description="Whose whip-around: none for the channel, `club:<club_id>` for a fan's club, or "
+    "`xi:<11 player ids, comma-separated>` for a fan's fantasy XI.",
+)
+
+
+def _whip(service: MatchdayService, lens: str | None) -> ChannelDirector:
+    try:
+        return service.whip(lens)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from None
+
+
 @app.get("/api/channel")
-def channel(request: Request) -> Channel:
+def channel(request: Request, lens: str | None = LENS) -> Channel:
     """The whip-around: the match on air, the Director's next cut, and every match's signals."""
     service = _service(request)
-    return service.channel.snapshot(service.clock.clock_ms())
+    return _whip(service, lens).snapshot(service.clock.clock_ms())
 
 
 @app.post("/api/channel/take")
-def channel_take(body: TakeRequest, request: Request) -> Channel:
+def channel_take(body: TakeRequest, request: Request, lens: str | None = LENS) -> Channel:
     """Take the pending cut now, or cut straight to a match."""
     service = _service(request)
+    whip = _whip(service, lens)
     try:
-        service.channel.take(service.clock.clock_ms(), body.match_id)
+        whip.take(service.clock.clock_ms(), body.match_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"No match {body.match_id}") from None
-    return service.channel.snapshot(service.clock.clock_ms())
+    return whip.snapshot(service.clock.clock_ms())
 
 
 @app.post("/api/channel/hold")
-def channel_hold(body: HoldRequest, request: Request) -> Channel:
+def channel_hold(body: HoldRequest, request: Request, lens: str | None = LENS) -> Channel:
     """Pause or resume the Director's automatic cuts."""
     service = _service(request)
-    service.channel.hold(service.clock.clock_ms(), body.held)
-    return service.channel.snapshot(service.clock.clock_ms())
+    whip = _whip(service, lens)
+    whip.hold(service.clock.clock_ms(), body.held)
+    return whip.snapshot(service.clock.clock_ms())
 
 
 @app.post("/api/channel/pin")
-def channel_pin(body: PinRequest, request: Request) -> Channel:
+def channel_pin(body: PinRequest, request: Request, lens: str | None = LENS) -> Channel:
     """Fix the feed on a match (cutting to it), or release it (no match_id)."""
     service = _service(request)
+    whip = _whip(service, lens)
     try:
-        service.channel.pin(service.clock.clock_ms(), body.match_id)
+        whip.pin(service.clock.clock_ms(), body.match_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"No match {body.match_id}") from None
-    return service.channel.snapshot(service.clock.clock_ms())
+    return whip.snapshot(service.clock.clock_ms())
+
+
+@app.get("/api/squads")
+def squads(request: Request) -> Squads:
+    """Every player in the league, the team of the season, and how fantasy points are scored."""
+    return _service(request).squads()
 
 
 @app.get("/api/channel/stream", response_class=EventSourceResponse)
 async def channel_stream(
     request: Request,
+    lens: str | None = LENS,
     ticks: int | None = Query(default=None, ge=1, description="Stop after this many ticks."),
 ) -> AsyncIterable[ServerSentEvent]:
     """The whip-around live: `channel` whenever the feed cuts or a cut is proposed, `signals`
-    (every live match's pressure and stakes) every 2 s, and `table` (the league as it stands)
-    every 5 s. Pages follow the match on air through its own stream."""
+    (every live match's pressure and stakes) and, on a fan's whip-around, `lens` (their club or
+    their XI's live points) every 2 s, and `table` (the league as it stands) every 5 s. Pages
+    follow the match on air through its own stream."""
     service = _service(request)
+    whip = _whip(service, lens)
     version = -1
     tick = 0
     while ticks is None or tick < ticks:
         if await request.is_disconnected():
             break
-        snapshot = service.channel.snapshot(service.clock.clock_ms())
+        snapshot = whip.snapshot(service.clock.clock_ms())
         if snapshot.version != version:
             version = snapshot.version
             yield ServerSentEvent(data=snapshot, event="channel")
         elif tick % SIGNALS_EVERY_TICKS == 0:
             yield ServerSentEvent(data=snapshot.signals, event="signals")
+            if snapshot.lens.kind != "channel":
+                yield ServerSentEvent(data=snapshot.lens, event="lens")
         if tick % TABLE_EVERY_TICKS == 0:
             yield ServerSentEvent(data=service.table(), event="table")
         tick += 1

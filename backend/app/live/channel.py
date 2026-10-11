@@ -16,6 +16,10 @@ the countdown and writes the package; whatever they don't deliver in time, the c
 
 Like the proposal desk, the channel only advances when someone asks for it (the channel stream
 or an API call), one second at a time, so its decisions don't depend on how often it is polled.
+
+A signed-in fan's own whip-around is another Director with a lens (app/live/lens.py) that weighs
+what matters to their club or their fantasy XI. It shares the channel's Watcher stories, keeps
+the channel (and so the Watchers) running while the fan watches, and calls no agents itself.
 """
 
 import math
@@ -26,6 +30,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 from app.agents.channel_brief import MatchBrief, match_brief
+from app.live.lens import ChannelLens, Lens
 from app.models import Claim, MatchEvent
 from app.models.channel import (
     Channel,
@@ -126,8 +131,16 @@ class _State:
 
 
 class ChannelDirector:
-    def __init__(self, service: "MatchdayService") -> None:
+    def __init__(
+        self,
+        service: "MatchdayService",
+        lens: Lens | None = None,
+        shared: "ChannelDirector | None" = None,
+    ) -> None:
         self.service = service
+        self.lens: Lens = lens or ChannelLens(service)
+        self.shared = shared  # a fan's whip-around reads the channel's Watcher stories
+        self.followed: dict[str, _Story] = {}  # ...and the one its packages last used, per match
         self.lock = threading.Lock()
         self.state: _State | None = None
         self.clocks = {
@@ -152,6 +165,8 @@ class ChannelDirector:
     # --- Driving the channel -----------------------------------------------------------------
 
     def sync(self, clock_ms: int) -> None:
+        if self.shared:  # the Watchers work while anyone watches any whip-around
+            self.shared.sync(clock_ms)
         with self.lock:
             s = self.state
             if s is not None and clock_ms < s.clock_ms:  # the matchday started over
@@ -180,7 +195,8 @@ class ChannelDirector:
                 history=s.history,
                 signals=sorted(self.signals(s.clock_ms), key=lambda x: -x.score),
                 log=self.log,
-                agents=self.agents is not None,
+                agents=(self.shared or self).agents is not None,
+                lens=self.lens.info(s.clock_ms),
             )
 
     # --- The producer ------------------------------------------------------------------------
@@ -259,6 +275,8 @@ class ChannelDirector:
             s.held_since = None
             s.version += 1
         self._watch(t)
+        if self.shared:
+            self._follow_stories()
         first = bisect_right(self.goal_clocks, t - STEP_MS)
         new_goals = self.goals[first : bisect_right(self.goal_clocks, t)]
         for _, match_id, goal in new_goals:
@@ -284,11 +302,16 @@ class ChannelDirector:
         full_time = on_air.result.full_time_ms
         # Staying for the aftermath: a goal on air, or the final whistle.
         aftermath = t - last_goal < AFTER_GOAL_MS or 0 <= t - full_time < AFTER_FULL_TIME_MS
-        # A goal elsewhere: cut to it now, unless we're in an aftermath and it changes nothing.
+        # A goal elsewhere: cut to it now if it matters to this whip-around, unless we're in an
+        # aftermath and it matters only a little (to the channel: it changes nothing).
         for _, match_id, goal in new_goals:
             already = s.pending is not None and s.pending.reason == "goal"  # first goal wins
-            swing = any(x.event_id == goal.event_id for x in self.service.swings)
-            if match_id != on_air.match_id and not already and (swing or not aftermath):
+            weight = self.lens.goal_weight(match_id, goal)
+            if (
+                match_id != on_air.match_id
+                and not already
+                and (weight >= 1 or (weight > 0 and not aftermath))
+            ):
                 self._propose(match_id, "goal", t, GOAL_COUNTDOWN_MS, goal)
         if s.pending or aftermath or t - s.on_air.clock_ms < MIN_DWELL_MS or t % 5_000:
             return  # weigh the matches every five seconds once settled
@@ -473,8 +496,28 @@ class ChannelDirector:
         self.story_asked[match_id] = t
         self.agents.request_story(self, match_id, key, self._brief(match_id, t))
 
+    def _follow_stories(self) -> None:
+        """A fan's whip-around takes up the Watchers' newer stories as the channel gets them."""
+        s = self.state
+        assert s
+        for cut in (s.on_air, s.pending):
+            told = self._told(cut.match_id) if cut else None
+            if not cut or not told or told.text == cut.package.story:
+                continue
+            package = _restory(cut.package, self.followed.get(cut.match_id), told)
+            if cut is s.on_air:
+                s.on_air = s.on_air.model_copy(update={"package": package})
+            elif s.pending:
+                s.pending = s.pending.model_copy(update={"package": package})
+            self.followed[cut.match_id] = told
+            s.version += 1
+
+    def _told(self, match_id: str) -> _Story | None:
+        """The match's latest Watcher story (a fan's whip-around reads the channel's)."""
+        return (self.shared or self).stories.get(match_id)
+
     def _brief(self, match_id: str, t: int) -> MatchBrief:
-        story = self.stories.get(match_id)
+        story = self._told(match_id)
         return match_brief(self.service, match_id, t, story.text if story else None)
 
     def story_ready(
@@ -576,7 +619,7 @@ class ChannelDirector:
 
     def _worded(self, package: CutPackage, decision: "CutDecision", match_id: str) -> CutPackage:
         """The package with the Director's words, keeping the Watcher's story."""
-        story = self.stories.get(match_id)
+        story = self._told(match_id)
         claims = _claims(decision.claims) + (story.claims if story else [])
         return package.model_copy(
             update={
@@ -625,15 +668,12 @@ class ChannelDirector:
         return out
 
     def _side(self, m: "ScheduledMatch", club_id: str, t: int, table: LeagueTable) -> SideSignal:
-        stake = next(
-            (x for x in table.stakes if x.match_id == m.match_id and x.scorer_club_id == club_id),
-            None,
-        )
+        weight, summary = self.lens.stake(m, club_id, t, table)
         return SideSignal(
             club_id=club_id,
             pressure=round(self._pressure(m, club_id, t), 3),
-            stake=stake.weight if stake else 0.0,
-            stake_summary=stake.summary if stake else None,
+            stake=round(weight, 3),
+            stake_summary=summary,
         )
 
     def _pressure(self, m: "ScheduledMatch", club_id: str, t: int) -> float:
@@ -673,7 +713,9 @@ class ChannelDirector:
         home, away = m.result.score_at(at)
         scoreline = f"{m.home.name} {home}-{away} {m.away.name}, {_minute(at)}."
         story = scoreline
-        told = self.stories.get(match_id)
+        told = self._told(match_id)
+        if told and self.shared:
+            self.followed[match_id] = told
         if told:  # the Watcher's story so far
             story = told.text
             claims += told.claims
@@ -740,21 +782,21 @@ class ChannelDirector:
                 why = f"The final day kicks off, and we start at {fixture}."
             else:  # a check-in, the producer's call, or joining a day under way
                 why = scoreline
-            if signal and side:
-                staked = (
-                    side
-                    if side.stake_summary
-                    else max((signal.home, signal.away), key=lambda x: x.stake)
+            if side:  # what's at stake in the whole table; the lens says what it means for you
+                general = {x.scorer_club_id: x for x in table.stakes if x.match_id == match_id}
+                staked = general.get(side.club_id) or max(
+                    general.values(), key=lambda x: x.weight, default=None
                 )
-                if staked.stake_summary:
-                    club = service.club(staked.club_id).name
-                    at_stake = f"A goal for {club}: {staked.stake_summary}"
+                if staked:
+                    club = service.club(staked.scorer_club_id).name
+                    at_stake = f"A goal for {club}: {staked.summary}"
         return CutPackage(
             why=why,
             at_stake=at_stake,
             story=story,
             claims=claims,
             written_by=["watcher"] if told else ["code"],
+            for_you=self.lens.for_you(match_id, at),
         )
 
 
