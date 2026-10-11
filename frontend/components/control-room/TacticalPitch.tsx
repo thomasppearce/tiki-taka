@@ -25,6 +25,7 @@ const STATE_TYPES: ReadonlySet<string> = new Set([
   "goal_kick",
   "corner",
   "free_kick",
+  "penalty",
   "goal",
   "half_end",
 ]);
@@ -156,6 +157,8 @@ function describeSituation(
       if (before?.type === "offside") return `Offside · free kick ${short}`;
       if (before?.type === "foul") return `Foul · free kick ${short}`;
       return `Free kick · ${short}`;
+    case "penalty":
+      return `Penalty · ${short}`;
     case "goal":
       return `Goal · ${short}`;
     case "half_end":

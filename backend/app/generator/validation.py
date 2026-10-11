@@ -18,7 +18,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 
-from app.generator.engine import FrameStore, MatchResult
+from app.generator.engine import FrameStore, L, MatchResult, W
 
 # (label, min, max). Per-team stats are checked for both teams.
 TEAM_RANGES: dict[str, tuple[float, float]] = {
@@ -43,7 +43,15 @@ MATCH_RANGES: dict[str, tuple[float, float]] = {
     "throw_ins": (15, 65),
     "goal_kicks": (4, 30),
     "free_kicks": (8, 45),
+    # Added 2026-10-11, after a viewer saw forwards pass up 1v1s and play stop for over a minute:
+    # through on goal (inside 18 m, nobody in the shooting lane but the keeper), most players
+    # shoot; and no single stoppage outside goals and half-time runs much past a minute.
+    "clear_sight_shot_share": (0.5, 1.0),
+    "penalties": (0, 3),
+    "longest_stoppage_s": (5, 70),
 }
+CLEAR_SIGHT_M = 18
+RESTARTS = ("throw_in", "free_kick", "corner", "goal_kick", "penalty")
 
 
 @dataclass(frozen=True)
@@ -103,7 +111,60 @@ def match_stats(result: MatchResult) -> dict[str, float]:
     restarts = Counter(e.type for e in result.events)
     for kind in ("corner", "throw_in", "goal_kick", "free_kick"):
         stats[f"{kind}s"] = restarts[kind]
+    stats["clear_sight_shot_share"] = clear_sight_shot_share(result)
+    stats["penalties"] = restarts["penalty"]
+    stats["longest_stoppage_s"] = longest_stoppage_s(result)
     return stats
+
+
+def clear_sight_shot_share(result: MatchResult) -> float:
+    """Of the on-ball actions taken through on goal (inside 18 m, no outfield opponent in the
+    triangle to the posts, from the tracking frame at that moment), the share that are shots.
+    1.0 when a match has no such moments."""
+    keepers = {c.squad[0].player_id for c in (result.home, result.away)}
+    keepers |= {p.player_id for c in (result.home, result.away) for p in c.squad if p.role == "gk"}
+    shots = passes = 0
+    for e in result.events:
+        if e.type not in ("pass", "shot") or not e.location or e.player_id in keepers:
+            continue
+        home = e.team_id == result.home.club_id
+        x, y = e.location.x / 100 * L, e.location.y / 100 * W
+        gx = L if home else 0.0
+        goal_d = math.hypot(gx - x, 34 - y)
+        if goal_d >= CLEAR_SIGHT_M or abs(math.atan2(y - 34, abs(gx - x))) > 0.9:
+            continue
+        frame = result.frames.frame_at(e.match_clock_ms)
+        blocked = False
+        for p in frame.players:
+            if p.team_id == e.team_id or p.player_id in keepers:
+                continue
+            px, py = p.x / 100 * L, p.y / 100 * W
+            u = (px - x) / (gx - x) if gx != x else -1
+            if 0 < u < 1:
+                half_width = 3.66 * u + 0.5 * (1 - u)
+                if abs(py - (y + (34 - y) * u)) < half_width + 0.5:
+                    blocked = True
+                    break
+        if blocked:
+            continue
+        shots += e.type == "shot"
+        passes += e.type == "pass"
+    return shots / (shots + passes) if shots + passes else 1.0
+
+
+def longest_stoppage_s(result: MatchResult) -> float:
+    """The longest wait from a restart being awarded to the ball being played again."""
+    longest = 0.0
+    events = result.events
+    for i, e in enumerate(events):
+        if e.type not in RESTARTS:
+            continue
+        nxt = next(
+            (f for f in events[i + 1 :] if f.type in ("pass", "shot", "half_end", "goal")), None
+        )
+        if nxt and nxt.type in ("pass", "shot"):  # not a restart the half ended before
+            longest = max(longest, (nxt.match_clock_ms - e.match_clock_ms) / 1000)
+    return longest
 
 
 def distances_km(frames: FrameStore) -> list[float]:

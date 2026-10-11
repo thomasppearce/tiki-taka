@@ -357,6 +357,7 @@
           "enum": [
             "kickoff",
             "goal",
+            "penalty",
             "pressure",
             "check_in",
             "manual"
@@ -1170,6 +1171,7 @@
             "goal_kick",
             "corner",
             "free_kick",
+            "penalty",
             "kickoff",
             "half_end"
           ],
@@ -1605,6 +1607,7 @@
           "enum": [
             "kickoff",
             "goal",
+            "penalty",
             "pressure",
             "check_in",
             "manual"

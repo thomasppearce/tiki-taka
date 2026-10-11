@@ -49,12 +49,13 @@ STORYLINES: dict[str, Storyline] = {
         ),
         Storyline(
             "second_half_comeback",
-            "Home take an early lead; away dominate after the break and turn it around late.",
+            "Home take an early lead; away dominate after the break and turn it around in "
+            "stoppage time.",
             ((0, 0.25), (40, 0.25), (52, 0.0), (58, -0.55), (95, -0.6)),
             (
-                Beat(23, "goal", "home", 9),
+                Beat(23, "goal", "home", 10),
                 Beat(71, "goal", "away", 9),
-                Beat(86, "goal", "away", 10),
+                Beat(92, "goal", "away", 9),  # the final day's title and drop, decided at the death
             ),
             # The featured demo match: only the scripted goals, so it tells exactly this story.
             finishing=(0.0, 0.0),
@@ -99,7 +100,7 @@ STORYLINES: dict[str, Storyline] = {
             "early_home_goal_holds",
             "Home start fast, score, and hold on more nervously as the game goes on.",
             ((0, 0.5), (32, 0.15), (95, -0.2)),
-            (Beat(31, "goal", "home", 9),),
+            (Beat(31, "goal", "home", 11),),
             finishing=(0.0, 0.0),
         ),
         Storyline(

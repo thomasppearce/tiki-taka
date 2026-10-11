@@ -33,10 +33,11 @@ def test_a_goal_replay_shows_the_move(service: MatchdayService, at_minute: Pin) 
 def test_no_replay_of_what_hasnt_happened(
     client: TestClient, service: MatchdayService, at_minute: Pin
 ) -> None:
-    at_minute(70)  # Halvern score at 78'
     goal = halvern_goal(service)
+    scored = next(e for e in service.by_id["m_l1_2"].result.events if e.event_id == goal)
+    at_minute(scored.match_clock_ms / 60_000 - 2)  # before Halvern score
     assert client.get(f"/api/matches/m_l1_2/replays/{goal}").status_code == 404
-    at_minute(80)
+    at_minute(scored.match_clock_ms / 60_000 + 1)
     replay = Replay.model_validate(client.get(f"/api/matches/m_l1_2/replays/{goal}").json())
     assert replay.event_id == goal
     assert client.get("/api/matches/m_l1_2/replays/evt_nope").status_code == 404
@@ -57,5 +58,6 @@ def test_goal_cuts_open_with_the_goal(service: MatchdayService) -> None:
         if cut.reason == "goal":
             assert cut.replay_event_id in goals
         elif cut.replay_event_id:  # pressure cuts and check-ins replay a recent big chance
-            assert cut.replay_event_id in shots and cut.reason in ("pressure", "check_in")
+            assert cut.replay_event_id in shots
+            assert cut.reason in ("pressure", "check_in", "penalty")
     assert any(c.reason != "goal" and c.replay_event_id for c in seen)

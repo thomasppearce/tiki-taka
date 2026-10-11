@@ -46,6 +46,7 @@ class AgentRunner:
         self.queue: asyncio.Queue[tuple[Any, ...]] | None = None
         self.workers: list[asyncio.Task[None]] = []
         self.caches: dict[str, dict[str, Any]] = {}
+        self.matchday = ""  # the simulated matchday's fingerprint (set by the app)
 
     def start(self) -> None:
         """Start the workers on the running event loop (call from the app's lifespan)."""
@@ -140,7 +141,11 @@ class AgentRunner:
             runs: dict[str, Any] = {}
             try:
                 data = json.loads(self._path(match_id).read_text())
-                if data.get("version") == PROMPT_VERSION and data.get("model") == self.team.model:
+                if (
+                    data.get("version") == PROMPT_VERSION
+                    and data.get("model") == self.team.model
+                    and data.get("matchday") == self.matchday
+                ):
                     runs = data["runs"]
             except (OSError, ValueError, KeyError):
                 pass
@@ -164,7 +169,12 @@ class AgentRunner:
             "generated_at": datetime.now(UTC).isoformat(),
         }
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        payload = {"version": PROMPT_VERSION, "model": self.team.model, "runs": runs}
+        payload = {
+            "version": PROMPT_VERSION,
+            "model": self.team.model,
+            "matchday": self.matchday,
+            "runs": runs,
+        }
         self._path(match_id).write_text(json.dumps(payload, indent=1))
 
 

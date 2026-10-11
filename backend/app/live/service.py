@@ -8,7 +8,7 @@ import threading
 from collections import OrderedDict
 from functools import lru_cache
 
-from app.generator.matchday import ScheduledMatch, build_matchday
+from app.generator.matchday import ScheduledMatch, build_matchday, fingerprint
 from app.generator.season import TEAM_OF_THE_SEASON, table_before_final_day
 from app.generator.world import Club
 from app.live.channel import ChannelDirector
@@ -48,6 +48,7 @@ class MatchdayService:
     ) -> None:
         self.agents = agents  # the agent team, for the featured match only
         self.matches = build_matchday(seed)
+        self.fingerprint = fingerprint(self.matches)  # what the agents' cached runs are for
         self.by_id = {m.match_id: m for m in self.matches}
         self.impacts: dict[str, dict[str, EventImpact]] = {
             m.match_id: event_impacts(m.result.events, m.home.club_id) for m in self.matches

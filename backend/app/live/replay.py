@@ -20,7 +20,7 @@ SLOW_BEFORE_MS = 1_200  # slow motion from just before the shot...
 SLOW_AFTER_MS = 800  # ...to just after it
 # Events that mean the other side had the ball, so the move starts after them.
 POSSESSION_TYPES = {"pass", "shot", "tackle", "possession_change"}
-RESTARTS = {"throw_in", "corner", "free_kick", "goal_kick", "kickoff"}
+RESTARTS = {"throw_in", "corner", "free_kick", "goal_kick", "kickoff", "penalty"}
 
 Kind = Literal["goal", "chance"]
 

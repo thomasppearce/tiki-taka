@@ -8,6 +8,7 @@ import { DURATION, EASE } from "@/lib/motion";
 
 const LABEL: Record<Cut["reason"], string> = {
   goal: "Goal",
+  penalty: "Penalty",
   pressure: "Why we're here",
   check_in: "Meanwhile",
   manual: "Producer's call",

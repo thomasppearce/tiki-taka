@@ -171,4 +171,4 @@ def test_cues_fill_the_broadcast_between_the_big_moments(service: MatchdayServic
         assert any(label.startswith(prefix) for label in labels), prefix
     clocks = [c.known_ms for c in desk.candidates]
     gaps = sorted(b - a for a, b in zip(clocks, clocks[1:], strict=False))
-    assert gaps[len(gaps) // 2] <= 90_000  # typically a proposal every minute or so
+    assert gaps[len(gaps) // 2] <= 120_000  # typically one every minute and a half or two

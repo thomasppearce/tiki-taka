@@ -54,6 +54,7 @@ if TYPE_CHECKING:
 STEP_MS = 1_000
 CUT_COUNTDOWN_MS = 5_000
 GOAL_COUNTDOWN_MS = 3_000
+PENALTY_COUNTDOWN_MS = 10_000  # after a goal on air: its replay first, the penalty is 30 s off
 MIN_DWELL_MS = 75_000  # on a match at least this long before an automatic cut away
 AFTER_GOAL_MS = 60_000  # after a goal on air, stay for the aftermath
 AFTER_FULL_TIME_MS = 45_000  # after the final whistle on air, stay for the reaction
@@ -75,6 +76,9 @@ REPLAY_CHANCE_XG = 0.08  # ...if there was one this good
 STAKE_BASE = 0.15  # a match with nothing at stake still deserves the screen when it's wild
 MAX_STAKE = 1.5
 
+DEAD_BALL_MS = 10_000  # a match whose ball has been dead this long...
+DEAD_BALL_DISCOUNT = 0.3  # ...holds the screen less firmly
+RESTARTS = ("throw_in", "free_kick", "corner", "goal_kick")
 CANDIDATES = 3  # the Director agent chooses between the code's top three
 LATE_DECISION_MS = 15_000  # a decision after the cut can still rewrite its package this long
 STORY_EVERY_MS = 15 * 60_000  # each Watcher retells its match at least this often...
@@ -157,6 +161,17 @@ class ChannelDirector:
             key=lambda g: g[0],
         )
         self.goal_clocks = [clock for clock, _, _ in self.goals]
+        # Every penalty awarded, for "the channel goes to a penalty".
+        self.penalties = sorted(
+            (
+                (e.match_clock_ms, m.match_id, e)
+                for m in service.matches
+                for e in m.result.events
+                if e.type == "penalty"
+            ),
+            key=lambda g: g[0],
+        )
+        self.penalty_clocks = [clock for clock, _, _ in self.penalties]
         self.agents: ChannelAgents | None = None
         self.stories: dict[str, _Story] = {}  # each match's latest Watcher story
         self.story_asked: dict[str, int] = {}
@@ -313,6 +328,19 @@ class ChannelDirector:
                 and (weight >= 1 or (weight > 0 and not aftermath))
             ):
                 self._propose(match_id, "goal", t, GOAL_COUNTDOWN_MS, goal)
+        # A penalty elsewhere: the ground holds its breath, and the channel goes there, if a
+        # goal from it would matter to this whip-around. The kick is half a minute away, so
+        # after a goal on air there's time to let its replay finish first.
+        first = bisect_right(self.penalty_clocks, t - STEP_MS)
+        for _, match_id, award in self.penalties[first : bisect_right(self.penalty_clocks, t)]:
+            busy = s.pending is not None and s.pending.reason in ("goal", "penalty")
+            if match_id == on_air.match_id or busy:
+                continue
+            m = self.service.by_id[match_id]
+            stake, _ = self.lens.stake(m, award.team_id or "", t, self._table(t))
+            if self.lens.kind == "channel" or stake > 0:
+                countdown = PENALTY_COUNTDOWN_MS if aftermath else GOAL_COUNTDOWN_MS
+                self._propose(match_id, "penalty", t, countdown, award)
         if s.pending or aftermath or t - s.on_air.clock_ms < MIN_DWELL_MS or t % 5_000:
             return  # weigh the matches every five seconds once settled
         signals = {x.match_id: x for x in self.signals(t)}
@@ -323,6 +351,11 @@ class ChannelDirector:
             default=None,
         )
         current_score = current.score if current else 0.0
+        dead = self._dead_since(s.on_air.match_id, t)
+        if dead is not None and t - dead >= DEAD_BALL_MS:
+            # A free kick being set up, a substitution: in a whip-around that's the moment to
+            # see what's happening elsewhere.
+            current_score *= DEAD_BALL_DISCOUNT
         settled = t - s.on_air.clock_ms - MIN_DWELL_MS
         margin = CUT_MARGIN * max(0.0, 1 - settled / STALE_MS)
         others = sorted(
@@ -373,7 +406,9 @@ class ChannelDirector:
             proposed_ms=t,
             take_at_ms=t + countdown,
             package=self._package(match_id, reason, t, goal),
-            replay_event_id=goal.event_id if goal else self._chance(match_id, t),
+            replay_event_id=(
+                goal.event_id if goal and goal.type == "goal" else self._chance(match_id, t)
+            ),
         )
         s.version += 1
         candidates = [match_id, *[c for c in (candidates or []) if c != match_id]]
@@ -676,6 +711,20 @@ class ChannelDirector:
             stake_summary=summary,
         )
 
+    def _dead_since(self, match_id: str, t: int) -> int | None:
+        """When the ball went dead in this match (a restart awarded and not yet taken), or
+        None while it is in play."""
+        events = self.service.by_id[match_id].result.events
+        i = bisect_right(self.clocks[match_id], t) - 1
+        while i >= 0:
+            e = events[i]
+            if e.type in ("pass", "shot", "kickoff", "goal", "half_end"):
+                return None
+            if e.type in RESTARTS:
+                return e.match_clock_ms
+            i -= 1
+        return None
+
     def _pressure(self, m: "ScheduledMatch", club_id: str, t: int) -> float:
         impacts = self.service.impacts[m.match_id]
         clocks = self.clocks[m.match_id]
@@ -732,9 +781,35 @@ class ChannelDirector:
                 for e in goals
             ]
 
-        table = self._table(at)
+        # A goal's own table move must count even when the whistle follows within the second.
+        scored = goal is not None and goal.type == "goal"
+        table = self._table(max(at, goal.match_clock_ms + 999) if goal and scored else at)
         at_stake = None
-        if reason == "goal" and goal:
+        if reason == "penalty" and goal:
+            club = service.club(goal.team_id).name
+            why = f"Penalty to {club}: {service.surname(goal.player_id)} to take it."
+            clock_ms = goal.match_clock_ms
+            foul = next(
+                (e for e in m.result.events if e.type == "foul" and e.match_clock_ms == clock_ms),
+                None,
+            )
+            claims.append(
+                Claim(
+                    text=f"Penalty to {club}",
+                    evidence_event_ids=[goal.event_id, *([foul.event_id] if foul else [])],
+                )
+            )
+            stake = next(
+                (
+                    x
+                    for x in table.stakes
+                    if x.match_id == match_id and x.scorer_club_id == goal.team_id
+                ),
+                None,
+            )
+            if stake:
+                at_stake = f"If it goes in: {stake.summary}"
+        elif reason == "goal" and goal:
             scorer = service.surname(goal.player_id)
             club = service.club(goal.team_id).name
             why = f"{scorer} scores for {club} ({_minute(goal.match_clock_ms)})."

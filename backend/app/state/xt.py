@@ -74,6 +74,7 @@ def learn(matches: list[tuple[list[MatchEvent], str]], iterations: int = 60) -> 
                     "goal_kick",
                     "corner",
                     "free_kick",
+                    "penalty",
                     "kickoff",
                     "save",
                     "half_end",

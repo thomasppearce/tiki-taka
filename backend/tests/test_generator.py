@@ -7,7 +7,7 @@ from app.generator.engine import MatchEngine
 from app.generator.matchday import FEATURED_MATCH_ID, build_matchday
 from app.generator.storylines import STORYLINES
 from app.generator.tactics import tactics_for
-from app.generator.validation import validate
+from app.generator.validation import clear_sight_shot_share, validate
 from app.generator.world import build_world
 
 
@@ -126,8 +126,8 @@ def test_offside_is_called_on_the_pass_and_the_defenders_restart() -> None:
             played = events[i - 1]
             assert played.type == "pass" and played.outcome == "fail"
             assert (played.team_id, played.target_player_id) == (e.team_id, e.player_id)
-            restart = next(x for x in events[i + 1 :] if x.type in ("pass", "shot"))
-            assert restart.team_id != e.team_id
+            restart = next((x for x in events[i + 1 :] if x.type in ("pass", "shot")), None)
+            assert restart is None or restart.team_id != e.team_id  # None: flagged at the whistle
     assert offsides > 0
 
 
@@ -156,3 +156,91 @@ def test_tactics_are_deterministic_and_varied() -> None:
     assert tactics_for("ngr", "possession", 2026) != tactics_for("brk", "possession", 2026)
     for league in build_world():
         assert len({club.tactics.style for club in league.clubs}) >= 4
+
+
+def test_the_scripted_goals_have_their_scorers_and_the_winner_comes_at_the_death() -> None:
+    """The story names its scorers (they are kept on the pitch until they score) and the
+    title and the drop are settled in stoppage time."""
+    matches = {m.match_id: m for m in build_matchday()}
+
+    def scorers(match_id: str) -> list[str]:
+        m = matches[match_id]
+        names = {p.player_id: p.name.split()[-1] for c in (m.home, m.away) for p in c.squad}
+        return [names[e.player_id or ""] for e in m.result.events if e.type == "goal"]
+
+    assert scorers(FEATURED_MATCH_ID) == ["Marlow", "Desai", "Desai"]
+    assert scorers("m_l1_2") == ["Ambrose"] and scorers("m_l1_3") == ["Radcliffe"]
+    winner = [e for e in matches[FEATURED_MATCH_ID].result.events if e.type == "goal"][-1]
+    assert winner.match_clock_ms > 90 * 60_000
+
+
+def test_forwards_shoot_when_through_on_goal() -> None:
+    """Through on goal with only the keeper to beat, most players shoot (a viewer once saw
+    them pass it up); across the day, at least two in three do."""
+    shares = [clear_sight_shot_share(m.result) for m in build_matchday()]
+    assert statistics.mean(shares) >= 0.6, shares
+
+
+def test_restarts_are_taken_without_being_challenged() -> None:
+    """Opponents stand back at free kicks and corners, and nobody challenges a restart before
+    it is played: every restart's next action is the restarting side's pass or shot."""
+    for m in build_matchday():
+        events = m.result.events
+        for i, e in enumerate(events):
+            if e.type not in ("free_kick", "corner", "throw_in", "goal_kick"):
+                continue
+            nxt = next(
+                (
+                    x
+                    for x in events[i + 1 :]
+                    if x.type in ("pass", "shot", "foul", "tackle", "half_end", "goal")
+                ),
+                None,
+            )
+            if nxt is not None and nxt.type in ("half_end", "goal"):
+                continue  # the half ended before it was taken
+            if nxt is not None and nxt.type not in ("pass", "shot"):
+                raise AssertionError(f"{m.match_id}: {nxt.type} before {e.type} {e.event_id}")
+            assert nxt is None or nxt.team_id == e.team_id, (m.match_id, e.event_id)
+            if e.type in ("free_kick", "corner") and nxt:
+                # Just before it is taken (the taker plays it within a second of taking it);
+                # once it's taken they may close in.
+                frame = m.result.frames.frame_at(nxt.match_clock_ms - 1_500)
+                ball = (frame.ball.x / 100 * 105, frame.ball.y / 100 * 68)
+                for p in frame.players:
+                    if p.team_id != e.team_id:
+                        gap = math.hypot(p.x / 100 * 105 - ball[0], p.y / 100 * 68 - ball[1])
+                        # They walk back toward 9.15 m: near the mark, never over the ball.
+                        assert gap > 7, (m.match_id, e.event_id, p.player_id, gap)
+
+
+def test_a_foul_in_the_box_is_a_penalty() -> None:
+    """No free kick is ever given inside the box it's taken toward: a foul there is a penalty,
+    taken from the spot with everyone else outside the area. Matches whose goals are all
+    written by the story have none (defenders there never risk one)."""
+    penalties = 0
+    for m in build_matchday():
+        events = m.result.events
+        for i, e in enumerate(events):
+            if e.type not in ("free_kick", "penalty") or not e.location:
+                continue
+            home = e.team_id == m.home.club_id
+            x, y = e.location.x / 100 * 105, e.location.y / 100 * 68
+            to_goal = 105 - x if home else x
+            in_box = to_goal < 16.5 and abs(y - 34) < 20.16
+            if e.type == "free_kick":
+                assert not in_box, (m.match_id, e.event_id)
+                continue
+            penalties += 1
+            assert m.storyline.finishing != (0.0, 0.0), m.match_id
+            kick = next(x for x in events[i + 1 :] if x.type == "shot")
+            assert kick.player_id == e.player_id  # the taker named takes it
+            frame = m.result.frames.frame_at(kick.match_clock_ms)
+            keeper = next(c for c in (m.home, m.away) if c.club_id != e.team_id).squad[0]
+            for p in frame.players:
+                if p.player_id in (e.player_id, keeper.player_id):
+                    continue
+                px, py = p.x / 100 * 105, p.y / 100 * 68
+                depth = 105 - px if home else px
+                assert not (depth < 15.5 and abs(py - 34) < 19), (m.match_id, p.player_id)
+    assert penalties > 0

@@ -6,6 +6,8 @@ relegation place are written around their goals (app/generator/season.py): North
 Millbrook. The rest play free storylines, so the race for fourth is decided on the pitch.
 """
 
+import hashlib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 
@@ -17,9 +19,9 @@ FEATURED_MATCH_ID = "m_l1_1"
 
 # (home, away, storyline), by club short code.
 FIXTURES: tuple[tuple[str, str, str], ...] = (
-    ("NGR", "WMA", "second_half_comeback"),  # 1-0 at 23', 1-1 at 71', 1-2 from 86' (stoppage)
+    ("NGR", "WMA", "second_half_comeback"),  # 1-0 at 23', 1-1 at 71', 1-2 in stoppage time
     ("BRK", "HVT", "late_away_winner"),  # 0-1 around 78'
-    ("CRB", "MBT", "early_home_goal_holds"),  # 1-0 around 31'
+    ("CRB", "MBT", "early_home_goal_holds"),  # 1-0 around 31' (Radcliffe)
     ("TDR", "IVU", "late_collapse"),
     ("KRC", "SCT", "balanced"),
     ("PHA", "ASM", "end_to_end"),
@@ -66,3 +68,14 @@ def build_matchday(seed: int = 2026) -> tuple[ScheduledMatch, ...]:
             )
         )
     return tuple(matches)
+
+
+def fingerprint(matches: Sequence[ScheduledMatch]) -> str:
+    """A short hash of the day's key events. Anything cached against the matchday (the agents'
+    runs) is only reused while this is unchanged, so a change to the engine retires it."""
+    digest = hashlib.sha1()
+    for m in matches:
+        for e in m.result.events:
+            if e.type in ("goal", "shot", "card", "penalty", "substitution"):
+                digest.update(f"{e.event_id}:{e.type}:{e.match_clock_ms}:{e.player_id}".encode())
+    return digest.hexdigest()[:12]

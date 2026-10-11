@@ -8,7 +8,7 @@ from app.models.common import Contract, UnitInterval
 from app.models.matchday import PlayerRef, Role
 from app.models.proposals import Claim
 
-CutReason = Literal["kickoff", "goal", "pressure", "check_in", "manual"]
+CutReason = Literal["kickoff", "goal", "penalty", "pressure", "check_in", "manual"]
 DecidedBy = Literal["code", "director", "producer"]
 
 

@@ -45,8 +45,8 @@ def test_stakes_say_what_a_goal_would_change(service: MatchdayService, at_minute
 
 
 def test_the_table_endpoint(client: TestClient, at_minute: Pin) -> None:
-    at_minute(80)
+    at_minute(82)
     table = LeagueTable.model_validate(client.get("/api/table").json())
     assert len(table.rows) == 20
-    assert table.rows[0].club.short == "HVT"  # Halvern scored at 78'
+    assert table.rows[0].club.short == "HVT"  # Halvern scored at 80'
     assert all(s.match_clock_ms <= table.clock_ms for s in table.swings)

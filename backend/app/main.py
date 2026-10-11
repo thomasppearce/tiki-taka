@@ -57,6 +57,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
     service = MatchdayService(agents=runner)
     service.channel.agents = channel
+    # Cached agent runs are only reused for the same simulated matchday.
+    for cached in (runner, channel):
+        if cached:
+            cached.matchday = service.fingerprint
     app.state.matchday = service
     yield
     if channel:

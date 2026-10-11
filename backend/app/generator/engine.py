@@ -64,17 +64,35 @@ SUPPORT_BLEND = 0.6  # how strongly the two nearest teammates move to offer the 
 SETTLE_MS = 1_500  # a team reshapes for attack or defence once a possession has settled
 OTHER: dict[Side, Side] = {"home": "away", "away": "home"}
 
-Restart = Literal["kickoff", "throw", "goal_kick", "corner", "free_kick"]
+Restart = Literal["kickoff", "throw", "goal_kick", "corner", "free_kick", "penalty"]
 NO_OFFSIDE_FROM: tuple[Restart, ...] = ("throw", "goal_kick", "corner")
 # How long the ball is dead before each restart is taken (ms). With these, about a third of the
 # match is stoppages, as in real football (the ball is in play for roughly 55-60 minutes).
 STOPPAGE_MS: dict[Restart, tuple[int, int]] = {
-    "throw": (10_000, 18_000),
-    "goal_kick": (18_000, 28_000),
+    "throw": (9_000, 17_000),
+    "goal_kick": (17_000, 27_000),
     "corner": (25_000, 35_000),
-    "free_kick": (18_000, 32_000),
+    "free_kick": (20_000, 32_000),  # within shooting or crossing range: the wall, the delivery
+    "penalty": (35_000, 55_000),  # the award, the protests, the keeper, the run-up
 }
-SUBSTITUTION_MS = (12_000, 20_000)  # added to the stoppage it is made in
+PENALTY_SPOT_M = 11.0
+PENALTY_GOAL = 0.76  # how often a penalty is scored, for a taker of average finishing
+# A foul by a defender in their own box is a penalty, so defenders there rarely risk one: a
+# challenge in the box is a foul this often (elsewhere 0.4): about 0.3 penalties a match.
+BOX_FOUL_SHARE = 0.06
+QUICK_FREE_KICK_MS = (9_000, 16_000)  # anywhere else, a free kick is taken quickly
+DANGEROUS_FREE_KICK_M = 40  # this close to the goal it's played toward, it's set up
+SUBSTITUTION_MS = (12_000, 20_000)  # added once to the stoppage changes are made in
+LONG_RANGE = 0.6
+TACKLE_RATE = 0.34  # challenges per second by a defender within reach of the carrier
+CLEAR_SIGHT_M = 20  # through on goal this close with nobody in the way: a forward shoots
+OWN_THIRD_M = 35  # every side closes down the ball this close to its own goal
+MARK_M = 26  # attackers this close to a side's goal line are picked up by a defender
+MARK_GAP_M = 1.5  # ...who stands this far goal-side of them
+RUNNER_M = 45  # a run in behind is tracked once the runner is in a side's own half
+RETREAT_M: dict[str, float] = {"free_kick": 9.15, "corner": 9.15, "throw": 2.0, "penalty": 9.15}
+MARK_URGENCY = 0.55  # a marker keeps pace with their man; the press and the cover do the sprinting
+GOAL_SIDE = 0.7  # how far defenders near their own goal tuck in toward the ball-to-goal line
 # Each restart is recorded as an event when it is awarded, so viewers can tell a stoppage apart
 # from open play.
 RESTART_EVENT: dict[Restart, EventType] = {
@@ -82,6 +100,7 @@ RESTART_EVENT: dict[Restart, EventType] = {
     "goal_kick": "goal_kick",
     "corner": "corner",
     "free_kick": "free_kick",
+    "penalty": "penalty",
 }
 
 
@@ -314,6 +333,10 @@ class MatchEngine:
         self.next_action_ms = 0
         self.carry_from = (L / 2, W / 2)
         self.press_on = True  # whether the defending side presses this possession
+        self.subs_this_stoppage = False
+        self.unchallenged_until_ms = 0
+        self.must_release = False
+        self.throw_taken = False
         self.dead_until_ms = 0
         self.restart: tuple[Side, Restart] | None = None  # who takes the next restart, and what
         self.restart_taker: _PlayerState | None = None
@@ -406,6 +429,30 @@ class MatchEngine:
                 return beat
         return None
 
+    def _may_score(self, h: _PlayerState, beat: Beat) -> bool:
+        """Whether `h` may score a scripted goal: its named scorer, or anyone when there is none
+        (or they have gone off). Anyone else's chances come and go as they would."""
+        if not beat.player_number or beat.player_number == h.player.number:
+            return True
+        return not any(p.player.number == beat.player_number for p in self._team(h.side))
+
+    def _finding_space(self, p: _PlayerState) -> bool:
+        beat = self._forcing(p.side, "goal")
+        return beat is not None and beat.player_number == p.player.number
+
+    def _ball_in_own_box(self, side: Side) -> bool:
+        """Whether the ball (where a foul would be given) is in `side`'s own penalty area."""
+        x, y = self._to_team(side, *self.ball)
+        return x < 16.5 and abs(y - 34) < 20.16
+
+    def _due_scorer(self, p: _PlayerState) -> bool:
+        """Named for a scripted goal not yet scored: kept on the pitch (no substitution, no
+        booking) until it is, so the story's scorer is the one who scores."""
+        return any(
+            b.kind == "goal" and b.side == p.side and b.player_number == p.player.number
+            for b in self.pending_beats
+        )
+
     def _team(self, side: Side) -> list[_PlayerState]:
         return [p for p in self.players if p.side == side and p.on_pitch]
 
@@ -479,10 +526,15 @@ class MatchEngine:
         self.restart_spot = spot
         self.dead_until_ms = self.t + dead_ms
         self.restart = (side, kind)
+        self.subs_this_stoppage = False
         team = self._team(side)
         keeper = next((p for p in team if p.slot == 0), None)
         if kind == "goal_kick" and keeper:
             self.restart_taker = keeper
+        elif kind == "penalty":
+            self.restart_taker = max(
+                [p for p in team if p.slot != 0] or team, key=lambda p: p.player.finishing
+            )
         else:
             outfield = [p for p in team if p.slot != 0] or team
             self.restart_taker = min(
@@ -501,6 +553,13 @@ class MatchEngine:
         low, high = STOPPAGE_MS[kind]
         return int(self.rng.uniform(low, high))
 
+    def _free_kick_ms(self, side: Side, spot: tuple[float, float]) -> int:
+        """How long a free kick to `side` takes: set up near goal, taken quickly elsewhere."""
+        x, y = self._to_team(side, *spot)
+        if math.hypot(L - x, 34 - y) < DANGEROUS_FREE_KICK_M:
+            return self._stoppage("free_kick")
+        return int(self.rng.uniform(*QUICK_FREE_KICK_MS))
+
     def _give(self, player: _PlayerState, hold_ms: int | None = None) -> None:
         if self.possession != player.side:
             self.offside_applies = True
@@ -512,6 +571,8 @@ class MatchEngine:
         self.holder = player
         self.flight = None
         self.possession = player.side
+        self.must_release = False
+        self.throw_taken = False
         if hold_ms is None:
             pressure = self._pressure_on(player)
             tempo = self._tactics(player.side).tempo
@@ -616,8 +677,16 @@ class MatchEngine:
             self._kickoff(side)
             return
         self.ball = spot
+        if kind == "penalty":
+            self._give(taker, hold_ms=60_000)
+            self._shoot(taker, PENALTY_SPOT_M, 0.0, PENALTY_GOAL, penalty=True)
+            return
         self.offside_applies = kind not in NO_OFFSIDE_FROM
-        self._give(taker, hold_ms=700 if kind in ("throw", "free_kick") else 1_000)
+        hold = 700 if kind in ("throw", "free_kick") else 1_000
+        self._give(taker, hold_ms=hold)
+        self.unchallenged_until_ms = self.t + hold  # nobody may challenge before it's played
+        self.must_release = True  # a throw-in (or any restart) is played, never carried
+        self.throw_taken = kind == "throw"  # and a throw-in can't be shot
 
     # --- Decisions ----------------------------------------------------------------------------
 
@@ -631,20 +700,28 @@ class MatchEngine:
         if goal_d < 30 and angle < 1.1:
             shot_p = _clamp(xg * 1.1, 0, 0.55) * (1 + 0.3 * self._advantage(h.side))
             if goal_d > 16 and angle < 0.7:
-                shot_p += 0.07  # a strike from range when the space opens up
+                shot_p += 0.04  # a strike from range when the space opens up
+            if goal_d > 18:
+                shot_p *= LONG_RANGE  # from distance, most sides keep the ball and work it closer
             # Defenders between the shooter and goal close the shooting lane.
-            shot_p *= 0.7 ** self._defenders_in_cone(h)
-            if forcing:  # a scripted goal is due: work it into the box, then finish it
-                named = not forcing.player_number or forcing.player_number == h.player.number
-                shot_p = (0.9 if named else 0.35) if goal_d < 26 else 0.0
-        if self.rng.random() < shot_p:
+            cone = self._defenders_in_cone(h)
+            shot_p *= 0.7**cone
+            if cone == 0 and goal_d < CLEAR_SIGHT_M:
+                # Through with only the keeper to beat: nobody passes that up.
+                shot_p = max(shot_p, _clamp(0.45 + 2.2 * xg, 0, 0.95))
+            if forcing and self._may_score(h, forcing):
+                # A scripted goal is due and this is its scorer: work it into the box, finish it.
+                shot_p = 0.9 if goal_d < 26 else 0.0
+        if self.rng.random() < shot_p and not (self.must_release and self.throw_taken):
             self._shoot(h, goal_d, angle, xg)
             return
-        if self._pass(h):
+        if self._pass(h) or (self.must_release and self._pass(h, nearest=True)):
             return
         self.next_action_ms = self.t + int(self.rng.uniform(400, 900))  # keep the ball
 
-    def _pass(self, h: _PlayerState) -> bool:
+    def _pass(self, h: _PlayerState, nearest: bool = False) -> bool:
+        """Play the best pass on, or with `nearest` (a restart that must be released) simply
+        the nearest teammate. False if there is nobody to play it to."""
         side = h.side
         tactics = self._tactics(side)
         mates = [p for p in self._team(side) if p is not h]
@@ -671,7 +748,7 @@ class MatchEngine:
                 lead = 0.45 if m.speed > 3 else 0.0
                 tx, ty = m.x + m.vx * lead, m.y + m.vy * lead
             dist = math.hypot(tx - bx, ty - by)
-            if dist < 5 or dist > 48:
+            if (dist < 5 and not nearest) or dist < 1.5 or dist > 48:
                 continue
             lane = min((_seg_dist(o.x, o.y, bx, by, tx, ty) for o in opponents), default=10)
             open_space = min((math.hypot(o.x - tx, o.y - ty) for o in opponents), default=10)
@@ -691,6 +768,8 @@ class MatchEngine:
                 score -= 2 + 6 * min(beyond, 1.5) + 1.5 * self.offsides[side]
             if forcing and forcing.player_number == m.player.number:
                 score += 12
+            if nearest:
+                score = -dist  # just get it away
             if best is None or score > best[0]:
                 best = (score, m, tx, ty, lane, open_space)
         if best is None:
@@ -716,7 +795,7 @@ class MatchEngine:
             spot = (target.x, target.y)
             self._emit("offside", target, side, spot, outcome="fail")
             self.offsides[side] += 1
-            self._set_restart(OTHER[side], "free_kick", spot, self._stoppage("free_kick"))
+            self._set_restart(OTHER[side], "free_kick", spot, self._free_kick_ms(OTHER[side], spot))
             return True
         # The final third is where possession is hardest to keep, more so when marked tightly.
         final_third = self._to_team(side, tx, ty)[0] > 70
@@ -785,17 +864,27 @@ class MatchEngine:
         u = _clamp(((p.x - ax) * dx + (p.y - ay) * dy) / length2, 0.2, 1)
         return ax + u * dx, ay + u * dy
 
-    def _shoot(self, h: _PlayerState, goal_d: float, angle: float, xg: float) -> None:
+    def _shoot(
+        self, h: _PlayerState, goal_d: float, angle: float, xg: float, penalty: bool = False
+    ) -> None:
         side = h.side
         self.offside_applies = True
         gx, gy = self._from_team(side, L, 34 + self.rng.uniform(-3.5, 3.5))
         forcing = self._forcing(side, "goal")
         finishing = self.story.finishing[0 if side == "home" else 1]
-        if forcing and goal_d < 26:
+        if forcing and goal_d < 26 and self._may_score(h, forcing):
             outcome: Outcome = "goal"
+        elif penalty:
+            p_goal = _clamp(PENALTY_GOAL + 0.2 * (h.player.finishing - 0.5), 0.6, 0.9)
+            roll = self.rng.random()
+            outcome = (
+                "goal"
+                if roll < p_goal
+                else "saved" if roll < p_goal + (1 - p_goal) * 0.7 else "off_target"
+            )
         else:
             # Storyline beats supply the scripted goals, so natural conversion is kept modest.
-            p_goal = xg * (0.5 + 0.6 * h.player.finishing) * finishing * 0.45
+            p_goal = xg * (0.5 + 0.6 * h.player.finishing) * finishing * 0.55
             roll = self.rng.random()
             outcome = (
                 "goal"
@@ -858,17 +947,30 @@ class MatchEngine:
             fly(*self._from_team(side, L - 0.2, _clamp(wide, 20, 48)), None)
 
     def _try_tackle(self, h: _PlayerState) -> bool:
+        if self.must_release and self.t < self.unchallenged_until_ms + 2_000:
+            return False  # a restart is being taken: nobody challenges until it's played
         if h.slot == 0 and self._to_team(h.side, h.x, h.y)[0] < 16.5:
             return False  # a keeper with the ball in their own box is not challenged
         side = OTHER[h.side]
         tackler = min(self._team(side), key=lambda o: math.hypot(o.x - h.x, o.y - h.y))
         if math.hypot(tackler.x - h.x, tackler.y - h.y) > 1.5:
             return False
-        rate = 0.75 * (0.7 + 0.3 * tackler.player.work_rate) * (1 + 0.15 * self._advantage(side))
+        # Per second within reach. Defenders now stay tight (marking, closing down), so most of
+        # that time is spent containing, not diving in.
+        rate = (
+            TACKLE_RATE
+            * (0.7 + 0.3 * tackler.player.work_rate)
+            * (1 + 0.15 * self._advantage(side))
+        )
         red_beat = self._forcing(side, "red_card")
         if not red_beat and self.rng.random() > rate * DT:
             return False
-        if red_beat or self.rng.random() < 0.4:
+        # In their own box defenders rarely risk a foul (a penalty); in a match the story has
+        # already written all the goals of, they never do.
+        scripted = self.story.finishing == (0.0, 0.0)
+        in_box = self._ball_in_own_box(side)
+        foul_share = (0.0 if scripted else BOX_FOUL_SHARE) if in_box else 0.4
+        if red_beat or self.rng.random() < foul_share:
             self._foul(tackler, h, red_beat)
             return True
         self._emit("tackle", tackler, side, (tackler.x, tackler.y), outcome="success")
@@ -886,14 +988,20 @@ class MatchEngine:
         if red_beat:
             card = "red"
             self.pending_beats.remove(red_beat)
-        elif self.rng.random() < 0.13:
+        elif self.rng.random() < 0.13 and not self._due_scorer(fouler):
             fouler.yellows += 1
             card = "red" if fouler.yellows == 2 else "yellow"
         if card:
             self._emit("card", fouler, fouler.side, (fouler.x, fouler.y), card_color=card)
             if card == "red":
                 fouler.on_pitch = False
-        self._set_restart(victim.side, "free_kick", self.ball, self._stoppage("free_kick"))
+        if self._ball_in_own_box(fouler.side):
+            spot = self._from_team(victim.side, L - PENALTY_SPOT_M, 34.0)
+            self._set_restart(victim.side, "penalty", spot, self._stoppage("penalty"))
+            return
+        self._set_restart(
+            victim.side, "free_kick", self.ball, self._free_kick_ms(victim.side, self.ball)
+        )
         self.restart_taker = victim
 
     # --- Substitutions -----------------------------------------------------------------------
@@ -904,7 +1012,12 @@ class MatchEngine:
             if not due or self.t < due[0] or self.t >= self.dead_until_ms:
                 continue  # changes are made while the ball is dead
             due.pop(0)
-            outfield = [p for p in self._team(side) if p.slot != 0 and p is not self.restart_taker]
+            # A player with a scripted goal still to score stays on until they have scored it.
+            outfield = [
+                p
+                for p in self._team(side)
+                if p.slot != 0 and p is not self.restart_taker and not self._due_scorer(p)
+            ]
             bench = [b for b in self.bench[side] if b.role != "gk"]
             if not outfield or not bench:
                 continue
@@ -912,8 +1025,9 @@ class MatchEngine:
             on = next((b for b in bench if b.role == off.player.role), bench[0])
             self.bench[side].remove(on)
             self._emit("substitution", off, side, (off.x, off.y), target=on)
-            if self.restart and self.restart[1] != "kickoff":
+            if self.restart and self.restart[1] != "kickoff" and not self.subs_this_stoppage:
                 self.dead_until_ms += int(self.rng.uniform(*SUBSTITUTION_MS))
+                self.subs_this_stoppage = True  # a double or triple change is made at once
             off.player = on
             off.distance = 0.0
             off.run_until_ms = 0
@@ -1039,16 +1153,54 @@ class MatchEngine:
     ) -> tuple[_PlayerState | None, _PlayerState | None]:
         """Who closes down the carrier, and who covers behind them, if this side presses now."""
         tactics = self._tactics(side)
-        if not self.press_on or self.flight or self._stopped():
+        if self.flight or self._stopped():
             return None, None
-        if ball_x > 35 + 70 * tactics.press_height:
-            return None, None  # the ball is beyond where this side starts pressing
+        # A side's pressing style decides whether it hunts the ball high up the pitch; near its
+        # own goal every side closes the carrier down, a low block included.
+        own_third = ball_x < OWN_THIRD_M
+        if not own_third and (not self.press_on or ball_x > 35 + 70 * tactics.press_height):
+            return None, None
         bx, by = self.ball
         outfield = [p for p in self._team(side) if p.slot != 0]
         by_distance = sorted(outfield, key=lambda p: math.hypot(p.x - bx, p.y - by))
-        if not by_distance or math.hypot(by_distance[0].x - bx, by_distance[0].y - by) > 16:
+        reach = 24 if own_third else 16
+        if not by_distance or math.hypot(by_distance[0].x - bx, by_distance[0].y - by) > reach:
             return None, None
         return by_distance[0], (by_distance[1] if len(by_distance) > 1 else None)
+
+    def _box_marks(
+        self, side: Side, busy: tuple[_PlayerState | None, ...], runners_only: bool = False
+    ) -> dict[int, tuple[float, float]]:
+        """Near their own goal, defenders pick up the attackers around the box (nearest first)
+        and stand goal-side of them, so a pass into the box finds a marker, not space. With the
+        ball further away they only track the runners making for the space behind them."""
+        defenders = [p for p in self._team(side) if self._role(p) == "def" and p not in busy]
+        reach = RUNNER_M if runners_only else MARK_M
+        threats = [
+            o
+            for o in self._team(OTHER[side])
+            if o.slot != 0
+            and o is not self.holder
+            and self._to_team(side, o.x, o.y)[0] < reach
+            and (not runners_only or o.running(self.t))
+            # A scripted goal is due: its scorer finds the space the story needs.
+            and not self._finding_space(o)
+        ]
+        pairs = sorted(
+            ((math.hypot(d.x - o.x, d.y - o.y), id(d), d, o) for d in defenders for o in threats),
+            key=lambda pair: pair[:2],
+        )
+        marks: dict[int, tuple[float, float]] = {}
+        taken: set[int] = set()
+        for _, _, d, o in pairs:
+            if id(d) in marks or id(o) in taken:
+                continue
+            ox, oy = self._to_team(side, o.x, o.y)
+            to_goal = math.hypot(ox, 34 - oy) or 1.0
+            gx, gy = ox - ox / to_goal * MARK_GAP_M, oy + (34 - oy) / to_goal * MARK_GAP_M
+            marks[id(d)] = self._from_team(side, gx, gy)
+            taken.add(id(o))
+        return marks
 
     def _support_spots(self, side: Side) -> dict[int, tuple[float, float]]:
         """The two teammates nearest the carrier offer angles: one short, one ahead (team frame)."""
@@ -1114,6 +1266,12 @@ class MatchEngine:
             reference = _back_line(self.clubs[side].formation)
             line = self._update_line(side, shaped, tbx)
             presser, cover = (None, None) if attacking else self._press_assignments(side, tbx)
+            # Near goal defenders mark everyone around the box; further out, only the runners.
+            marks = (
+                {}
+                if attacking
+                else self._box_marks(side, (presser, cover), runners_only=tbx >= OWN_THIRD_M)
+            )
             offside_line = self._offside_line(side) if attacking else L
             support = self._support_spots(side) if attacking else {}
             for p in team:
@@ -1125,6 +1283,38 @@ class MatchEngine:
                     taker = kicking and p is self._kickoff_taker(side)
                     out[id(p)] = (x, y, 0.5 if taker else 0.35)
                     continue
+                if dead and self.restart and self.restart[1] == "penalty" and self.restart_spot:
+                    taking = self.restart[0]
+                    keeping = OTHER[taking]
+                    if p is self.restart_taker:
+                        out[id(p)] = (*self.restart_spot, 0.5)
+                        continue
+                    if role == "gk" and side == keeping:
+                        out[id(p)] = (*self._from_team(keeping, 0.5, 34.0), 0.5)
+                        continue
+                    if role != "gk":
+                        # Everyone else waits outside the area and the arc, where they are.
+                        x, y = self._to_team(keeping, p.x, p.y)
+                        edge = 21.0 if abs(y - 34) < 9.5 else 17.5
+                        tx = max(x, edge) if abs(y - 34) < 22 else x
+                        out[id(p)] = (*self._from_team(keeping, tx, y), 0.35)
+                        continue
+                if dead and self.restart_spot and self.restart and self.restart[0] != side:
+                    # The laws: opponents stand back from a free kick or corner (9.15 m) and
+                    # from a throw-in (2 m). They walk there; nobody is placed.
+                    gap = RETREAT_M.get(self.restart[1], 0.0)
+                    rx, ry = self.restart_spot
+                    away = math.hypot(p.x - rx, p.y - ry)
+                    if away < gap:
+                        if away < 0.1:
+                            gx, _ = self._from_team(side, 0.0, 34.0)
+                            ux, uy = (1.0 if gx > rx else -1.0), 0.0
+                        else:
+                            ux, uy = (p.x - rx) / away, (p.y - ry) / away
+                        tx = _clamp(rx + ux * (gap + 0.5), 0.5, L - 0.5)
+                        ty = _clamp(ry + uy * (gap + 0.5), 0.5, W - 0.5)
+                        out[id(p)] = (tx, ty, 0.35)  # a walk
+                        continue
                 if dead and p is self.restart_taker and self.restart_spot:
                     hurry = 0.8 if self.t > self.dead_until_ms else 0.6
                     out[id(p)] = (*self.restart_spot, hurry)
@@ -1145,6 +1335,9 @@ class MatchEngine:
                     continue
                 if p is cover:
                     out[id(p)] = (*self._from_team(side, max(tbx - 6, 2), tby), 0.7)
+                    continue
+                if id(p) in marks:
+                    out[id(p)] = (*marks[id(p)], MARK_URGENCY)
                     continue
                 if attacking and p.running(self.t):
                     if self.t < p.run_burst_ms:  # shape the run along the line, still onside
@@ -1176,6 +1369,13 @@ class MatchEngine:
                         + (sy - 34) * (0.85 - 0.25 * tactics.compactness)
                         + (tby - 34) * (0.2 + 0.15 * tactics.compactness)
                     )
+                    if tbx < OWN_THIRD_M and role == "def":
+                        # Near their own goal defenders squeeze in and get goal-side: onto the
+                        # line from the ball to the middle of the goal, as much as their shape
+                        # allows, so a way through has to be earned.
+                        goal_side = 34 + (tby - 34) * _clamp(fx / max(tbx, 1.0), 0, 1)
+                        squeeze = GOAL_SIDE * (1 - tbx / OWN_THIRD_M) + 0.25
+                        fy += (goal_side - fy) * _clamp(squeeze, 0, GOAL_SIDE)
                     urgency = 0.34 + 0.12 * p.player.work_rate
                     if px - fx > 12:  # caught upfield: a recovery run, a sprint if badly exposed
                         urgency = max(p.transition_effort, 0.9 if px - fx > 28 else 0.0)

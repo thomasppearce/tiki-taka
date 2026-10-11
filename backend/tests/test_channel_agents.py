@@ -118,11 +118,12 @@ def test_watchers_tell_the_story_on_air(service: MatchdayService) -> None:
 
 def test_a_goal_asks_its_watcher_for_a_new_story(service: MatchdayService) -> None:
     director, agents = director_with_agents(service)
-    director.sync(77 * 60_000)
+    goal = next(e for e in service.by_id["m_l1_2"].result.events if e.type == "goal")  # Halvern
+    start = goal.match_clock_ms // 60_000 * 60_000 - 60_000
+    director.sync(start)
     agents.stories.clear()
-    for t in range(77 * 60_000, 80 * 60_000, 1_000):  # Halvern score at 78'
+    for t in range(start, start + 3 * 60_000, 1_000):
         director.sync(t)
-    goal = next(e for e in service.by_id["m_l1_2"].result.events if e.type == "goal")
     assert any(m == "m_l1_2" and goal.event_id in key for m, key, _ in agents.stories)
 
 
@@ -130,7 +131,7 @@ def test_the_checker_holds_stories_and_decisions_to_their_briefs(
     service: MatchdayService,
 ) -> None:
     director, agents = director_with_agents(service)
-    director.sync(80 * 60_000)
+    director.sync(82 * 60_000)  # Halvern have scored (80')
     brief = next(b for m, _, b in agents.stories if m == "m_l1_2")
     assert brief.scores[-1] == (0, 1)
     good = StoryUpdate(story="Halvern Town lead 1-0.", claims=claim_from(brief))
@@ -193,9 +194,9 @@ def test_the_checker_knows_how_the_lead_changed_hands(service: MatchdayService) 
         claims=[],
     )
     assert "back in front" in check_decision(slip, [decider])[0]
-    swings = match_brief(service, "m_l1_6", 70 * 60_000, None)  # 1-0, 1-1, then 2-1 at 67'
-    back = StoryUpdate(story="Porthallow Athletic are back in front, 2-1.", claims=[])
+    swings = match_brief(service, "m_l1_9", 66 * 60_000, None)  # 0-1, 1-1, then 1-2 at 65'
+    back = StoryUpdate(story="Redstack Rovers are back in front, 2-1.", claims=[])
     assert check_story(back, swings) == []
-    one_way = match_brief(service, "m_l1_10", 70 * 60_000, None)  # Elmswick were never caught
-    level = StoryUpdate(story="Elmswick Rangers lead 3-1 after an early equaliser.", claims=[])
+    one_way = match_brief(service, "m_l1_8", 70 * 60_000, None)  # Mistral Bay were never caught
+    level = StoryUpdate(story="Mistral Bay lead 1-0 after an early equaliser.", claims=[])
     assert any("equaliser" in p for p in check_story(level, one_way))

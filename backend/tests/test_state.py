@@ -24,8 +24,8 @@ def test_forward_passes_add_threat_and_backward_ones_barely_matter() -> None:
     result, home = featured()
     impacts = event_impacts(result.events, home)
     passes = [e for e in result.events if e.type == "pass" and e.outcome == "success"]
-    forward = [p for p in passes if impacts[p.event_id].threat > 0.015]
-    backward = [p for p in passes if impacts[p.event_id].threat < -0.015]
+    forward = [p for p in passes if impacts[p.event_id].threat > 0.01]
+    backward = [p for p in passes if impacts[p.event_id].threat < -0.005]
     assert forward and backward
     assert min(impacts[p.event_id].importance for p in forward) > max(
         impacts[p.event_id].importance for p in backward

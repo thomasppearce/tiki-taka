@@ -99,7 +99,7 @@ export interface Cut {
   cut_id: string;
   match_id: string;
   clock_ms: number;
-  reason: "kickoff" | "goal" | "pressure" | "check_in" | "manual";
+  reason: "kickoff" | "goal" | "penalty" | "pressure" | "check_in" | "manual";
   decided_by: "code" | "director" | "producer";
   package: CutPackage;
   /**
@@ -157,7 +157,7 @@ export interface Claim {
  */
 export interface PendingCut {
   match_id: string;
-  reason: "kickoff" | "goal" | "pressure" | "check_in" | "manual";
+  reason: "kickoff" | "goal" | "penalty" | "pressure" | "check_in" | "manual";
   proposed_ms: number;
   take_at_ms: number;
   package: CutPackage;
@@ -547,6 +547,7 @@ export interface MatchEvent {
     | "goal_kick"
     | "corner"
     | "free_kick"
+    | "penalty"
     | "kickoff"
     | "half_end";
   team_id: string | null;

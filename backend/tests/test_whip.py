@@ -19,11 +19,13 @@ def test_fantasy_points_have_receipts(service: MatchdayService) -> None:
     assert desai.points == 2 + 4 + 4
     goals = [i for i in desai.items if i.label == "Goal"]
     assert len(goals) == 2 and all(len(i.event_ids) == 1 for i in goals)
-    sato = service.fantasy.score("p_wma_08", FULL_TIME)  # set up the equaliser
-    assist = next(i for i in sato.items if i.label == "Assist")
-    assert assist.points == 3 and goals[0].event_ids[0] in assist.event_ids
-    keeper = service.fantasy.score("p_dhu_01", FULL_TIME)
-    assert {i.label for i in keeper.items} >= {"Clean sheet", "12 saves"}
+    creator = service.fantasy.score("p_ivu_07", FULL_TIME)  # Kowalczyk-Reid: two assists
+    assists = [i for i in creator.items if i.label == "Assist"]
+    assert len(assists) == 2 and all(i.points == 3 and len(i.event_ids) == 2 for i in assists)
+    goal_ids = {e.event_id for e in service.by_id["m_l1_4"].result.events if e.type == "goal"}
+    assert all(i.event_ids[1] in goal_ids for i in assists)  # the pass, then the goal it made
+    keeper = service.fantasy.score("p_hvt_01", FULL_TIME)  # the champions' keeper
+    assert "Clean sheet" in {i.label for i in keeper.items}
     early = service.fantasy.score("p_wma_09", 30 * 60_000)  # nothing after the minute leaks out
     assert early.points == 1 and early.on_pitch
 
@@ -32,10 +34,9 @@ def test_an_xi_must_follow_the_rules(service: MatchdayService) -> None:
     assert service.fantasy.check_xi(list(TEAM_OF_THE_SEASON)) == []
     keepers = [*TEAM_OF_THE_SEASON[:10], "p_ngr_01"]  # a second keeper for a forward
     assert any("goalkeeper" in p for p in service.fantasy.check_xi(keepers))
-    westmere = [p for p in TEAM_OF_THE_SEASON if p != "p_elr_11"] + ["p_wma_10"]
-    assert service.fantasy.check_xi(westmere) == []  # three from a club is fine...
-    four = [p for p in westmere if p != "p_lpt_09"] + ["p_wma_11"]
-    assert "At most 3 from Westmere Athletic." in service.fantasy.check_xi(four)  # ...four isn't
+    assert sum(p.startswith("p_hvt") for p in TEAM_OF_THE_SEASON) == 3  # three is fine...
+    four = [p for p in TEAM_OF_THE_SEASON if p != "p_crb_05"] + ["p_hvt_04"]
+    assert "At most 3 from Halvern Town." in service.fantasy.check_xi(four)  # ...four isn't
 
 
 def test_a_club_fan_hears_what_each_match_means_to_them(service: MatchdayService) -> None:
@@ -60,8 +61,8 @@ def test_only_goals_that_matter_cut_a_fans_whip_around(service: MatchdayService)
         assert whip.state
         if whip.state.pending and whip.state.pending.reason == "goal":
             goal_cuts.add((whip.state.pending.match_id, whip.state.pending.proposed_ms // 60_000))
-    # Corrin Bay's 33' goal drops Westmere into the zone; Halvern's 79' title goal moves nothing.
-    assert ("m_l1_3", 32) in goal_cuts
+    # Corrin Bay's 34' goal drops Westmere into the zone; Halvern's 80' title goal moves nothing.
+    assert ("m_l1_3", 33) in goal_cuts
     assert all(match_id in ("m_l1_1", "m_l1_3") for match_id, _ in goal_cuts)
 
 
@@ -71,9 +72,9 @@ def test_a_fantasy_whip_around_follows_the_xi(service: MatchdayService) -> None:
     snapshot = whip.snapshot(97 * 60_000)
     assert snapshot.lens.kind == "fantasy" and len(snapshot.lens.xi) == 11
     assert snapshot.lens.points == sum(p.points for p in snapshot.lens.xi)
-    assert whip.lens.for_you("m_l1_1", FULL_TIME) == "Your XI here: Desai 10 pts, Sato 5 pts."
-    blackwood = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Blackwood")
-    assert whip.lens.goal_weight("m_l1_10", blackwood) == 1.0
+    assert whip.lens.for_you("m_l1_1", FULL_TIME) == "Your XI here: Desai 10 pts."
+    ashby = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Ashby")
+    assert whip.lens.goal_weight("m_l1_4", ashby) == 1.0
     ambrose = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Ambrose")
     assert whip.lens.goal_weight("m_l1_2", ambrose) == 0.0  # not ours, and ours scored it
 

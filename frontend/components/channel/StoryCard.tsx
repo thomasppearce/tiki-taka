@@ -16,6 +16,7 @@ const DECIDED_BY: Record<Cut["decided_by"], string> = {
 
 const REASON: Record<Cut["reason"], string> = {
   goal: "Goal",
+  penalty: "Penalty",
   pressure: "Pressure",
   check_in: "Check-in",
   manual: "Producer's call",

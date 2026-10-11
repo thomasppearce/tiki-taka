@@ -49,6 +49,7 @@ class ChannelRunner:
         self.decisions: asyncio.Queue[tuple[Any, ...]] | None = None
         self.workers: list[asyncio.Task[None]] = []
         self.cache: dict[str, Any] | None = None
+        self.matchday = ""  # the simulated matchday's fingerprint (set by the app)
 
     def start(self) -> None:
         self.loop = asyncio.get_running_loop()
@@ -198,6 +199,7 @@ class ChannelRunner:
                 if (
                     data.get("version") == CHANNEL_PROMPT_VERSION
                     and data.get("model") == self.team.model
+                    and data.get("matchday") == self.matchday
                 ):
                     self.cache = data["runs"]
             except (OSError, ValueError, KeyError):
@@ -228,6 +230,11 @@ class ChannelRunner:
         runs = self._runs()
         runs[key] = run
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        payload = {"version": CHANNEL_PROMPT_VERSION, "model": self.team.model, "runs": runs}
+        payload = {
+            "version": CHANNEL_PROMPT_VERSION,
+            "model": self.team.model,
+            "matchday": self.matchday,
+            "runs": runs,
+        }
         (self.cache_dir / CACHE_FILE).write_text(json.dumps(payload, indent=1))
         return run

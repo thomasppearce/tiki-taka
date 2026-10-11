@@ -60,9 +60,10 @@ def test_the_feed_moves_but_never_flickers(service: MatchdayService) -> None:
 def test_hold_pin_and_take(service: MatchdayService) -> None:
     director = ChannelDirector(service)
     watch(director, 76, 77)
+    director.take(77 * 60_000, "m_l1_5")  # elsewhere when Halvern score at 78'...
     director.hold(77 * 60_000, True)
-    cuts = watch(director, 77, 78.9)  # Halvern score at 78' and the feed stays put
-    assert len(cuts) == 1 and cuts[0].match_id != "m_l1_2"
+    cuts = watch(director, 77, 78.9)  # ...and, held, the feed stays put
+    assert {c.match_id for c in cuts} == {"m_l1_5"}
     director.hold(int(78.9 * 60_000), False)
     director.pin(int(79.5 * 60_000), "m_l1_9")
     assert director.state and director.state.on_air.decided_by == "producer"
@@ -84,3 +85,36 @@ def test_the_channel_api(client: TestClient, at_minute: Pin) -> None:
     assert held.held and held.pending is None
     assert client.post("/api/channel/pin", json={"match_id": "m_nope"}).status_code == 404
     client.post("/api/channel/hold", json={"held": False})
+
+
+def test_the_channel_knows_a_dead_ball_and_goes_to_a_penalty(service: MatchdayService) -> None:
+    """A restart being set up is dead time (the feed may cut away); a penalty is the opposite,
+    and the channel goes there."""
+    director = ChannelDirector(service)
+    events = service.by_id["m_l1_5"].result.events
+    throw = next(e for e in events if e.type == "throw_in" and e.match_clock_ms > 30 * 60_000)
+    played = next(e for e in events if e.type == "pass" and e.match_clock_ms > throw.match_clock_ms)
+    assert director._dead_since("m_l1_5", throw.match_clock_ms + 1_000) == throw.match_clock_ms
+    assert director._dead_since("m_l1_5", played.match_clock_ms + 500) is None
+
+    award = next(
+        (e, m.match_id) for m in service.matches for e in m.result.events if e.type == "penalty"
+    )
+    penalty, match_id = award
+    quiet = next(
+        m.match_id
+        for m in service.matches
+        if m.match_id != match_id
+        and not any(
+            e.type == "goal" and abs(e.match_clock_ms - penalty.match_clock_ms) < 3 * 60_000
+            for e in m.result.events
+        )
+    )
+    start = penalty.match_clock_ms // 1_000 * 1_000 - 30_000
+    director.sync(start)
+    director.take(start, quiet)
+    for t in range(start, penalty.match_clock_ms + 2_000, 1_000):
+        director.sync(t)
+    assert director.state and director.state.pending
+    assert (director.state.pending.match_id, director.state.pending.reason) == (match_id, "penalty")
+    assert director.state.pending.package.why.startswith("Penalty to ")
