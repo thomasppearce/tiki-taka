@@ -9,6 +9,7 @@ from collections import OrderedDict
 from functools import lru_cache
 
 from app.generator.matchday import ScheduledMatch, build_matchday, fingerprint
+from app.generator.player_season import season_records
 from app.generator.season import TEAM_OF_THE_SEASON, table_before_final_day
 from app.generator.world import Club
 from app.live.channel import ChannelDirector
@@ -29,9 +30,21 @@ from app.models.matchday import (
     PlayerRef,
 )
 from app.models.replay import Replay
-from app.models.table import LeagueTable, Stake, TableRow, TableSwing, ZoneChange
+from app.models.table import (
+    BootSwing,
+    GoldenBoot,
+    LeagueTable,
+    ScorerRow,
+    Stake,
+    TableRow,
+    TableSwing,
+    ZoneChange,
+)
 from app.state.aggregator import event_impacts, key_moments, momentum, team_stats
 from app.state.fantasy import RULES, FantasyScorer
+from app.state.scorers import standings as boot_standings
+from app.state.scorers import swings as boot_swings
+from app.state.stories import match_stories
 from app.state.table import Change, Scores, standings, summarize, weight, zone_changes
 
 RECENT_EVENTS = 40
@@ -61,6 +74,16 @@ class MatchdayService:
                 for p in club.squad:
                     self.surnames[p.player_id] = p.name.split(" ", 1)[-1]
         self.season = table_before_final_day()
+        # The players' season before today, and the Golden Boot race through the day.
+        self.player_seasons = season_records(self.clubs.values())
+        self.season_goals = {p: r.goals for p, r in self.player_seasons.items() if r.goals}
+        self.goal_list = sorted(
+            (e.match_clock_ms, m.match_id, e.event_id, e.player_id or "")
+            for m in self.matches
+            for e in m.result.events
+            if e.type == "goal"
+        )
+        self.boot_swings = boot_swings(self.season_goals, self.goal_list, self.surnames)
         self.swings = self._all_swings()
         cycle = max(m.result.full_time_ms for m in self.matches)
         self.clock = clock or MatchdayClock(cycle)
@@ -233,7 +256,38 @@ class MatchdayService:
             rows=rows,
             swings=[s for s in self.swings if s.match_clock_ms <= now],
             stakes=sorted(stakes, key=lambda s: -s.weight),
+            golden_boot=self._golden_boot(now),
         )
+
+    def _golden_boot(self, now: int) -> GoldenBoot:
+        rows = [
+            ScorerRow(
+                position=position,
+                player_id=s.player_id,
+                name=self.fantasy.players[s.player_id][0].name,
+                club=_club(self.fantasy.players[s.player_id][1]),
+                season_goals=s.season,
+                today=s.today,
+                goals=s.goals,
+            )
+            for position, s in boot_standings(self.season_goals, self.goal_list, now)
+        ]
+        swings = [
+            BootSwing(
+                match_clock_ms=x.clock_ms,
+                match_id=x.match_id,
+                event_id=x.event_id,
+                player_id=x.player_id,
+                summary=x.summary,
+            )
+            for x in self.boot_swings
+            if x.clock_ms <= now
+        ]
+        return GoldenBoot(rows=rows, swings=swings)
+
+    def stories(self, match_id: str, t: int) -> list[str]:
+        """The players' stories in a match at `t` (app/state/stories.py)."""
+        return match_stories(self, match_id, t)
 
     def _scores(self, now: int) -> Scores:
         """Every club's goals scored and conceded today, as it stands at `now`."""

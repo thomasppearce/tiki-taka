@@ -83,6 +83,14 @@ export function StoryCard({
             <p className="mt-0.5 text-base leading-snug text-ink">{forYou}</p>
           </div>
         )}
+        {cut.package.storyline && (
+          <div>
+            <h3 className="text-xs text-ink-3">Storyline</h3>
+            <p className="mt-0.5 text-sm text-ink">
+              <Unbroken text={cut.package.storyline} />
+            </p>
+          </div>
+        )}
         {atStake && (
           <div>
             <h3 className="text-xs text-ink-3">At stake</h3>

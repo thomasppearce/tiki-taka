@@ -37,6 +37,10 @@ class CutPackage(Contract):
     for_you: str | None = Field(
         default=None, description="On a personal whip-around: what this match means to you."
     )
+    storyline: str | None = Field(
+        default=None,
+        description="A player's story here (the Golden Boot race, a milestone...), by code.",
+    )
 
 
 class Cut(Contract):

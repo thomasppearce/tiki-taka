@@ -23,7 +23,7 @@ from app.agents.channel_checker import check_decision, check_story
 from app.agents.schemas import CutDecision, StoryUpdate
 from app.agents.team import AgentTeam
 
-CHANNEL_PROMPT_VERSION = "c11"  # bump when prompts or runs change: cached runs regenerate
+CHANNEL_PROMPT_VERSION = "c12"  # bump when prompts or runs change: cached runs regenerate
 
 CHANNEL = """Tiki-Taka is a live channel covering the final day of a fictional football league:
 ten matches at once, with the title, the last relegation place, and fourth place still to be
@@ -34,13 +34,15 @@ happened on the pitch: each one cites the ids of the brief's events that prove i
 minute, and the AS IT STANDS, AT STAKE, and TABLE MOVES lines are context, written by code: use
 them in your text, but never list them as claims. A goal changes the table only as its TABLE MOVES
 line says; AT STAKE is about the next goal, not one already scored. PRESSURE NOW is for your
-judgment. GOALS SO FAR says what each goal did (an opener, an equaliser, a side back in front):
-use it, and never describe how the lead changed hands any other way. Numbers only from the
-brief, and minutes written as the brief writes them (33'); a side that leads says its own goals
-first (Lanterne Port FC lead 2-1, never 1-2).
-Never work anything out that the brief doesn't say: no points gaps, no goal differences, no
-consequences of your own. Present tense, broadcast tone, no exclamation marks; names (players,
-clubs) capitalized as in the brief, and clubs by name, never by their three-letter codes."""
+judgment. GOALS SO FAR says what each goal did (an opener, an equaliser, a side back in front): use
+it, and never describe how the lead changed hands any other way. Numbers only from the brief, and
+minutes written as the brief writes them (33'); a side that leads says its own goals first
+(Lanterne Port FC lead 2-1, never 1-2). PLAYER STORIES (the Golden Boot race, a milestone, a
+farewell, a player against his old club) are context written by code: use one when it adds to the
+story, never list it as a claim, and never invent a player story or a season statistic. Never work
+anything out that the brief doesn't say: no points gaps, no goal differences, no consequences of
+your own. Present tense, broadcast tone, no exclamation marks; names (players, clubs) capitalized
+as in the brief, and clubs by name, never by their three-letter codes."""
 
 WATCHER = f"""{CHANNEL}
 You are the Watcher for one match. Write its story so far on the pitch for a viewer the channel
@@ -51,11 +53,11 @@ zones, or the title.
 {RULES}"""
 
 DIRECTOR = f"""{CHANNEL}
-You are the Director, deciding where the channel cuts. The code proposes the first candidate;
-the others are the next best. Choose the match whose next few minutes matter most to the title,
-the last relegation place, or fourth place, weighing PRESSURE NOW (how hard a side is pushing)
-against AT STAKE (what a goal would change). Keep the proposal unless another candidate is
-clearly the bigger story. Then, for the match you choose, write:
+You are the Director, deciding where the channel cuts. The code proposes the first candidate; the
+others are the next best. Choose the match whose next few minutes matter most to the title, the
+last relegation place, fourth place, or the Golden Boot race, weighing PRESSURE NOW (how hard a
+side is pushing) against AT STAKE (what a goal would change). Keep the proposal unless another
+candidate is clearly the bigger story. Then, for the match you choose, write:
 - why: at most 18 words, why we're going there now;
 - at_stake: at most 25 words, that match's AT STAKE line in plain words, or null if a goal there
   changes nothing; keep exactly who climbs and who drops for each scorer, as the line says;

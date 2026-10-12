@@ -659,7 +659,7 @@ class ChannelDirector:
         return package.model_copy(
             update={
                 "why": decision.why,
-                "at_stake": decision.at_stake or package.at_stake,
+                "at_stake": _sentence(decision.at_stake) or package.at_stake,
                 "claims": claims,
                 "written_by": (
                     ["watcher", "director", "checker"] if story else ["director", "checker"]
@@ -874,11 +874,27 @@ class ChannelDirector:
             claims=claims,
             written_by=["watcher"] if told else ["code"],
             for_you=self.lens.for_you(match_id, at),
+            storyline=self._storyline(match_id, t, goal),
         )
+
+    def _storyline(self, match_id: str, t: int, goal: MatchEvent | None) -> str | None:
+        """The player story to lead with: a goal that moved the Golden Boot race says so; else
+        the match's most important story."""
+        if goal is not None and goal.type == "goal":
+            swing = next((x for x in self.service.boot_swings if x.event_id == goal.event_id), None)
+            if swing:
+                return swing.summary
+        stories = self.service.stories(match_id, t)
+        return stories[0] if stories else None
 
 
 def _minute(clock_ms: int) -> str:
     return f"{clock_ms // 60_000 + 1}'"
+
+
+def _sentence(text: str | None) -> str | None:
+    """An agent's line as a sentence: it may copy a brief line that starts lower case."""
+    return text[:1].upper() + text[1:] if text else text
 
 
 def _claims(claims: "Sequence[DraftClaim]") -> list[Claim]:

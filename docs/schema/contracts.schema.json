@@ -166,6 +166,38 @@
       "title": "AuditRecord",
       "type": "object"
     },
+    "BootSwing": {
+      "additionalProperties": false,
+      "description": "A goal that changed the top of the Golden Boot race. Written by code, citable.",
+      "properties": {
+        "match_clock_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "match_id": {
+          "type": "string"
+        },
+        "event_id": {
+          "description": "The goal.",
+          "type": "string"
+        },
+        "player_id": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "match_clock_ms",
+        "match_id",
+        "event_id",
+        "player_id",
+        "summary"
+      ],
+      "title": "BootSwing",
+      "type": "object"
+    },
     "Channel": {
       "additionalProperties": false,
       "properties": {
@@ -447,6 +479,18 @@
           ],
           "default": null,
           "description": "On a personal whip-around: what this match means to you."
+        },
+        "storyline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A player's story here (the Golden Boot race, a milestone...), by code."
         }
       },
       "required": [
@@ -455,7 +499,8 @@
         "story",
         "claims",
         "written_by",
-        "for_you"
+        "for_you",
+        "storyline"
       ],
       "title": "CutPackage",
       "type": "object"
@@ -776,6 +821,31 @@
       "title": "FantasyPlayer",
       "type": "object"
     },
+    "GoldenBoot": {
+      "additionalProperties": false,
+      "description": "The season's top scorers as it stands, and the goals that changed the top of the race.",
+      "properties": {
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/ScorerRow"
+          },
+          "type": "array"
+        },
+        "swings": {
+          "description": "Oldest first.",
+          "items": {
+            "$ref": "#/$defs/BootSwing"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "rows",
+        "swings"
+      ],
+      "title": "GoldenBoot",
+      "type": "object"
+    },
     "HoldRequest": {
       "additionalProperties": false,
       "properties": {
@@ -902,13 +972,17 @@
             "$ref": "#/$defs/Stake"
           },
           "type": "array"
+        },
+        "golden_boot": {
+          "$ref": "#/$defs/GoldenBoot"
         }
       },
       "required": [
         "clock_ms",
         "rows",
         "swings",
-        "stakes"
+        "stakes",
+        "golden_boot"
       ],
       "title": "LeagueTable",
       "type": "object"
@@ -1976,6 +2050,49 @@
         "events"
       ],
       "title": "Replay",
+      "type": "object"
+    },
+    "ScorerRow": {
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "description": "Players level share a position.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "player_id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "club": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "season_goals": {
+          "description": "League goals before today.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "today": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "goals": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "position",
+        "player_id",
+        "name",
+        "club",
+        "season_goals",
+        "today",
+        "goals"
+      ],
+      "title": "ScorerRow",
       "type": "object"
     },
     "SideSignal": {

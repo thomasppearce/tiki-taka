@@ -37,6 +37,7 @@ class MatchBrief:
     surnames: frozenset[str]  # every player in the match
     scores: tuple[tuple[int, int], ...]  # every scoreline so far (home, away), the last is now
     goals: tuple[str, ...] = ()  # each goal, its scoreline, and what it did (code-written)
+    stories: tuple[str, ...] = ()  # the players' stories here (the Golden Boot race...), by code
 
     @property
     def citable(self) -> dict[str, EventFact]:
@@ -56,6 +57,8 @@ class MatchBrief:
             lines.append(f"AS IT STANDS NOW: {self.standing}")
         lines.append(f"PRESSURE NOW: {self.pressure}")
         lines.append("GOALS SO FAR: " + (" | ".join(self.goals) or "none"))
+        if self.stories:
+            lines.append("PLAYER STORIES: " + " | ".join(self.stories))
         if table:
             lines.append(
                 "AT STAKE, IF EITHER SIDE SCORES NEXT: "
@@ -158,6 +161,7 @@ def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | 
         surnames=frozenset(name.split(" (")[0] for name in players.values()),
         scores=tuple(scores),
         goals=tuple(goals),
+        stories=tuple(service.stories(match_id, t)),
     )
 
 

@@ -52,7 +52,7 @@ from app.agents.checker import check_draft, check_localized
 from app.agents.schemas import Draft, Interpretation, Localized, Placement
 
 MAX_DRAFTS = 3
-PROMPT_VERSION = "v6"  # bump when prompts change, so cached runs are regenerated
+PROMPT_VERSION = "v7"  # bump when prompts change, so cached runs are regenerated
 KNOWLEDGE_BASE = "matchdesk-kb"  # app/rag/knowledge_base.py builds it
 KNOWLEDGE_MCP_API = "2026-08-01-preview"  # the knowledge base MCP endpoint is in preview
 SEARCH_SCOPE = "https://search.azure.com/.default"
@@ -78,7 +78,9 @@ Write one broadcast graphic for the moment, in English:
   brief that prove it.
 Rules: use only numbers, names, and facts that appear in the brief, and never invent a statistic.
 Cite only event ids listed in the brief. The score, the minute, and the stats so far are context:
-the body may mention them, but they are not claims, so don't list them.
+the body may mention them, but they are not claims, so don't list them. PLAYER STORIES (the
+Golden Boot race, a milestone, a player against his old club) are context too: use one when the
+moment is about that player, word for word with its numbers, never as a claim.
 When the angle turns on how a club plays, the laws (offside, restarts), or what a metric means
 (xG, field tilt, momentum), first look it up with knowledge_base_retrieve, and list the titles of
 the sections you used in background_used. You get one lookup per moment: make a single call, with

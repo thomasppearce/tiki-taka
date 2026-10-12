@@ -16,8 +16,9 @@ from app.agents.schemas import CutDecision, DraftClaim, StoryUpdate
 # Words that only make sense about the table ("2nd half" is the match, "top corner" the goal).
 TABLE_TALK = re.compile(
     r"\b(?:relegat\w*|zones?|table|points?|title|champions?|continental|top four|safety|"
-    r"survival|(?:go|goes|stay|stays|move|moves|sit|sits) (?:top|bottom)|"
-    r"\d+(?:st|nd|rd|th)\b(?! half))",
+    r"survival|(?:go|goes|stay|stays|move|moves|sit|sits) (?:top|bottom)(?! of the Golden Boot)|"
+    # ordinals are table talk, unless they count a player's goals or the match's half
+    r"\d+(?:st|nd|rd|th)\b(?! half| league goal| goal| of the season))",
     re.IGNORECASE,
 )
 SCORELINE = re.compile(r"\b(\d+)\s*[-–]\s*(\d+)\b")
@@ -62,7 +63,9 @@ def check_decision(decision: CutDecision, briefs: Sequence[MatchBrief]) -> list[
 def _check(brief: MatchBrief, claims: list[DraftClaim], text: dict[str, str]) -> list[str]:
     problems: list[str] = []
     citable = brief.citable
-    general = numbers_in(" ".join((brief.situation, brief.standing, *brief.stakes, *brief.moves)))
+    general = numbers_in(
+        " ".join((brief.situation, brief.standing, *brief.stakes, *brief.moves, *brief.stories))
+    )
     for claim in claims:
         quoted = f'"{claim.text}"'
         if not claim.evidence_event_ids:

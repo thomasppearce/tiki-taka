@@ -61,6 +61,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     for cached in (runner, channel):
         if cached:
             cached.matchday = service.fingerprint
+    if runner:
+        runner.stories = service.stories  # the graphics team knows the players' stories too
     app.state.matchday = service
     yield
     if channel:

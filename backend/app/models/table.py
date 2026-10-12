@@ -60,8 +60,36 @@ class Stake(Contract):
     )
 
 
+class ScorerRow(Contract):
+    position: int = Field(ge=1, description="Players level share a position.")
+    player_id: str
+    name: str
+    club: ClubRef
+    season_goals: int = Field(ge=0, description="League goals before today.")
+    today: int = Field(ge=0)
+    goals: int = Field(ge=0)
+
+
+class BootSwing(Contract):
+    """A goal that changed the top of the Golden Boot race. Written by code, citable."""
+
+    match_clock_ms: int = Field(ge=0)
+    match_id: str
+    event_id: str = Field(description="The goal.")
+    player_id: str
+    summary: str
+
+
+class GoldenBoot(Contract):
+    """The season's top scorers as it stands, and the goals that changed the top of the race."""
+
+    rows: list[ScorerRow]
+    swings: list[BootSwing] = Field(description="Oldest first.")
+
+
 class LeagueTable(Contract):
     clock_ms: int = Field(ge=0)
     rows: list[TableRow]
     swings: list[TableSwing] = Field(description="Every zone change so far today, oldest first.")
     stakes: list[Stake] = Field(description="For each live match and side, what a goal would do.")
+    golden_boot: GoldenBoot

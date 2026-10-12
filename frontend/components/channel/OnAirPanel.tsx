@@ -122,15 +122,16 @@ export function OnAirPanel({
   );
 }
 
-/** What the ticker says, in turn: for you first (on a fan's own whip-around), then why, then
- * what's at stake. */
+/** What the ticker says, in turn: for you first (on a fan's own whip-around), then why, a
+ * player's story, and what's at stake. */
 function tickerItems(cut: Cut, forWhom: string | null): TickerItem[] {
-  const { why, at_stake: atStake, for_you: forYou } = cut.package;
+  const { why, at_stake: atStake, for_you: forYou, storyline } = cut.package;
   return [
     ...(forWhom && forYou
       ? [{ label: `For ${forWhom}`, text: forYou, accent: true }]
       : []),
     { label: "Why we're here", text: why },
+    ...(storyline ? [{ label: "Storyline", text: storyline }] : []),
     ...(atStake ? [{ label: "At stake", text: atStake }] : []),
   ];
 }

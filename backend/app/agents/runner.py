@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
@@ -47,6 +48,8 @@ class AgentRunner:
         self.workers: list[asyncio.Task[None]] = []
         self.caches: dict[str, dict[str, Any]] = {}
         self.matchday = ""  # the simulated matchday's fingerprint (set by the app)
+        # The players' stories in a match at a moment (set by the app: MatchdayService.stories).
+        self.stories: Callable[[str, int], list[str]] | None = None
 
     def start(self) -> None:
         """Start the workers on the running event loop (call from the app's lifespan)."""
@@ -79,6 +82,7 @@ class AgentRunner:
             desk.match.home,
             desk.match.away,
             candidate.copy.claims,
+            self.stories(desk.match.match_id, candidate.known_ms) if self.stories else (),
         )
         job = (desk, candidate, generation, replace(brief, queue=queue))
         self.loop.call_soon_threadsafe(self.queue.put_nowait, job)

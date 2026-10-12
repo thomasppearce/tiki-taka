@@ -18,6 +18,7 @@ from app.models.channel import Lens as LensInfo
 from app.models.channel import LensKind
 from app.models.events import MatchEvent
 from app.models.table import LeagueTable
+from app.state.stories import boot_stake
 from app.state.table import ZONE_WEIGHT, Change, Placed, Scores, standings, summarize
 
 if TYPE_CHECKING:
@@ -71,11 +72,14 @@ class ChannelLens:
     def stake(
         self, m: ScheduledMatch, club_id: str, t: int, table: LeagueTable
     ) -> tuple[float, str | None]:
+        """What a goal would change in the table, and in the Golden Boot race."""
         stake = next(
             (x for x in table.stakes if x.match_id == m.match_id and x.scorer_club_id == club_id),
             None,
         )
-        return (stake.weight, stake.summary) if stake else (0.0, None)
+        boot, boot_summary = boot_stake(self.service, club_id, t)
+        parts = [x for x in (stake.summary if stake else None, boot_summary) if x]
+        return (stake.weight if stake else 0.0) + boot, ("; ".join(parts) or None)
 
     def goal_weight(self, match_id: str, goal: MatchEvent) -> float:
         swing = any(x.event_id == goal.event_id for x in self.service.swings)

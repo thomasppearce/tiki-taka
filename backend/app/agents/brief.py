@@ -62,6 +62,7 @@ class MomentBrief:
     players: dict[str, str]  # player_id -> "Surname (CLUB #n)", everyone in the match
     figures: tuple[Figure, ...] = ()
     queue: str = ""  # the live queue and the producer's recent decisions (for the Producer)
+    stories: tuple[str, ...] = ()  # the players' stories (the Golden Boot race...), by code
 
     @property
     def citable(self) -> dict[str, EventFact]:
@@ -102,7 +103,12 @@ class MomentBrief:
             f"{figures}"
             f"LEAD-UP (citable):\n{facts(self.lead_up)}\n"
             f"STATS SO FAR: {self.stats}\n"
-            f"BACKGROUND (not citable, never a claim): {self.background}"
+            + (
+                f"PLAYER STORIES (context, never a claim): {' | '.join(self.stories)}\n"
+                if self.stories
+                else ""
+            )
+            + f"BACKGROUND (not citable, never a claim): {self.background}"
         )
 
     @property
@@ -129,6 +135,7 @@ def build_brief(
     home: Club,
     away: Club,
     figures: Sequence[Claim] = (),
+    stories: Sequence[str] = (),
 ) -> MomentBrief:
     """Everything the team may use for one moment, as of `clock_ms`. `figures` are the moment's
     scripted claims: numbers code computed from its events."""
@@ -170,6 +177,7 @@ def build_brief(
         background=background,
         players=players,
         figures=tuple(Figure(c.text, frozenset(c.evidence_event_ids)) for c in figures),
+        stories=tuple(stories),
     )
 
 

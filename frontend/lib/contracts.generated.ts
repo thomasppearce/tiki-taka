@@ -57,6 +57,22 @@ export interface AuditRecord {
   detail: string | null;
 }
 /**
+ * A goal that changed the top of the Golden Boot race. Written by code, citable.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "BootSwing".
+ */
+export interface BootSwing {
+  match_clock_ms: number;
+  match_id: string;
+  /**
+   * The goal.
+   */
+  event_id: string;
+  player_id: string;
+  summary: string;
+}
+/**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "Channel".
  */
@@ -135,6 +151,10 @@ export interface CutPackage {
    * On a personal whip-around: what this match means to you.
    */
   for_you: string | null;
+  /**
+   * A player's story here (the Golden Boot race, a milestone...), by code.
+   */
+  storyline: string | null;
 }
 /**
  * A factual statement made by a proposal. Every claim cites the events that support it.
@@ -359,6 +379,38 @@ export interface EventImpact {
   importance: number;
 }
 /**
+ * The season's top scorers as it stands, and the goals that changed the top of the race.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "GoldenBoot".
+ */
+export interface GoldenBoot {
+  rows: ScorerRow[];
+  /**
+   * Oldest first.
+   */
+  swings: BootSwing[];
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ScorerRow".
+ */
+export interface ScorerRow {
+  /**
+   * Players level share a position.
+   */
+  position: number;
+  player_id: string;
+  name: string;
+  club: ClubRef;
+  /**
+   * League goals before today.
+   */
+  season_goals: number;
+  today: number;
+  goals: number;
+}
+/**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "HoldRequest".
  */
@@ -430,6 +482,7 @@ export interface LeagueTable {
    * For each live match and side, what a goal would do.
    */
   stakes: Stake[];
+  golden_boot: GoldenBoot;
 }
 /**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema

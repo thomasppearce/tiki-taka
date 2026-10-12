@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 import { CrewLog } from "@/components/channel/CrewLog";
 import { CutControls } from "@/components/channel/CutControls";
 import { FantasyXi } from "@/components/channel/FantasyXi";
+import { GoldenBoot } from "@/components/channel/GoldenBoot";
 import { LeagueTable } from "@/components/channel/LeagueTable";
 import { Multiview } from "@/components/channel/Multiview";
 import { OnAirPanel } from "@/components/channel/OnAirPanel";
@@ -211,6 +212,12 @@ export function ChannelPage() {
                 clubId={channel.lens.club_id ?? null}
               />
             )}
+            {table && (
+              <GoldenBoot
+                boot={table.golden_boot}
+                onAirClubIds={onAirClubs(byId.get(channel.on_air.match_id))}
+              />
+            )}
             {producer && <CrewLog channel={channel} fixtureOf={fixtureOf} />}
           </aside>
         </main>
@@ -218,6 +225,10 @@ export function ChannelPage() {
       </div>
     </MotionConfig>
   );
+}
+
+function onAirClubs(card: MatchCard | undefined): ReadonlySet<string> {
+  return new Set(card ? [card.home.club_id, card.away.club_id] : []);
 }
 
 /** On a fan's own whip-around, which matches are theirs, and why. */
