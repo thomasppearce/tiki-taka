@@ -93,12 +93,14 @@ def _match(service: MatchdayService, match_id: str) -> ScheduledMatch:
 
 @app.get("/api/health")
 def health(request: Request) -> dict[str, str]:
-    """Up, and who writes the featured match's proposals: the agent team or the script."""
+    """Up, who writes the featured match's proposals (the agent team or the script), and which
+    simulated matchday this is (the same everywhere: app/detmath.py)."""
     runner: AgentRunner | None = request.app.state.agents
+    matchday = _service(request).fingerprint
     if runner:
         model = os.environ.get("FOUNDRY_MODEL_LABEL", runner.team.model)
-        return {"status": "ok", "agents": "foundry", "model": model}
-    return {"status": "ok", "agents": "scripted"}
+        return {"status": "ok", "agents": "foundry", "model": model, "matchday": matchday}
+    return {"status": "ok", "agents": "scripted", "matchday": matchday}
 
 
 @app.get("/api/matchday")

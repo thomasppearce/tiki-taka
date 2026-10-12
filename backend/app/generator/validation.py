@@ -18,6 +18,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 
+from app.detmath import atan2
 from app.generator.engine import FrameStore, L, MatchResult, W
 
 # (label, min, max). Per-team stats are checked for both teams.
@@ -131,7 +132,7 @@ def clear_sight_shot_share(result: MatchResult) -> float:
         x, y = e.location.x / 100 * L, e.location.y / 100 * W
         gx = L if home else 0.0
         goal_d = math.hypot(gx - x, 34 - y)
-        if goal_d >= CLEAR_SIGHT_M or abs(math.atan2(y - 34, abs(gx - x))) > 0.9:
+        if goal_d >= CLEAR_SIGHT_M or abs(atan2(y - 34, abs(gx - x))) > 0.9:
             continue
         frame = result.frames.frame_at(e.match_clock_ms)
         blocked = False

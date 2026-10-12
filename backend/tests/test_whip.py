@@ -61,8 +61,9 @@ def test_only_goals_that_matter_cut_a_fans_whip_around(service: MatchdayService)
         assert whip.state
         if whip.state.pending and whip.state.pending.reason == "goal":
             goal_cuts.add((whip.state.pending.match_id, whip.state.pending.proposed_ms // 60_000))
-    # Corrin Bay's 34' goal drops Westmere into the zone; Halvern's 80' title goal moves nothing.
-    assert ("m_l1_3", 33) in goal_cuts
+    # Corrin Bay's goal drops Westmere into the zone; Halvern's title goal moves nothing.
+    radcliffe = next(e for e in service.by_id["m_l1_3"].result.events if e.type == "goal")
+    assert ("m_l1_3", radcliffe.match_clock_ms // 60_000) in goal_cuts
     assert all(match_id in ("m_l1_1", "m_l1_3") for match_id, _ in goal_cuts)
 
 
@@ -73,8 +74,8 @@ def test_a_fantasy_whip_around_follows_the_xi(service: MatchdayService) -> None:
     assert snapshot.lens.kind == "fantasy" and len(snapshot.lens.xi) == 11
     assert snapshot.lens.points == sum(p.points for p in snapshot.lens.xi)
     assert whip.lens.for_you("m_l1_1", FULL_TIME) == "Your XI here: Desai 10 pts."
-    ashby = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Ashby")
-    assert whip.lens.goal_weight("m_l1_4", ashby) == 1.0
+    blackwood = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Blackwood")
+    assert whip.lens.goal_weight("m_l1_10", blackwood) == 1.0
     ambrose = next(g for _, _, g in whip.goals if service.surname(g.player_id) == "Ambrose")
     assert whip.lens.goal_weight("m_l1_2", ambrose) == 0.0  # not ours, and ours scored it
 

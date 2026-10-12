@@ -86,7 +86,8 @@ def season_records(clubs: Iterable[Club], seed: int = 2026) -> dict[str, PlayerS
             round(record.goals_for * ASSISTS_PER_GOAL),
             {
                 p.player_id: ROLE_ASSISTS[p.role]
-                * (0.3 + p.passing) ** 2
+                * (0.3 + p.passing)
+                * (0.3 + p.passing)
                 * (1 if i < 11 else BENCH)
                 for i, p in enumerate(club.squad)
             },

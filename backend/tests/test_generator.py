@@ -244,3 +244,13 @@ def test_a_foul_in_the_box_is_a_penalty() -> None:
                 depth = 105 - px if home else px
                 assert not (depth < 15.5 and abs(py - 34) < 19), (m.match_id, p.player_id)
     assert penalties > 0
+
+
+def test_the_matchday_is_the_same_on_every_machine() -> None:
+    """The engine's maths are platform-independent (app/detmath.py): a Mac, CI on Linux, and the
+    production container all simulate exactly this matchday (its fingerprint). If this fails on
+    one machine only, something reached for the platform's maths library again; if it fails
+    everywhere after an engine change, update the fingerprint (and re-warm the agents' cache)."""
+    from app.generator.matchday import fingerprint
+
+    assert fingerprint(build_matchday()) == "73e2d515d426"

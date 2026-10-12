@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
+from app.detmath import atan2
 from app.models import MatchEvent
 
 COLS, ROWS = 16, 12
@@ -159,7 +160,7 @@ def _prior(z: int) -> float:
     col, row = z % COLS, z // COLS
     x = (col + 0.5) / COLS * 105
     y = (row + 0.5) / ROWS * 68
-    return expected_goals(math.hypot(105 - x, 34 - y), abs(math.atan2(y - 34, 105 - x)))
+    return expected_goals(math.hypot(105 - x, 34 - y), abs(atan2(y - 34, 105 - x)))
 
 
 def _training_matches() -> list[tuple[list[MatchEvent], str]]:

@@ -8,6 +8,7 @@ computed from: the Explainer can cite them, and the UI can show only the plays t
 import math
 from collections.abc import Callable, Sequence
 
+from app.detmath import atan2
 from app.generator.engine import expected_goals
 from app.models import MatchEvent
 from app.models.insight import EventImpact, KeyMoment, TeamStats
@@ -29,7 +30,7 @@ def _xg(e: MatchEvent, home: bool) -> float:
     assert e.location
     x, y = to_frame((e.location.x, e.location.y), home)
     mx, my = x * 1.05, y * 0.68
-    return expected_goals(math.hypot(105 - mx, 34 - my), abs(math.atan2(my - 34, 105 - mx)))
+    return expected_goals(math.hypot(105 - mx, 34 - my), abs(atan2(my - 34, 105 - mx)))
 
 
 def event_impacts(

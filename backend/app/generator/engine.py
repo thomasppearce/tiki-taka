@@ -31,8 +31,10 @@ import math
 import random
 from array import array
 from dataclasses import dataclass, field
+from functools import cache
 from typing import Literal
 
+from app.detmath import atan2, cos, exp, sin
 from app.generator.storylines import Beat, Side, Storyline
 from app.generator.tactics import Tactics
 from app.generator.world import FORMATIONS, Club, Player, Role
@@ -118,14 +120,18 @@ def _seg_dist(px: float, py: float, ax: float, ay: float, bx: float, by: float) 
 
 def _ease(current: float, target: float, tau_s: float) -> float:
     """Move `current` toward `target` like a first-order lag with time constant `tau_s`."""
-    return current + (target - current) * (1 - math.exp(-DT / tau_s))
+    return current + (target - current) * _ease_step(tau_s)
+
+
+@cache
+def _ease_step(tau_s: float) -> float:
+    """The share of the gap closed in one tick (a handful of time constants, millions of ticks)."""
+    return 1 - exp(-DT / tau_s)
 
 
 def expected_goals(distance_m: float, angle_rad: float) -> float:
     """A simple location xG: falls off with distance and with how wide the shot is."""
-    return _clamp(
-        0.9 * math.exp(-distance_m / 8.0) * (0.35 + 0.65 * math.cos(angle_rad)), 0.01, 0.8
-    )
+    return _clamp(0.9 * exp(-distance_m / 8.0) * (0.35 + 0.65 * cos(angle_rad)), 0.01, 0.8)
 
 
 def _back_line(formation: str) -> float:
@@ -271,7 +277,7 @@ def _catmull_rom(p: list[float], f: float) -> tuple[float, float]:
     b = p[2] - p[0]
     c = 2 * p[0] - 5 * p[1] + 4 * p[2] - p[3]
     d = -p[0] + 3 * p[1] - 3 * p[2] + p[3]
-    return 0.5 * (a + b * f + c * f * f + d * f**3), 0.5 * (b + 2 * c * f + 3 * d * f * f)
+    return 0.5 * (a + b * f + c * f * f + d * f * f * f), 0.5 * (b + 2 * c * f + 3 * d * f * f)
 
 
 @dataclass
@@ -693,7 +699,7 @@ class MatchEngine:
     def _decide(self, h: _PlayerState) -> None:
         hx, hy = self._to_team(h.side, h.x, h.y)
         goal_d = math.hypot(L - hx, 34 - hy)
-        angle = abs(math.atan2(hy - 34, L - hx))
+        angle = abs(atan2(hy - 34, L - hx))
         xg = expected_goals(goal_d, angle)
         forcing = self._forcing(h.side, "goal")
         shot_p = 0.0
@@ -1089,8 +1095,8 @@ class MatchEngine:
             gx, gy = p.tx, p.ty
             if urgency < 0.5 and p is not self.holder:  # nobody stands perfectly still
                 seconds = self.t / 1000
-                gx += DRIFT_M * math.sin(2 * math.pi * seconds / p.sway[0] + p.sway[1])
-                gy += DRIFT_M * math.sin(2 * math.pi * seconds / p.sway[2] + p.sway[3])
+                gx += DRIFT_M * sin(2 * math.pi * seconds / p.sway[0] + p.sway[1])
+                gy += DRIFT_M * sin(2 * math.pi * seconds / p.sway[2] + p.sway[3])
             dx, dy = gx - p.x, gy - p.y
             d = math.hypot(dx, dy)
             top = p.player.top_speed_mps
@@ -1233,11 +1239,11 @@ class MatchEngine:
         best: tuple[float, float, float, float] | None = None
         for degrees in (-55, -30, -12, 0, 12, 30, 55):
             angle = math.radians(degrees)
-            px, py = hx + 7 * math.cos(angle), hy + 7 * math.sin(angle)
+            px, py = hx + 7 * cos(angle), hy + 7 * sin(angle)
             if not 2 < py < W - 2 or px > L - 6:
                 continue
             space = min(min((math.hypot(ox - px, oy - py) for ox, oy in opponents), default=12), 12)
-            value = space + 2.5 * math.cos(angle) - (abs(py - 34) * 0.04 if px > 70 else 0)
+            value = space + 2.5 * cos(angle) - (abs(py - 34) * 0.04 if px > 70 else 0)
             if best is None or value > best[0]:
                 best = (value, px, py, space)
         if best is None:

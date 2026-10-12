@@ -63,11 +63,11 @@ TEAM_OF_THE_SEASON: tuple[str, ...] = (
     "p_hvt_03",
     "p_crb_02",
     "p_crb_05",
-    "p_tdr_06",
+    "p_pha_08",
     "p_ivu_07",
-    "p_cfg_10",
-    "p_ivu_09",
-    "p_elr_09",
+    "p_tdr_08",
+    "p_elr_11",
+    "p_lpt_09",
     "p_wma_09",
 )
 

@@ -61,8 +61,10 @@ def test_the_days_personal_stories(service: MatchdayService) -> None:
 def test_agents_get_the_stories_and_may_use_them(service: MatchdayService) -> None:
     brief = match_brief(service, "m_l1_3", 40 * 60_000, None)
     assert "PLAYER STORIES:" in brief.text(watcher=True) and "100th" in brief.text()
+    goal = next(e for e in service.by_id["m_l1_3"].result.events if e.type == "goal")
     story = StoryUpdate(
-        story="Corrin Bay lead 1-0, and Radcliffe's 34' goal is his 100th league goal for them.",
+        story=f"Corrin Bay lead 1-0, and Radcliffe's {goal.minute + 1}' goal is his 100th league "
+        "goal for them.",
         claims=[],
     )
     assert check_story(story, brief) == []  # a goal count, not table talk

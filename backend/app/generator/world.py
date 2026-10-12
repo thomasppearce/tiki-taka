@@ -9,6 +9,7 @@ import random
 from dataclasses import dataclass
 from typing import Literal
 
+from app.detmath import gauss
 from app.generator.tactics import Style, Tactics, tactics_for
 
 Role = Literal["gk", "def", "mid", "fwd"]
@@ -626,10 +627,10 @@ def _player(code: str, name: str, number: int, role: Role, rng: random.Random) -
         name=name,
         number=number,
         role=role,
-        top_speed_mps=round(min(10.0, max(8.0, rng.gauss(pace, 0.35))), 2),
-        passing=round(min(0.95, max(0.4, rng.gauss(0.72 if role == "mid" else 0.64, 0.08))), 2),
-        finishing=round(min(0.95, max(0.1, rng.gauss(0.62 if role == "fwd" else 0.38, 0.1))), 2),
-        work_rate=round(min(1.0, max(0.5, rng.gauss(0.78, 0.1))), 2),
+        top_speed_mps=round(min(10.0, max(8.0, gauss(rng, pace, 0.35))), 2),
+        passing=round(min(0.95, max(0.4, gauss(rng, 0.72 if role == "mid" else 0.64, 0.08))), 2),
+        finishing=round(min(0.95, max(0.1, gauss(rng, 0.62 if role == "fwd" else 0.38, 0.1))), 2),
+        work_rate=round(min(1.0, max(0.5, gauss(rng, 0.78, 0.1))), 2),
     )
 
 

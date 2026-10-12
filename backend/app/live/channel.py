@@ -22,7 +22,6 @@ what matters to their club or their fantasy XI. It shares the channel's Watcher 
 the channel (and so the Watchers) running while the fan watches, and calls no agents itself.
 """
 
-import math
 import threading
 from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
@@ -30,6 +29,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 from app.agents.channel_brief import MatchBrief, match_brief
+from app.detmath import exp
 from app.live.lens import ChannelLens, Lens
 from app.models import Claim, MatchEvent
 from app.models.channel import (
@@ -739,8 +739,8 @@ class ChannelDirector:
                 continue
             threat = max(impacts[e.event_id].threat, 0.0)
             weight = SHOT_WEIGHT if e.type == "shot" else 1.0
-            raw += threat * weight * math.exp(-(t - e.match_clock_ms) / PRESSURE_TAU_MS)
-        return 1 - math.exp(-raw / PRESSURE_SCALE)
+            raw += threat * weight * exp(-(t - e.match_clock_ms) / PRESSURE_TAU_MS)
+        return 1 - exp(-raw / PRESSURE_SCALE)
 
     def _table(self, t: int) -> LeagueTable:
         return self.service._table(t // 1000)
