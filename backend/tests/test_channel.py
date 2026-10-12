@@ -118,3 +118,14 @@ def test_the_channel_knows_a_dead_ball_and_goes_to_a_penalty(service: MatchdaySe
     assert director.state and director.state.pending
     assert (director.state.pending.match_id, director.state.pending.reason) == (match_id, "penalty")
     assert director.state.pending.package.why.startswith("Penalty to ")
+
+
+def test_viewers_joining_in_the_same_minute_get_the_same_channel(service: MatchdayService) -> None:
+    """The channel starts from the top of the minute, so a cold start's first visitors (and the
+    agents' cached answers for them) all see the same cuts."""
+    early, late = ChannelDirector(service), ChannelDirector(service)
+    cuts_early = watch(early, 55 + 10 / 60, 62)
+    cuts_late = watch(late, 55 + 50 / 60, 62)
+    assert [(c.cut_id, c.match_id) for c in cuts_early] == [
+        (c.cut_id, c.match_id) for c in cuts_late
+    ]

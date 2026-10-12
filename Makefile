@@ -2,7 +2,14 @@ SCHEMA := docs/schema/contracts.schema.json
 TS_TYPES := frontend/lib/contracts.generated.ts
 BANNER := /* Generated from backend/app/models by `make types`. Do not edit by hand. */
 
-.PHONY: install types check-types test lint format dev-backend dev-frontend
+.PHONY: install types check-types test lint format dev-backend dev-frontend \
+	deploy-infra deploy-backend deploy-frontend deploy warm cold
+
+# Azure (infra/README.md). The image tag is the commit, so a deploy names exactly what it ran.
+RG := rg-matchdesk
+REGISTRY = $(shell az deployment group show -g $(RG) -n hosting --query properties.outputs.registryName.value -o tsv)
+API_URL = $(shell az deployment group show -g $(RG) -n hosting --query properties.outputs.apiUrl.value -o tsv)
+TAG = $(shell git rev-parse --short HEAD)$(shell git diff --quiet || echo -dirty)
 
 install: ## Install backend and frontend dependencies
 	cd backend && uv sync
@@ -27,8 +34,31 @@ format: ## Auto-format both halves
 	cd backend && uv run ruff check --fix . && uv run black .
 	cd frontend && npm run format
 
-dev-backend: ## Run the API on :8001 with reload
-	cd backend && uv run uvicorn app.main:app --reload --port 8001 --timeout-graceful-shutdown 3
+dev-backend: ## Run the API on :8001 with reload (the simulated matchday is kept in backend/.cache)
+	cd backend && MATCHDAY_CACHE_DIR=.cache/matchday uv run uvicorn app.main:app --reload --port 8001 --timeout-graceful-shutdown 3
 
 dev-frontend: ## Run the control room on :3000
 	cd frontend && npm run dev
+
+deploy-infra: ## Create or update the hosting resources (keeps the running image and replica setting)
+	az deployment group create -g $(RG) -n hosting --template-file infra/hosting.bicep \
+		--parameters backendImage=$$(az containerapp show -g $(RG) -n tikitaka-api --query 'properties.template.containers[0].image' -o tsv 2>/dev/null || echo mcr.microsoft.com/k8se/quickstart:latest) \
+		minReplicas=$$(az containerapp show -g $(RG) -n tikitaka-api --query 'properties.template.scale.minReplicas' -o tsv 2>/dev/null | grep -E '^[01]$$' || echo 0) \
+		--query properties.provisioningState -o tsv
+
+deploy-backend: ## Build the backend image in Azure (matchday baked in) and roll it out
+	az acr build --registry $(REGISTRY) --image tikitaka-api:$(TAG) --file backend/Dockerfile backend
+	az containerapp update -g $(RG) -n tikitaka-api --image $(REGISTRY).azurecr.io/tikitaka-api:$(TAG) --query properties.provisioningState -o tsv
+
+deploy-frontend: ## Build the static site against the deployed API and publish it
+	cd frontend && NEXT_PUBLIC_API_URL=$(API_URL) npx next build
+	cd frontend && npx -y @azure/static-web-apps-cli@2.0.10 deploy ./out --env production \
+		--deployment-token $$(az staticwebapp secrets list -g $(RG) -n tikitaka-web --query properties.apiKey -o tsv)
+
+deploy: deploy-backend deploy-frontend ## Both halves
+
+warm: ## Keep one backend replica running (judging week): no cold starts, ~$5 a week at idle rates
+	az containerapp update -g $(RG) -n tikitaka-api --min-replicas 1 --query properties.template.scale -o json
+
+cold: ## Back to scaling to zero when nobody is watching (~$0)
+	az containerapp update -g $(RG) -n tikitaka-api --min-replicas 0 --query properties.template.scale -o json

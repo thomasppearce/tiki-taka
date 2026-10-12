@@ -187,8 +187,11 @@ class ChannelDirector:
             if s is not None and clock_ms < s.clock_ms:  # the matchday started over
                 self.stories, self.story_asked, self.log = {}, {}, []
             if s is None or clock_ms < s.clock_ms or clock_ms - s.clock_ms > RESET_GAP_MS:
-                self._start(clock_ms)
-                return
+                # From the top of the minute: anyone joining in the same minute gets the same
+                # channel (and the agents' cached answers for it), since every cut follows.
+                self._start(clock_ms - clock_ms % 60_000)
+                s = self.state
+                assert s
             t = s.clock_ms - s.clock_ms % STEP_MS + STEP_MS
             while t <= clock_ms:
                 self._tick(t)

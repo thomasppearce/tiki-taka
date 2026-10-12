@@ -1,0 +1,10 @@
+# Only the app, its lockfile, and the agents' cached runs go into the image.
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.env
+.env.*
+tests
+.cache/matchday
