@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterator
 
 from fastapi.testclient import TestClient
 
-from app.live.clock import FULL_TIME_HOLD_MS, MatchdayClock
+from app.live.clock import FULL_TIME_HOLD_MS, QUIET_RESTART_S, MatchdayClock
 from app.models import Desk, LiveEvent, Matchday, MatchDetail, TrackingFrame
 
 Pin = Callable[..., None]
@@ -72,6 +72,17 @@ def test_clock_loops_and_holds_full_time() -> None:
     assert clock.clock_ms() == 95 * 60_000
     now[0] = 5 * 60 + FULL_TIME_HOLD_MS / 1000  # the loop has kicked off again
     assert clock.clock_ms() == 0
+
+
+def test_clock_starts_afresh_after_a_quiet_spell() -> None:
+    now = [0.0]
+    clock = MatchdayClock(cycle_ms=95 * 60_000, start_minute=55, speed=1, now=lambda: now[0])
+    now[0] = 9 * 60
+    assert clock.clock_ms() == 64 * 60_000  # someone is watching
+    now[0] += QUIET_RESTART_S  # a long pause, but the clock was read just now
+    assert clock.clock_ms() == 74 * 60_000
+    now[0] += QUIET_RESTART_S + 1  # nobody read it for over ten minutes: as after a cold start
+    assert clock.clock_ms() == 55 * 60_000
 
 
 def _sse(lines: Iterator[str]) -> list[dict[str, str]]:
