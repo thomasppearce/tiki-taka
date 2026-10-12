@@ -2,8 +2,10 @@
 //
 // - The backend (FastAPI) on Azure Container Apps, Consumption: it scales to zero when nobody is
 //   watching and boots in seconds on the next visit (the matchday is baked into the image). One
-//   replica at most, because the matchday clock and the channel live in its memory. `minReplicas`
-//   = 1 keeps it warm (about $5 a week at idle rates); see infra/README.md for the switch.
+//   replica at most, because the matchday clock and the channel live in its memory.
+// - Two scheduled Container Apps jobs keep it warm through judging: one sets `minReplicas` to 1
+//   when judging starts, the other back to 0 when it ends. A replica held by `minReplicas` is
+//   billed at the idle rate (about $0.78 a day); one held by a scale rule would be billed active.
 // - Its image in Azure Container Registry (Basic), pulled with a managed identity: no secrets.
 // - That identity may use the Foundry project and models (the agents) and read the AI Search
 //   knowledge base.
@@ -31,13 +33,23 @@ param app string = 'tikitaka'
 @description('The backend image. The first deployment runs a placeholder until an image is built.')
 param backendImage string = 'mcr.microsoft.com/k8se/quickstart:latest'
 
-@description('0 scales to zero when idle; 1 keeps one replica warm (for judging week).')
+@description('0 scales to zero when idle; 1 keeps one replica warm. The jobs below switch it.')
 @allowed([0, 1])
 param minReplicas int = 0
+
+// Container Apps jobs read cron in UTC. Judging runs Oct 27 to Nov 10, 11:59 PM Pacific: warm
+// from midnight Pacific on Oct 27 (07:00 UTC, daylight time) to 2 AM Pacific on Nov 11 (10:00
+// UTC, standard time). The schedules repeat yearly; take the jobs down with the rest after.
+@description('When the backend starts staying warm (UTC cron).')
+param warmFrom string = '0 7 27 10 *'
+
+@description('When it goes back to scaling to zero (UTC cron).')
+param warmUntil string = '0 10 11 11 *'
 
 var suffix = uniqueString(resourceGroup().id)
 var roles = {
   acrPull: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+  contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
   foundryUser: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // formerly "Azure AI User"
   openAiUser: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
   searchIndexDataReader: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
@@ -236,6 +248,76 @@ resource backend 'Microsoft.App/containerApps@2026-07-01' = {
   }
   dependsOn: [pull]
 }
+
+// The warm/cold switch: `make warm` and `make cold` on a timer, under an identity that may change
+// the backend app and nothing else.
+resource scheduler 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
+  name: '${app}-scheduler'
+  location: location
+}
+
+resource schedulerScalesBackend 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: backend
+  name: guid(backend.id, scheduler.id, roles.contributor)
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roles.contributor)
+    principalId: scheduler.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+var switches = [
+  { name: 'warm', cron: warmFrom, minReplicas: 1 }
+  { name: 'cold', cron: warmUntil, minReplicas: 0 }
+]
+
+resource switchJobs 'Microsoft.App/jobs@2026-07-01' = [
+  for s in switches: {
+    name: '${app}-${s.name}'
+    location: location
+    identity: {
+      type: 'UserAssigned'
+      userAssignedIdentities: {
+        '${scheduler.id}': {}
+      }
+    }
+    properties: {
+      environmentId: environment.id
+      workloadProfileName: 'Consumption'
+      configuration: {
+        triggerType: 'Schedule'
+        scheduleTriggerConfig: {
+          cronExpression: s.cron
+          parallelism: 1
+          replicaCompletionCount: 1
+        }
+        replicaTimeout: 600
+        replicaRetryLimit: 2
+      }
+      template: {
+        containers: [
+          {
+            name: 'switch'
+            image: 'mcr.microsoft.com/azure-cli:2.90.0'
+            command: ['/bin/sh', '-c']
+            args: [
+              'az login --identity --client-id "$AZURE_CLIENT_ID" --allow-no-subscriptions --output none && az containerapp update --ids "$APP_ID" --min-replicas ${s.minReplicas} --query properties.template.scale --output json'
+            ]
+            env: [
+              { name: 'AZURE_CLIENT_ID', value: scheduler.properties.clientId }
+              { name: 'APP_ID', value: backend.id }
+            ]
+            resources: {
+              cpu: json('0.5')
+              memory: '1Gi'
+            }
+          }
+        ]
+      }
+    }
+    dependsOn: [schedulerScalesBackend]
+  }
+]
 
 output apiUrl string = 'https://${backend.properties.configuration.ingress.fqdn}'
 output webUrl string = 'https://${web.properties.defaultHostname}'

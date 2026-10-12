@@ -57,8 +57,8 @@ deploy-frontend: ## Build the static site against the deployed API and publish i
 
 deploy: deploy-backend deploy-frontend ## Both halves
 
-warm: ## Keep one backend replica running (judging week): no cold starts, ~$5 a week at idle rates
+warm: ## Keep one backend replica running now (the tikitaka-warm job does this for judging): ~$0.78 a day
 	az containerapp update -g $(RG) -n tikitaka-api --min-replicas 1 --query properties.template.scale -o json
 
-cold: ## Back to scaling to zero when nobody is watching (~$0)
+cold: ## Back to scaling to zero when nobody is watching (the tikitaka-cold job does this after judging)
 	az containerapp update -g $(RG) -n tikitaka-api --min-replicas 0 --query properties.template.scale -o json
