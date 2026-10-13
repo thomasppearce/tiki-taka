@@ -42,7 +42,7 @@ Copy the outputs (`projectEndpoint`, `searchEndpoint`) into `backend/.env` (see 
 | Container Registry (Basic) | The backend image, built in Azure (`az acr build`, no local Docker) and pulled with the managed identity |
 | User-assigned managed identity `tikitaka-backend` | The backend's identity: may use the Foundry project and models, and read the AI Search knowledge base. No keys anywhere |
 | Static Web App `tikitaka-web` (Free, Central US) | The frontend, a Next.js static export (Static Web Apps is not offered in North Central US) |
-| Log Analytics + Application Insights | Container logs, and the agents' traces |
+| Log Analytics + Application Insights, connected to the Foundry project | Container logs, and the agents' traces: with the connection, they show in Foundry under Observability > Traces |
 | Container Apps jobs `tikitaka-warm`, `tikitaka-cold` + identity `tikitaka-scheduler` | Keep the backend warm through judging: on a schedule, they set its minimum replicas to 1 and back to 0. The identity may change the backend app and nothing else |
 
 ```bash
@@ -52,6 +52,8 @@ make deploy-frontend  # build the static site against the deployed API and publi
 ```
 
 **Cold starts.** The image bakes in the simulated matchday (`python -m app.generator.matchday` at build time), so a cold start loads it in well under a second instead of simulating ten matches (~15 s); the container is serving in about 3 s, and a visitor waits about 27 s in all (most of it Azure starting the replica). Each cold start begins the day at 55' (`MATCH_START_MINUTE`), so a visitor lands just before the drama; a warm replica does the same for the first visitor after ten quiet minutes (`backend/app/live/clock.py`). The channel starts from the top of the minute, so every such session is the same, and the agents' cached runs (in `backend/.cache/agent-runs`, copied into the image) answer it without new model calls. To refresh them: run the backend locally from 55' with the agents on, keep the channel and featured-match streams open to full time, then `make deploy-backend`.
+
+**Tracing.** Every agent run is a trace (`backend/app/agents/tracing.py`): a graphics-team moment, a Watcher's story, or a Director's decision is the root span, carrying the match, the moment, and how it ended (`tiki_taka.status`, `cached`, `drafts`, `tokens`); a failure, and what aired instead, marks it as an error. Under it are Agent Framework's own spans: the workflow, each executor, each agent with its instructions, prompt, and answer, each model call, and each knowledge-base lookup. The deployed backend sends them with the connection string it holds as a secret; a local backend reads it from the project's connection. Runs answered from the cache have no model spans, so to see a live run's full tree, run locally with an empty cache (`MATCHDESK_AGENT_CACHE` pointing at an empty folder). `TRACING=off` turns it off.
 
 **Cost.** Scaled to zero, the backend costs nothing while idle, and the monthly free grant (180,000 vCPU-seconds, 360,000 GiB-seconds) covers about 50 hours of viewing. Kept warm, one idle replica is about $0.78 a day (North Central US: vCPU $0.000003/s idle, memory $0.000003/GiB-s). The idle rate only applies to a replica held by the minimum replica count; one held by a scale rule (a KEDA cron rule, say) is billed at the active vCPU rate, $0.000024/s, about $2.60 a day. So the schedule switches the minimum rather than adding a rule. The registry is $0.17 a day; Static Web Apps Free and Application Insights' free 5 GB are free.
 

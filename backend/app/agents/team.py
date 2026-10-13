@@ -210,7 +210,14 @@ class AgentTeam:
         tools: list[MCPStreamableHTTPTool] | None,
     ) -> tuple[T, int, list[str]]:
         """A structured call that may use tools; also returns what the tools gave back."""
-        agent = Agent(client=self.client, name=name, instructions=instructions, tools=tools)
+        # A stable id per role (each call gets its own Agent), so traces group by agent.
+        agent = Agent(
+            client=self.client,
+            id=f"tiki-taka-{name.lower()}",
+            name=name,
+            instructions=instructions,
+            tools=tools,
+        )
         response = await agent.run(prompt, options={"response_format": schema})
         value = response.value
         if not isinstance(value, schema):

@@ -21,8 +21,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from opentelemetry.trace import Span
+
 from app.agents.brief import build_brief
 from app.agents.team import PROMPT_VERSION, AgentTeam, Outcome
+from app.agents.tracing import ended, run_span
 from app.live.copy import Copy
 from app.models import Claim
 from app.models.proposals import AudienceBody, LocalizedText
@@ -103,10 +106,23 @@ class AgentRunner:
     async def _handle(
         self, desk: "ProposalDesk", candidate: Any, generation: int, brief: Any
     ) -> None:
+        with run_span(
+            "graphics team",
+            match_id=desk.match.match_id,
+            moment_id=candidate.moment_id,
+            moment_kind=candidate.kind,
+            matchday=self.matchday,
+        ) as span:
+            await self._run(desk, candidate, generation, brief, span)
+
+    async def _run(
+        self, desk: "ProposalDesk", candidate: Any, generation: int, brief: Any, span: Span
+    ) -> None:
         match_id = desk.match.match_id
         start = time.perf_counter()
 
         def step(agent: str, action: str, detail: str) -> None:
+            span.add_event(f"{agent} {action}", {"detail": detail})
             desk.agent_step(candidate.index, generation, agent, action, detail)
 
         cached = self._cache(match_id).get(candidate.moment_id)
@@ -116,6 +132,7 @@ class AgentRunner:
                 step(agent, action, f"{detail} · cached")
             graphic = _graphic_from_json(cached["graphic"]) if cached["graphic"] else None
             desk.agent_result(candidate.index, generation, graphic, cached["status"])
+            ended(span, cached["status"], _failure(cached["status"]), cached=True)
             return
 
         steps: list[tuple[str, str, str, float]] = []
@@ -130,10 +147,19 @@ class AgentRunner:
             reason = "timed out" if isinstance(error, TimeoutError) else type(error).__name__
             log.warning("agent team failed on %s: %s", candidate.moment_id, error)
             desk.agent_result(candidate.index, generation, None, "error", reason)
+            ended(span, "error", f"{reason}: the desk airs its scripted copy", cached=False)
             return
         graphic = to_graphic(outcome) if outcome.status == "proposed" else None
         self._remember(match_id, candidate.moment_id, outcome, graphic, steps)
         desk.agent_result(candidate.index, generation, graphic, outcome.status)
+        ended(
+            span,
+            outcome.status,
+            _failure(outcome.status),
+            cached=False,
+            drafts=outcome.run.drafts,
+            tokens=outcome.run.tokens,
+        )
 
     # --- Cache -------------------------------------------------------------------------------
 
@@ -180,6 +206,13 @@ class AgentRunner:
             "runs": runs,
         }
         self._path(match_id).write_text(json.dumps(payload, indent=1))
+
+
+def _failure(status: str) -> str | None:
+    """Why a finished run counts as a failure in its trace: drafts that never passed the checks."""
+    if status == "failed_checks":
+        return "no draft passed the checks: the desk airs its scripted copy"
+    return None
 
 
 def to_graphic(outcome: Outcome) -> "AgentGraphic":

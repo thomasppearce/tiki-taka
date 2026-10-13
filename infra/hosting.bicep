@@ -10,7 +10,8 @@
 // - That identity may use the Foundry project and models (the agents) and read the AI Search
 //   knowledge base.
 // - The frontend (a Next.js static export) on Azure Static Web Apps, Free.
-// - Logs in Log Analytics, and Application Insights for the agents' traces.
+// - Logs in Log Analytics, and Application Insights for the agents' traces, connected to the
+//   Foundry project so the traces show in Foundry.
 //
 // Deploy: see infra/README.md. Resource shapes from Microsoft Learn's template reference
 // (2026-10-12): Microsoft.App 2026-07-01, Microsoft.Web/staticSites 2024-11-01,
@@ -81,6 +82,31 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
   properties: {
     Application_Type: 'web'
     WorkspaceResourceId: logs.id
+  }
+}
+
+resource project 'Microsoft.CognitiveServices/accounts/projects@2026-07-01' existing = {
+  parent: foundry
+  name: name
+}
+
+// Connecting App Insights to the Foundry project is what puts the agents' traces in Foundry
+// (Observability > Traces); locally, the backend reads the connection string from here too.
+resource tracing 'Microsoft.CognitiveServices/accounts/projects/connections@2026-07-01' = {
+  parent: project
+  name: insights.name
+  properties: {
+    category: 'AppInsights'
+    target: insights.id
+    authType: 'ApiKey'
+    isSharedToAll: true
+    credentials: {
+      key: insights.properties.ConnectionString
+    }
+    metadata: {
+      ApiType: 'Azure'
+      ResourceId: insights.id
+    }
   }
 }
 

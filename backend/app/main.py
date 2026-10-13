@@ -16,6 +16,7 @@ from app.agents.channel_runner import ChannelRunner
 from app.agents.channel_team import ChannelTeam
 from app.agents.runner import AgentRunner
 from app.agents.team import AgentTeam
+from app.agents.tracing import start_tracing
 from app.generator.matchday import ScheduledMatch
 from app.live.channel import ChannelDirector
 from app.live.service import MatchdayService
@@ -45,6 +46,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
         cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
         team = AgentTeam.from_env()
+        await start_tracing(team.client)  # every agent run as a trace in Foundry
         await team.connect()  # the knowledge base over MCP, when AI Search is configured
         runner = AgentRunner(team, cache_dir=cache)
         runner.start()
