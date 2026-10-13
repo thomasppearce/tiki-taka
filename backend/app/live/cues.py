@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from app.live.copy import Copy, CopyContext, audience, es_number, minute_label
 from app.models import Claim, MatchEvent
+from app.state.table import _ordinal
 from app.state.xt import to_frame
 
 STATS_EVERY_MS = 10 * 60_000  # shots and xG at 10', 20', ...; territory five minutes later
@@ -113,7 +114,7 @@ def _offside(
         at_ms=flag.match_clock_ms,
         key=f"cue_{flag.event_id[4:]}",
         kind="offside",
-        label=f"Offside: {player} ({team.short} #{n})",
+        label=f"Offside: {player} ({team.short}'s {_ordinal(n)})",
         importance=min(0.8, 0.6 + 0.06 * (n - 1)),
         copy=Copy(
             type="tactical_insight" if n > 1 else "narrative_line",

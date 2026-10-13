@@ -9,7 +9,15 @@ from typing import Any, cast
 from app.agents.brief import MomentBrief, build_brief, is_close, numbers_in
 from app.agents.checker import check_draft
 from app.agents.runner import AgentRunner
-from app.agents.schemas import Draft, DraftClaim, Interpretation, Localized, Placement
+from app.agents.schemas import (
+    Draft,
+    DraftClaim,
+    FactCheck,
+    Interpretation,
+    Localized,
+    Placement,
+    StatementCheck,
+)
 from app.agents.team import AgentTeam, Outcome, Run
 from app.live.desk import AGENT_DEADLINE_MS, ProposalDesk
 from app.live.service import MatchdayService
@@ -272,6 +280,7 @@ class ScriptedTeam(AgentTeam):
             Draft(headline=f"{scorer} scores", body=f"{scorer} finishes.", claims=[uncited]),
             Draft(headline=f"{scorer} scores", body=f"{scorer} finishes.", claims=[cited]),
         ]
+        self.fact_checks: list[FactCheck] = []  # then every draft reads true
         self.answers: dict[type, Any] = {
             Interpretation: Interpretation(worth_airing=True, angle="x", type="stat_graphic"),
             Placement: Placement(
@@ -287,6 +296,9 @@ class ScriptedTeam(AgentTeam):
         if schema is Draft:
             found = ["Offside trap: Overview. A high line steps up together."] if tools else []
             return self.drafts.pop(0), 0, found
+        if schema is FactCheck:
+            verdict = self.fact_checks.pop(0) if self.fact_checks else FactCheck(statements=[])
+            return verdict, 0, []
         return self.answers[schema], 0, []
 
 
@@ -298,3 +310,81 @@ def test_the_explainer_looks_up_once_and_reuses_it_on_a_redraft(service: Matchda
     explainer = [(tools, prompt) for name, prompt, tools in team.calls if name == "Explainer"]
     assert [tools for tools, _ in explainer] == [True, False]  # the redraft gets no tool
     assert "A high line steps up together." in explainer[1][1]  # but sees what was found
+
+
+def _verdict(statement: str, verdict: str, shows: str) -> FactCheck:
+    fair = StatementCheck(statement="a neat move", verdict="fair reading", brief_shows="passes")
+    return FactCheck(
+        statements=[fair, StatementCheck(statement=statement, verdict=verdict, brief_shows=shows)]  # type: ignore[arg-type]
+    )
+
+
+def test_a_fair_reading_is_not_a_problem() -> None:
+    assert _verdict("Northgate lead", "supported", "1-0").problems == []
+    assert _verdict("Westmere lead", "wrong", "Northgate lead 1-0").problems == [
+        '"Westmere lead" is wrong: the brief shows Northgate lead 1-0'
+    ]
+
+
+def test_the_fact_checker_sends_back_a_draft_that_misreads_the_brief(
+    service: MatchdayService,
+) -> None:
+    """The code passes the right names and numbers; the fact-checker reads what they say."""
+    brief = goal_brief(service)
+    team = ScriptedTeam(brief)
+    cited = team.drafts[1]
+    team.drafts = [cited, cited]
+    team.fact_checks = [_verdict("scores again", "wrong", "no earlier goal")]
+    steps: list[tuple[str, str, str]] = []
+    outcome = asyncio.run(team.run(brief, lambda *step: steps.append(step)))
+    assert outcome.status == "proposed" and outcome.run.drafts == 2
+    redraft = [prompt for name, prompt, _ in team.calls if name == "Explainer"][1]
+    assert "The fact-checker sent your previous draft back" in redraft
+    assert '"scores again" is wrong: the brief shows no earlier goal' in redraft
+    checks = [(agent, action) for agent, action, _ in steps if "checker" in agent]
+    assert checks == [
+        ("checker", "handoff"),
+        ("fact_checker", "agent_failure"),
+        ("checker", "handoff"),
+        ("fact_checker", "handoff"),
+    ]
+
+
+def test_a_draft_the_fact_checker_never_accepts_does_not_air(service: MatchdayService) -> None:
+    brief = goal_brief(service)
+    team = ScriptedTeam(brief)
+    team.drafts = [team.drafts[1]] * 3
+    team.fact_checks = [_verdict("Westmere lead", "wrong", "Northgate lead")] * 3
+    outcome = asyncio.run(team.run(brief, lambda *step: None))
+    assert outcome.status == "failed_checks" and outcome.run.drafts == 3
+
+
+def test_the_brief_spells_out_who_leads_who_has_the_ball_and_what_came_last(
+    service: MatchdayService,
+) -> None:
+    from app.evals.graphics import briefs
+
+    texts = {c.label: b.text() for c, b in briefs(service)}
+    offside = next(t for label, t in texts.items() if label.startswith("Offside: Lindqvist"))
+    assert "level at 1-1" in offside
+    assert "who was caught offside" in offside  # not "misplaced": the ball reached him
+    assert "Westmere Athletic's 2nd offside of the match" in offside
+    assert "- Ahead: more of the ball: Westmere Athletic" in offside
+    assert offside.count("(the latest event)") == 1
+    late = next(t for t in texts.values() if "94'" in t.split("\n")[1])
+    assert "Westmere Athletic lead 2-1" in late and "stoppage time" in late
+
+
+def test_two_rejections_then_a_pass_runs_each_step_once(service: MatchdayService) -> None:
+    """Each step works on its own copy of the run: a step changing the run it was sent once
+    let a sibling edge (out of drafts) fire alongside the redraft."""
+    brief = goal_brief(service)
+    team = ScriptedTeam(brief)
+    uncited, cited = team.drafts
+    team.drafts = [uncited, uncited, cited]
+    steps: list[tuple[str, str, str]] = []
+    outcome = asyncio.run(team.run(brief, lambda *step: steps.append(step)))
+    assert outcome.status == "proposed" and outcome.run.drafts == 3
+    agents = [agent for agent, action, _ in steps if action == "handoff"]
+    assert agents.count("explainer") == 3
+    assert agents.count("producer") == agents.count("localizer") == 1

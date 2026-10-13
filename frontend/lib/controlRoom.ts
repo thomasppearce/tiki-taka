@@ -68,6 +68,7 @@ const PIPELINE: AgentName[] = [
   "interpreter",
   "explainer",
   "checker",
+  "fact_checker",
   "producer",
   "localizer",
 ];
@@ -76,6 +77,7 @@ const WORKING: Partial<Record<AgentName, string>> = {
   interpreter: "Scanning the match state",
   explainer: "Grounding claims in events and knowledge",
   checker: "Checking every claim against the events",
+  fact_checker: "Reading the graphic against what happened",
   producer: "Ranking against the queue",
   localizer: "Writing audience and language variants",
 };

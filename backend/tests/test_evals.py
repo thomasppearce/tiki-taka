@@ -18,7 +18,7 @@ def test_every_featured_moment_becomes_a_brief_with_its_evidence(
 
 def test_the_single_agent_answers_every_specialist_s_fields_in_order() -> None:
     fields = list(SoloGraphic.model_fields)
-    assert fields[:4] == ["worth_airing", "angle", "type", "focus_player_id"]
+    assert fields[:5] == ["worth_airing", "angle", "evidence_event_ids", "type", "focus_player_id"]
     assert fields.index("claims") < fields.index("priority") < fields.index("casual_body_es")
 
 
@@ -28,7 +28,13 @@ def _answer(system: str, **kw: object) -> Answer:
 
 def test_the_summary_counts_what_airs_and_what_was_wrong_with_it() -> None:
     team = [
-        _answer("team", airs=True, first_draft_ok=False, scores={"groundedness": 5.0}),
+        _answer(
+            "team",
+            airs=True,
+            first_draft_ok=False,
+            sent_back={"fact_checker": 1},
+            scores={"groundedness": 5.0},
+        ),
         _answer("team", problems=["cites evt_9, which is not in the brief."]),
     ]
     solo = [
@@ -39,5 +45,6 @@ def test_the_summary_counts_what_airs_and_what_was_wrong_with_it() -> None:
     page = render({**meta, "judge_model": "j"}, team, solo)
     assert "| Graphics put on air | 1 | 2 |" in page
     assert "| On air with something the brief doesn't support | 0 | 1 |" in page
-    assert "| Held back by the checker (the scripted copy airs instead) | 1 | no checker |" in page
-    assert "| First draft passed the checker | 0/1 (0%) | no checker |" in page
+    assert "| Held back by the checks (the scripted copy airs instead) | 1 | no checks |" in page
+    assert "| First draft passed both checks | 0/1 (0%) | no checks |" in page
+    assert "| Drafts sent back by the fact-checker | 1 | no checks |" in page

@@ -13,6 +13,9 @@ class Interpretation(BaseModel):
 
     worth_airing: bool = Field(description="False only if a viewer would not care right now.")
     angle: str = Field(description="One sentence: why this moment matters in this match.")
+    evidence_event_ids: list[str] = Field(
+        default_factory=list, description="Ids of the brief's events the angle rests on."
+    )
     type: GraphicType
     focus_player_id: str | None = Field(
         default=None,
@@ -35,6 +38,36 @@ class Draft(BaseModel):
         default_factory=list,
         description="Titles of the knowledge base sections the graphic draws on, if any.",
     )
+
+
+Verdict = Literal["supported", "fair reading", "unsupported", "wrong"]
+
+
+class StatementCheck(BaseModel):
+    statement: str = Field(description="One statement from the headline or body, quoted.")
+    verdict: Verdict = Field(
+        description="supported: the brief states it. fair reading: it follows directly from the "
+        "brief's events, score, or stats. unsupported: the brief doesn't show it. wrong: the "
+        "brief shows otherwise."
+    )
+    brief_shows: str = Field(description="What the brief shows about it, in a few words.")
+
+
+class FactCheck(BaseModel):
+    """The fact-checker's verdict on each statement in a graphic."""
+
+    statements: list[StatementCheck] = Field(
+        description="Every statement in the headline and body, in order, each with a verdict."
+    )
+
+    @property
+    def problems(self) -> list[str]:
+        """The statements that send the draft back: unsupported or wrong."""
+        return [
+            f'"{s.statement}" is {s.verdict}: the brief shows {s.brief_shows}'
+            for s in self.statements
+            if s.verdict in ("unsupported", "wrong")
+        ]
 
 
 class Placement(BaseModel):

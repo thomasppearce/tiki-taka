@@ -1907,6 +1907,7 @@
               "interpreter",
               "explainer",
               "checker",
+              "fact_checker",
               "producer",
               "localizer",
               "renderer",

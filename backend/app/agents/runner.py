@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-TEAM: list[str] = ["interpreter", "explainer", "checker", "producer", "localizer"]
+TEAM: list[str] = ["interpreter", "explainer", "checker", "fact_checker", "producer", "localizer"]
 
 
 class AgentRunner:

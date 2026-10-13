@@ -7,6 +7,7 @@ match page always agree, and nothing after the current minute leaks out.
 import threading
 from collections import OrderedDict
 from functools import lru_cache
+from itertools import pairwise
 
 from app.generator.matchday import ScheduledMatch, build_matchday, fingerprint
 from app.generator.player_season import season_records
@@ -383,6 +384,11 @@ class MatchdayService:
             surname=self.surname,
             club=self.club,
             score_at=m.result.score_at,
+            offside_passes=frozenset(
+                p.event_id
+                for p, n in pairwise(events)
+                if p.type == "pass" and n.type == "offside" and n.player_id == p.target_player_id
+            ),
         )
         return ProposalDesk(
             m, moments, ctx, autopilot=not m.featured, agents=self.agents if m.featured else None

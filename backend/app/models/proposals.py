@@ -13,7 +13,14 @@ ProposalType = Literal[
 ProposalStatus = Literal["pending", "approved", "edited", "rejected", "expired"]
 
 AgentName = Literal[
-    "interpreter", "explainer", "checker", "producer", "localizer", "renderer", "orchestrator"
+    "interpreter",
+    "explainer",
+    "checker",
+    "fact_checker",
+    "producer",
+    "localizer",
+    "renderer",
+    "orchestrator",
 ]
 
 

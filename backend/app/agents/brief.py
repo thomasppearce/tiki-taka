@@ -17,6 +17,7 @@ from app.generator.world import Club
 from app.live.copy import CopyContext, distance_to_goal
 from app.models import Claim, MatchEvent
 from app.state.aggregator import team_stats
+from app.state.table import _ordinal
 from app.state.xt import to_frame
 
 LEAD_UP_EVENTS = 8
@@ -29,6 +30,7 @@ class EventFact:
     event_id: str
     text: str
     players: tuple[str, ...]  # surnames involved
+    clock_ms: int = 0
 
     @property
     def numbers(self) -> frozenset[float]:
@@ -87,8 +89,16 @@ class MomentBrief:
     def text(self) -> str:
         """The brief as the agents read it."""
 
+        latest = max(
+            (*self.evidence, *self.lead_up), key=lambda f: (f.clock_ms, f.event_id), default=None
+        )
+
         def facts(items: tuple[EventFact, ...]) -> str:
-            return "\n".join(f"- {f.event_id}: {f.text}" for f in items) or "- (none)"
+            lines = [
+                f"- {f.event_id}: {f.text}" + (" (the latest event)" if f is latest else "")
+                for f in sorted(items, key=lambda f: (f.clock_ms, f.event_id))
+            ]
+            return "\n".join(lines) or "- (none)"
 
         figures = "".join(f"- {f.text}\n" for f in self.figures)
         if figures:
@@ -99,16 +109,19 @@ class MomentBrief:
         return (
             f"MOMENT: {self.label} ({self.kind})\n"
             f"SITUATION: {self.situation}\n"
-            f"EVENTS BEHIND IT (citable):\n{facts(self.evidence)}\n"
+            f"EVENTS BEHIND IT (citable, in time order):\n{facts(self.evidence)}\n"
             f"{figures}"
-            f"LEAD-UP (citable):\n{facts(self.lead_up)}\n"
-            f"STATS SO FAR: {self.stats}\n"
+            "LEAD-UP (citable, in time order; these may come before or between the events "
+            f"above):\n{facts(self.lead_up)}\n"
+            f"STATS SO FAR:\n{self.stats}\n"
             + (
-                f"PLAYER STORIES (context, never a claim): {' | '.join(self.stories)}\n"
+                "PLAYER STORIES (true, and may be quoted word for word when the moment is about "
+                f"that player; never listed as a claim): {' | '.join(self.stories)}\n"
                 if self.stories
                 else ""
             )
-            + f"BACKGROUND (not citable, never a claim): {self.background}"
+            + "BACKGROUND (how each club usually plays: it may describe a club, but it is not "
+            f"evidence of what happened in this moment): {self.background}"
         )
 
     @property
@@ -156,13 +169,20 @@ def build_brief(
     )
     home_goals, away_goals = ctx.score_at(clock_ms)
     minute = clock_ms // 60_000 + 1
+    half_time = next((e.match_clock_ms for e in events if e.type == "half_end"), None)
+    first_half = half_time is None or clock_ms <= half_time
+    stoppage = minute > (45 if first_half else 90)
+    if home_goals == away_goals:
+        standing = f"level at {home_goals}-{away_goals}"
+    else:
+        leader = home if home_goals > away_goals else away
+        standing = f"{leader.name} lead {max(home_goals, away_goals)}-{min(home_goals, away_goals)}"
     situation = (
         f"{home.name} ({home.short}, home) {home_goals}-{away_goals} {away.name} "
-        f"({away.short}, away), {minute}' ({'1st' if minute <= 45 else '2nd'} half)"
+        f"({away.short}, away): {standing}. {minute}', "
+        f"{'1st' if first_half else '2nd'} half{', stoppage time' if stoppage else ''}"
     )
-    stats = "; ".join(
-        _stats_line(club, events, ctx, home.club_id, clock_ms) for club in (home, away)
-    )
+    stats = _stats(home, away, events, ctx, clock_ms)
     background = " ".join(_tactics_line(club) for club in (home, away))
     return MomentBrief(
         match_id=events[0].match_id if events else "",
@@ -181,15 +201,74 @@ def build_brief(
     )
 
 
-def _stats_line(
-    club: Club, events: list[MatchEvent], ctx: CopyContext, home_id: str, clock_ms: int
-) -> str:
-    s = team_stats(events, ctx.impacts, club.club_id, home_id, clock_ms)
-    return (
-        f"{club.short} {s.shots} shots ({s.xg:.2f} xG, {s.shots_on_target} on target), "
-        f"{round(s.possession_pct)}% possession, {round(s.field_tilt_pct)}% field tilt, "
-        f"{s.offsides} offsides"
+def _stats(home: Club, away: Club, events: list[MatchEvent], ctx: CopyContext, t: int) -> str:
+    """Each club's numbers on its own line, by name, then which club is ahead on each, so no
+    one has to work out from two abbreviations which side has more of the ball."""
+    s = {
+        c.club_id: team_stats(events, ctx.impacts, c.club_id, home.club_id, t) for c in (home, away)
+    }
+    lines = [
+        f"- {c.name} ({c.short}): {_count(s[c.club_id].shots, 'shot')} "
+        f"({s[c.club_id].xg:.2f} xG, {s[c.club_id].shots_on_target} on target), "
+        f"{round(s[c.club_id].possession_pct)}% possession, "
+        f"{round(s[c.club_id].field_tilt_pct)}% field tilt, "
+        f"{_count(s[c.club_id].offsides, 'offside')}"
+        for c in (home, away)
+    ]
+    h, a = s[home.club_id], s[away.club_id]
+
+    def ahead(what: str, hv: float, av: float, shown: str) -> str:
+        if round(hv, 2) == round(av, 2):
+            return f"{what}: even"
+        return f"{what}: {(home if hv > av else away).name} ({shown})"
+
+    lines.append(
+        "- Ahead: "
+        + "; ".join(
+            (
+                ahead(
+                    "more of the ball",
+                    h.possession_pct,
+                    a.possession_pct,
+                    f"{round(max(h.possession_pct, a.possession_pct))}%",
+                ),
+                ahead(
+                    "more of the territory",
+                    h.field_tilt_pct,
+                    a.field_tilt_pct,
+                    f"{round(max(h.field_tilt_pct, a.field_tilt_pct))}% field tilt",
+                ),
+                ahead(
+                    "more shots",
+                    h.shots,
+                    a.shots,
+                    f"{max(h.shots, a.shots)} to {min(h.shots, a.shots)}",
+                ),
+                ahead(
+                    "better chances",
+                    h.xg,
+                    a.xg,
+                    f"{max(h.xg, a.xg):.2f} xG to {min(h.xg, a.xg):.2f}",
+                ),
+            )
+        )
     )
+    return "\n".join(lines)
+
+
+def _count(n: int, noun: str) -> str:
+    return f"{n} {noun}{'' if n == 1 else 's'}"
+
+
+def _so_far(e: MatchEvent, ctx: CopyContext, noun: str) -> str:
+    """'(Westmere Athletic's 1st offside of the match)': how many of these the club has had,
+    counting this one, so nobody writes "again" about the first."""
+    n = sum(
+        1
+        for x in ctx.events.values()
+        if x.type == e.type and x.team_id == e.team_id and x.match_clock_ms <= e.match_clock_ms
+    )
+    return f" ({ctx.club(e.team_id).name}'s {_ordinal(n)} {noun} of the match)"
 
 
 def _tactics_line(club: Club) -> str:
@@ -216,9 +295,16 @@ def _fact(e: MatchEvent, ctx: CopyContext, players: dict[str, str]) -> EventFact
     score_after = ctx.score_at(e.match_clock_ms)
     text = {
         "pass": lambda: (
-            f"{who} {'completed' if e.outcome == 'success' else 'misplaced'} a "
-            f"{round(a.pass_distance_m or 0)} m pass to {target}{zone}"
-            + (f", +{impact.threat:.3f} xT" if impact and impact.threat > 0 else "")
+            f"{who} played a {round(a.pass_distance_m or 0)} m pass to {target}{zone}, "
+            f"who was caught offside"
+            if e.event_id in ctx.offside_passes
+            else (
+                f"{who} completed a {round(a.pass_distance_m or 0)} m pass to {target}{zone}"
+                + (f", +{impact.threat:.3f} xT" if impact and impact.threat > 0 else "")
+                if e.outcome == "success"
+                else f"{who} misplaced a {round(a.pass_distance_m or 0)} m pass meant for "
+                f"{target}{zone}: it did not reach him"
+            )
         ),
         "shot": lambda: (
             f"{who} shot from {distance_to_goal(e, home)} m{zone}, "
@@ -228,11 +314,11 @@ def _fact(e: MatchEvent, ctx: CopyContext, players: dict[str, str]) -> EventFact
         "save": lambda: f"{who} made a save",
         "tackle": lambda: f"{who} won the ball{zone}",
         "foul": lambda: f"{who} committed a foul{zone}",
-        "card": lambda: f"{a.card_color} card for {who}",
-        "offside": lambda: f"{who} was flagged offside{zone}",
+        "card": lambda: f"{a.card_color} card for {who}" + _so_far(e, ctx, "card"),
+        "offside": lambda: f"{who} was flagged offside{zone}" + _so_far(e, ctx, "offside"),
         "substitution": lambda: (
             f"{target} replaced {who}, who had covered "
-            f"{(a.distance_covered_m or 0) / 1000:.1f} km"
+            f"{(a.distance_covered_m or 0) / 1000:.1f} km" + _so_far(e, ctx, "substitution")
         ),
         "sprint": lambda: (
             f"{who} sprinted {round(a.sprint_distance_m or 0)} m, top speed "
@@ -242,7 +328,7 @@ def _fact(e: MatchEvent, ctx: CopyContext, players: dict[str, str]) -> EventFact
     involved = tuple(
         players[p].split(" (")[0] for p in (e.player_id, e.target_player_id) if p in players
     )
-    return EventFact(e.event_id, f"{minute} {text}", involved)
+    return EventFact(e.event_id, f"{minute} {text}", involved, e.match_clock_ms)
 
 
 def is_close(value: float, allowed: frozenset[float]) -> bool:

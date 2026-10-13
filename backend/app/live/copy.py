@@ -33,6 +33,7 @@ class CopyContext:
     surname: Callable[[str | None], str]
     club: Callable[[str | None], Club]
     score_at: Callable[[int], tuple[int, int]]
+    offside_passes: frozenset[str] = frozenset()  # passes whose receiver was caught offside
 
 
 def audience(analyst: tuple[str, str], casual: tuple[str, str]) -> AudienceBody:

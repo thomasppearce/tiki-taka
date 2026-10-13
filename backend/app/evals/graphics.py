@@ -65,7 +65,10 @@ class Answer:
     body: str = ""
     claims: list[dict[str, Any]] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)  # the checker's, on the last draft
-    first_draft_ok: bool | None = None  # team only: did the first draft pass the checker
+    first_draft_ok: bool | None = None  # team only: did the first draft pass both checks
+    sent_back: dict[str, int] = field(
+        default_factory=dict
+    )  # team only: drafts each check sent back
     drafts: int = 0
     tokens: int = 0
     seconds: float = 0.0
@@ -108,11 +111,10 @@ def briefs(service: MatchdayService) -> list[tuple[Any, MomentBrief]]:
 
 async def run_team(team: AgentTeam, candidate: Any, brief: MomentBrief) -> Answer:
     answer = _answer("team", candidate)
-    checks: list[str] = []
 
     def report(agent: str, action: str, detail: str) -> None:
-        if agent == "checker":
-            checks.append(action)
+        if agent in ("checker", "fact_checker") and action == "agent_failure":
+            answer.sent_back[agent] = answer.sent_back.get(agent, 0) + 1
 
     start = time.perf_counter()
     try:
@@ -128,7 +130,7 @@ async def run_team(team: AgentTeam, candidate: Any, brief: MomentBrief) -> Answe
     )
     answer.passed_on = outcome.status == "passed"
     answer.airs = outcome.status == "proposed"
-    answer.first_draft_ok = checks[0] == "handoff" if checks else None
+    answer.first_draft_ok = None if answer.passed_on else answer.airs and run.drafts == 1
     answer.problems = list(run.problems)
     answer.background = run.background
     if run.draft:
@@ -290,23 +292,34 @@ def render(meta: dict[str, Any], team: list[Answer], solo: list[Answer]) -> str:
             lambda a: sum(x.airs and bool(x.problems) for x in a),
         ),
         row(
-            "Held back by the checker (the scripted copy airs instead)",
+            "Held back by the checks (the scripted copy airs instead)",
             lambda a: (
                 sum(not x.airs and bool(x.problems) for x in a)
                 if a and a[0].system == "team"
-                else "no checker"
+                else "no checks"
             ),
         ),
         row(
-            "First draft passed the checker",
+            "First draft passed both checks",
             lambda a: (
                 share(
                     sum(bool(x.first_draft_ok) for x in a),
                     sum(x.first_draft_ok is not None for x in a),
                 )
                 if a and a[0].system == "team"
-                else "no checker"
+                else "no checks"
             ),
+        ),
+        *(
+            row(
+                f"Drafts sent back by the {label}",
+                lambda a, check=check: (
+                    sum(x.sent_back.get(check, 0) for x in a)
+                    if a and a[0].system == "team"
+                    else "no checks"
+                ),
+            )
+            for check, label in (("checker", "code checker"), ("fact_checker", "fact-checker"))
         ),
         *(row(f"Foundry {e} (1-5)", lambda a, e=e: mean_score(a, e)) for e in EVALUATORS),
         row(
