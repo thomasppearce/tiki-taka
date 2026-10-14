@@ -1,8 +1,16 @@
 "use client";
 
-import { Pause, Play, PushPinSlash } from "@phosphor-icons/react/dist/ssr";
+import {
+  ClockCounterClockwise,
+  FastForward,
+  Pause,
+  Play,
+  PushPinSlash,
+} from "@phosphor-icons/react/dist/ssr";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { postJson } from "@/lib/api";
 import type { Channel } from "@/lib/contracts.generated";
 import type { ChannelControls } from "@/lib/live/useChannel";
 import { useCountdown } from "@/lib/live/useCountdown";
@@ -64,7 +72,35 @@ export function CutControls({
           </Button>
         )}
       </div>
+      <DemoClock />
     </section>
+  );
+}
+
+/**
+ * Demo controls for the one matchday clock: skip to the day's last final whistle (the recaps),
+ * or back to 55'. Everyone watching moves with it.
+ */
+function DemoClock() {
+  const [busy, setBusy] = useState(false);
+  const move = (minute: number | null) => {
+    setBusy(true);
+    void postJson("/api/clock", minute === null ? {} : { minute })
+      .catch(() => undefined)
+      .finally(() => setBusy(false));
+  };
+  return (
+    <div className="flex w-full flex-wrap items-center gap-2 border-t border-line pt-2">
+      <span className="mr-auto text-xs text-ink-3">
+        Match clock (demo, moves everyone watching)
+      </span>
+      <Button onClick={() => move(55)} disabled={busy}>
+        <ClockCounterClockwise size={14} /> Back to 55&prime;
+      </Button>
+      <Button onClick={() => move(null)} disabled={busy}>
+        <FastForward size={14} /> Skip to the final whistle
+      </Button>
+    </div>
   );
 }
 

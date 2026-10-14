@@ -9,11 +9,12 @@ import type { ClubRef, Recap, RecapFact } from "@/lib/contracts.generated";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
- * How the final day unfolded, once the last match ends: the recap writer's headline and story,
- * the four outcomes code worked out (the title, the top four, the drop, the Golden Boot), and the
- * moments that decided the day, each with its receipt: the code's own line for the goal it cites.
+ * How the matchday unfolded, once its last match ends: the recap writer's headline and story,
+ * where code says the day left the table (the top, the top four, the bottom three, the Golden
+ * Boot race; on the season's last day, how it ended), and the moments that decided the day, each
+ * with its receipt: the code's own line for the goal it cites.
  */
-export function FinalDayRecap({
+export function MatchdayRecap({
   recap,
   fixtureOf,
 }: {
@@ -35,6 +36,7 @@ export function FinalDayRecap({
       </section>
     );
   }
+  const over = recap.season_over;
   const facts = new Map(recap.facts.map((f) => [f.fact_id, f]));
   const cited = new Set(recap.beats.flatMap((b) => b.fact_ids)).size;
   return (
@@ -50,7 +52,9 @@ export function FinalDayRecap({
       >
         <header className="max-w-[70ch]">
           <p className="text-xs text-ink-3">
-            Full time &middot; How the final day unfolded
+            Full time &middot; How{" "}
+            {recap.matchday ? `matchday ${recap.matchday}` : "the matchday"}{" "}
+            unfolded
           </p>
           <h2
             id={titleId}
@@ -64,16 +68,16 @@ export function FinalDayRecap({
         </header>
 
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line lg:grid-cols-4">
-          <Outcome label="Champions">
-            {recap.champions && <Club club={recap.champions} />}
+          <Outcome label={over ? "Champions" : "Top of the table"}>
+            {recap.top && <Club club={recap.top} />}
           </Outcome>
           <Outcome label="Top four">
             <Clubs clubs={recap.top_four} />
           </Outcome>
-          <Outcome label="Relegated">
-            <Clubs clubs={recap.relegated} />
+          <Outcome label={over ? "Relegated" : "Bottom three"}>
+            <Clubs clubs={recap.bottom_three} />
           </Outcome>
-          <Outcome label="Golden Boot">
+          <Outcome label={over ? "Golden Boot" : "Golden Boot leader"}>
             {recap.golden_boot && (
               <span className="flex items-center gap-2">
                 <Crest club={recap.golden_boot.club} size={20} />

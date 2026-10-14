@@ -203,6 +203,8 @@ def test_a_match_recap_waits_for_its_whistle_then_the_code_writes_it(
         ["evt_002634"],
     ]
     assert client.get("/api/recap", params={"ended": True}).json()["status"] == "ready"
+    every = client.get("/api/recaps", params={"ended": True}).json()
+    assert len(every) == len(service.matches) and {r["status"] for r in every} == {"ready"}
 
 
 def test_a_match_recap_gives_the_final_score_and_stays_on_the_pitch(
@@ -219,6 +221,8 @@ def test_a_match_recap_gives_the_final_score_and_stays_on_the_pitch(
         headline="Desai wins it late", story="Westmere won 2-1 at Northgate.", claims=[winner]
     )
     assert check_match_recap(good, brief) == []
+    shots = good.model_copy(update={"story": "Westmere won 2-1, though out-shot 11-7."})
+    assert check_match_recap(shots, brief) == []  # a stat compared, not a scoreline
     bad = MatchRecapDraft(
         headline="Desai keeps Westmere up",
         story="Westmere led 2-0 and stayed out of the relegation zone.",

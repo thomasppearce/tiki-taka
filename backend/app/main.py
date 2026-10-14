@@ -69,8 +69,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         watchers = AgentTeam.from_env("FOUNDRY_WATCHER_MODEL", knowledge=False)
         channel = ChannelRunner(ChannelTeam(team, watchers), cache_dir=cache)
         channel.start()
-        # The recap writer has no deadline either: the accurate model writes, the fast one checks.
-        writer = RecapWriter(watchers, team)
+        # Recaps have no deadline either: the accurate model writes them and checks them.
+        writer = RecapWriter(watchers, watchers)
     app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
     service = MatchdayService(agents=runner)
@@ -233,6 +233,14 @@ def recap(request: Request, ended: bool = False) -> Recap:
     by code, and the story, written by the recap writer and checked (app/live/recap.py).
     `ended`: the finished day whatever the clock says (the /recap page)."""
     return request.app.state.recap.snapshot(_service(request).clock.clock_ms(), ended)
+
+
+@app.get("/api/recaps")
+def match_recaps(request: Request, ended: bool = False) -> list[MatchRecap]:
+    """Every match's recap (pending until its final whistle), in fixture order."""
+    service = _service(request)
+    now = service.clock.clock_ms()
+    return [request.app.state.recap.match(m.match_id, now, ended) for m in service.matches]
 
 
 @app.get("/api/matches/{match_id}/recap")

@@ -8,6 +8,7 @@ import { MomentumTimeline } from "@/components/control-room/MomentumTimeline";
 import { ProgramMonitor } from "@/components/control-room/ProgramMonitor";
 import { TacticalPitch } from "@/components/control-room/TacticalPitch";
 import { FeedState } from "@/components/match/FeedState";
+import { MatchRecapCard } from "@/components/recap/MatchRecapCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FanPreferences } from "@/components/viewer/FanPreferences";
 import { KeyMoments } from "@/components/viewer/KeyMoments";
@@ -19,6 +20,7 @@ import { formatClock } from "@/lib/format";
 import { useEvidence } from "@/lib/live/useEvidence";
 import { usePlaybackClock } from "@/lib/live/usePlaybackClock";
 import { type LiveMatch, useLiveMatch } from "@/lib/live/useLiveMatch";
+import { useMatchRecap } from "@/lib/live/useRecap";
 import {
   MatchContext,
   type MatchInfo,
@@ -81,6 +83,7 @@ function Viewer({
   const prefs = role === "fan" ? stored : GUEST_PREFS;
   const [momentId, setMomentId] = useState<string | null>(null);
   const clockMs = usePlaybackClock(live.source.getClockMs);
+  const recap = useMatchRecap(info.matchId);
 
   const events = useMemo(
     () => live.events.filter((e) => e.match_clock_ms <= clockMs),
@@ -131,6 +134,9 @@ function Viewer({
         </SiteHeader>
         <main className="mx-auto grid w-full max-w-[1600px] flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="grid min-w-0 gap-3">
+            {recap && live.card?.status === "full_time" && (
+              <MatchRecapCard recap={recap} />
+            )}
             <ProgramMonitor
               clock={formatClock(clockMs)}
               source={live.source}

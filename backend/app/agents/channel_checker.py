@@ -57,6 +57,7 @@ def check_match_recap(recap: MatchRecapDraft, brief: MatchBrief) -> list[str]:
     problems = _check(brief, recap.claims, fields)
     home, away = final = brief.scores[-1]
     told = {(int(h), int(a)) for text in fields.values() for h, a in SCORELINE.findall(text)}
+    told -= _stat_pairs(brief.stats)  # "8-4 on target" is a comparison, not a scoreline
     if not told & {final, (away, home)}:
         problems.append(f"The recap doesn't give the final score: {home}-{away}.")
     passed = set(brief.scores) | {(a, h) for h, a in brief.scores}
@@ -69,6 +70,18 @@ def check_match_recap(recap: MatchRecapDraft, brief: MatchBrief) -> list[str]:
             f"The recap talks about the table ({words}); the matchday recap covers that."
         )
     return problems
+
+
+def _stat_pairs(stats: str) -> set[tuple[int, int]]:
+    """Each stat as both sides' whole numbers, either way round: (11, 7) shots, (8, 4) on
+    target. A recap may compare them the way it gives a score."""
+    if ";" not in stats:
+        return set()
+    home, away = (
+        [int(float(n)) for n in re.findall(r"\d+(?:\.\d+)?", side) if "." not in n]
+        for side in stats.split(";", 1)
+    )
+    return {pair for h, a in zip(home, away, strict=False) for pair in ((h, a), (a, h))}
 
 
 def check_decision(decision: CutDecision, briefs: Sequence[MatchBrief]) -> list[str]:

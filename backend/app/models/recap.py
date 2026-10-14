@@ -66,6 +66,10 @@ class MatchRecap(Contract):
 
     match_id: str
     status: RecapStatus
+    home: ClubRef
+    away: ClubRef
+    score_home: int = Field(ge=0, description="The final score.")
+    score_away: int = Field(ge=0)
     written_by: Literal["agents", "code"] | None = None
     headline: str | None = None
     story: str | None = None

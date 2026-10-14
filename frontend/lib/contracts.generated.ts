@@ -717,6 +717,13 @@ export interface PlayerRef {
 export interface MatchRecap {
   match_id: string;
   status: "pending" | "writing" | "ready";
+  home: ClubRef;
+  away: ClubRef;
+  /**
+   * The final score.
+   */
+  score_home: number;
+  score_away: number;
   written_by: ("agents" | "code") | null;
   headline: string | null;
   story: string | null;

@@ -1470,6 +1470,21 @@
           ],
           "type": "string"
         },
+        "home": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "away": {
+          "$ref": "#/$defs/ClubRef"
+        },
+        "score_home": {
+          "description": "The final score.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "score_away": {
+          "minimum": 0,
+          "type": "integer"
+        },
         "written_by": {
           "anyOf": [
             {
@@ -1523,6 +1538,10 @@
       "required": [
         "match_id",
         "status",
+        "home",
+        "away",
+        "score_home",
+        "score_away",
         "written_by",
         "headline",
         "story",

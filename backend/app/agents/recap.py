@@ -10,8 +10,8 @@
   four to six beats in time order, each citing the facts it rests on.
 - Checker (code): every beat cites facts that exist, is set at their minute, and uses only their
   numbers and names; beats in time order; the headline's and standfirst's numbers are in the facts.
-- Fact-checker (model): what the recap says against what the facts show, statement by statement,
-  as for the graphics (team.py).
+- Fact-checker (model, the accurate one too: a recap has no deadline): what the recap says
+  against what the facts show, statement by statement, as for the graphics (team.py).
 """
 
 import logging
@@ -24,7 +24,7 @@ from app.models.recap import RecapFact
 
 log = logging.getLogger(__name__)
 
-RECAP_VERSION = "r4"  # bump when the prompts change: the cached recap is rewritten
+RECAP_VERSION = "r6"  # bump when the prompts change: the cached recap is rewritten
 MAX_DRAFTS = 3
 
 RECAP_WRITER = """You are the recap writer on Tiki-Taka, a live channel covering a matchday of a
@@ -32,8 +32,9 @@ fictional football league: every match at once. The day is over. Tell a viewer w
 it unfolded, as a story, not a list:
 - headline: at most 10 words, sentence case: the day's biggest story. When one goal settled more
   than one race, that is the story.
-- standfirst: at most 45 words: what the day came down to, then where it left the top, the top
-  four, the bottom three, and the Golden Boot race.
+- standfirst: at most 45 words, two sentences. First what the day came down to: the goals the
+  deciders fact names and what they settled. Then, briefly, where it left the top, the bottom
+  three, and the Golden Boot race (the panel beside it lists every club, so don't).
 - beats: four to six moments that decided the day, in time order. Each is at most 30 words, set at
   its minute, says what the goal did to the race it moved, and lists the ids of the facts it rests
   on.

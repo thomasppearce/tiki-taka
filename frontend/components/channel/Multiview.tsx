@@ -35,6 +35,7 @@ export function Multiview({
   pinnedMatchId,
   canCut,
   tags,
+  recaps,
   onCut,
   onPin,
 }: {
@@ -46,6 +47,8 @@ export function Multiview({
   pinnedMatchId: string | null;
   canCut: boolean;
   tags?: Map<string, string>;
+  /** Each finished match's recap headline. */
+  recaps?: Map<string, string>;
   onCut: (matchId: string) => void;
   onPin: (matchId: string | null) => void;
 }) {
@@ -71,6 +74,7 @@ export function Multiview({
             pinned={card.match_id === pinnedMatchId}
             canCut={canCut}
             tag={tags?.get(card.match_id) ?? null}
+            recap={recaps?.get(card.match_id) ?? null}
             onCut={onCut}
             onPin={onPin}
           />
@@ -89,6 +93,7 @@ function Tile({
   pinned,
   canCut,
   tag,
+  recap,
   onCut,
   onPin,
 }: {
@@ -100,6 +105,7 @@ function Tile({
   pinned: boolean;
   canCut: boolean;
   tag: string | null;
+  recap: string | null;
   onCut: (matchId: string) => void;
   onPin: (matchId: string | null) => void;
 }) {
@@ -136,9 +142,13 @@ function Tile({
         tint="bg-away"
       />
       <p className="mt-1 min-h-4 text-xs text-ink-3">
-        {stakes.length
-          ? `At stake: ${stakes.map((z) => STAKE_LABEL[z]).join(", ")}`
-          : ""}
+        {card.status === "full_time" && recap ? (
+          <span className="line-clamp-2 text-ink-2">{recap}</span>
+        ) : stakes.length ? (
+          `At stake: ${stakes.map((z) => STAKE_LABEL[z]).join(", ")}`
+        ) : (
+          ""
+        )}
       </p>
     </>
   );

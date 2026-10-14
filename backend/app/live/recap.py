@@ -28,6 +28,7 @@ from app.agents.drill import failure_reason
 from app.agents.recap import RECAP_VERSION
 from app.agents.tracing import ended, run_span
 from app.generator.season import LEAGUE_GAMES
+from app.models.matchday import ClubRef
 from app.models.proposals import Claim
 from app.models.recap import MatchRecap, Recap, RecapBeat, RecapFact
 from app.models.table import LeagueTable
@@ -392,7 +393,7 @@ class RecapDesk:
         """A match's recap, once it has ended (or whatever the clock says, if `ended`)."""
         m = self.service.by_id[match_id]
         if not ended and clock_ms < m.result.full_time_ms:
-            return MatchRecap(match_id=match_id, status="pending")
+            return MatchRecap(status="pending", **self._fixture(match_id))
         with self._lock:
             ready = self._ready.get(match_id)
             if ready:
@@ -406,7 +407,7 @@ class RecapDesk:
             if match_id not in self._writing:
                 self._writing.add(match_id)
                 asyncio.run_coroutine_threadsafe(self._write_match(match_id, brief), self.loop)
-            return MatchRecap(match_id=match_id, status="writing")
+            return MatchRecap(status="writing", **self._fixture(match_id))
 
     async def _write_match(self, match_id: str, brief: "MatchBrief") -> None:
         assert self.crew
@@ -433,14 +434,25 @@ class RecapDesk:
             m = self.service.by_id[match_id]
             headline, story, claims = code_match_recap(brief, m.home.name, m.away.name)
         return MatchRecap(
-            match_id=match_id,
             status="ready",
+            **self._fixture(match_id),
             written_by="agents" if draft else "code",
             headline=headline,
             story=story,
             claims=claims,
             checks=list(run["checks"]) if run else [],
         )
+
+    def _fixture(self, match_id: str) -> dict[str, Any]:
+        m = self.service.by_id[match_id]
+        home, away = m.result.score_at(m.result.full_time_ms)
+        return {
+            "match_id": match_id,
+            "home": _club_ref(m.home),
+            "away": _club_ref(m.away),
+            "score_home": home,
+            "score_away": away,
+        }
 
     # --- Cache: the matchday's recap and each match's, per prompt version and models ---------
 
@@ -508,3 +520,7 @@ def _names(items: Any) -> str:
 
 def _count(n: int, noun: str) -> str:
     return f"{'a' if n == 1 else n} {noun}{'' if n == 1 else 's'}"
+
+
+def _club_ref(club: Any) -> ClubRef:
+    return ClubRef(club_id=club.club_id, name=club.name, short=club.short, color=club.color)

@@ -86,7 +86,8 @@ You are the Watcher for one match, and it has ended. Write its recap for a viewe
 The channel's matchday recap says what the results did to the table, so never mention the table,
 positions, points, zones, or the title.
 {RULES}
-The match is over: write in the past tense."""
+The match is over: write in the past tense. Write for the viewer, never about your sources: no
+"the brief", "the events", or what is or isn't listed; leave out what didn't happen."""
 
 
 class ChannelTeam:
@@ -164,7 +165,8 @@ class ChannelTeam:
             draft = _receipts_only(draft)
             problems, who = check_match_recap(draft, brief), "checker"
             if not problems:
-                verdict, used = await self.team.ask(
+                # A recap has no deadline: the accurate model checks it, as it writes it.
+                verdict, used = await self.watchers.ask(
                     "Fact-checker",
                     FACT_CHECKER,
                     f"{base}\n\nTHE GRAPHIC\nHEADLINE: {draft.headline}\nBODY: {draft.story}",
