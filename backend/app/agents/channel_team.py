@@ -19,9 +19,11 @@ checker first time on 39 of 40 stories (gpt-5.4-mini 33) but took a median 7.7 s
 from collections.abc import Sequence
 
 from app.agents.channel_brief import MatchBrief
-from app.agents.channel_checker import check_decision, check_story
-from app.agents.schemas import CutDecision, StoryUpdate
-from app.agents.team import AgentTeam, Reporter
+from app.agents.channel_checker import check_decision, check_match_recap, check_story
+from app.agents.schemas import CutDecision, FactCheck, MatchRecapDraft, StoryUpdate
+from app.agents.team import FACT_CHECKER, AgentTeam, Reporter
+
+MAX_RECAP_DRAFTS = 3
 
 CHANNEL_PROMPT_VERSION = "c12"  # bump when prompts or runs change: cached runs regenerate
 
@@ -72,6 +74,19 @@ You are the Director. The channel is cutting to a goal. Write:
 - claims: every factual statement in why, citing the match's event ids.
 Set match_id to the match's id.
 {RULES}"""
+
+
+WATCHER_RECAP = f"""{CHANNEL}
+You are the Watcher for one match, and it has ended. Write its recap for a viewer who missed it:
+- headline: at most 10 words, sentence case: the match's story.
+- story: at most 50 words: the final score as the MATCH line gives it, the goals and what each did
+  (GOALS SO FAR), who was on top (STATS), the big chances, and the cards.
+- claims: every statement about what happened on the pitch, each citing the ids of the events
+  that prove it.
+The channel's matchday recap says what the results did to the table, so never mention the table,
+positions, points, zones, or the title.
+{RULES}
+The match is over: write in the past tense."""
 
 
 class ChannelTeam:
@@ -133,8 +148,39 @@ class ChannelTeam:
             problems = check_decision(decision, briefs)
         return (None if problems else decision), tokens, problems, sent_back
 
+    async def recap(
+        self, brief: MatchBrief, report: Reporter | None = None
+    ) -> tuple[MatchRecapDraft | None, int, list[str]]:
+        """The Watcher's recap of its match, from the whole match's brief: checked by code and
+        by the fact-checker, up to three drafts. None if none passes (the code writes it then).
+        Also what the checks sent back on the way."""
+        base = brief.text(watcher=True)
+        prompt, tokens, checks = base, 0, []
+        for n in range(1, MAX_RECAP_DRAFTS + 1):
+            draft, used = await self.watchers.ask(
+                "Watcher", WATCHER_RECAP, prompt, MatchRecapDraft, report
+            )
+            tokens += used
+            draft = _receipts_only(draft)
+            problems, who = check_match_recap(draft, brief), "checker"
+            if not problems:
+                verdict, used = await self.team.ask(
+                    "Fact-checker",
+                    FACT_CHECKER,
+                    f"{base}\n\nTHE GRAPHIC\nHEADLINE: {draft.headline}\nBODY: {draft.story}",
+                    FactCheck,
+                    report,
+                )
+                tokens += used
+                problems, who = verdict.problems, "fact-checker"
+            if not problems:
+                return draft, tokens, checks
+            checks.append(f"The {who} sent draft {n} back: {problems[0]}")
+            prompt = _redo(base, draft.model_dump_json(), problems)
+        return None, tokens, checks
 
-def _receipts_only[A: (StoryUpdate, CutDecision)](answer: A) -> A:
+
+def _receipts_only[A: (StoryUpdate, CutDecision, MatchRecapDraft)](answer: A) -> A:
     """Claims are receipts for what happened on the pitch. A claim that cites nothing is the
     model restating context (the score, the table): the text that says it is still checked, so
     it is dropped rather than failed."""

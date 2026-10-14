@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from app.agents.brief import is_close, numbers_in
 from app.agents.channel_brief import MatchBrief
 from app.agents.checker import CAPITALIZED
-from app.agents.schemas import CutDecision, DraftClaim, StoryUpdate
+from app.agents.schemas import CutDecision, DraftClaim, MatchRecapDraft, StoryUpdate
 
 # Words that only make sense about the table ("2nd half" is the match, "top corner" the goal).
 TABLE_TALK = re.compile(
@@ -47,6 +47,26 @@ def check_story(update: StoryUpdate, brief: MatchBrief) -> list[str]:
         words = ", ".join(f'"{w}"' for w in talk)
         problems.append(
             f"The story talks about the table ({words}); tell the story on the pitch only."
+        )
+    return problems
+
+
+def check_match_recap(recap: MatchRecapDraft, brief: MatchBrief) -> list[str]:
+    """A recap, like a story, is about the pitch, and gives the final score."""
+    fields = {"headline": recap.headline, "story": recap.story}
+    problems = _check(brief, recap.claims, fields)
+    home, away = final = brief.scores[-1]
+    told = {(int(h), int(a)) for text in fields.values() for h, a in SCORELINE.findall(text)}
+    if not told & {final, (away, home)}:
+        problems.append(f"The recap doesn't give the final score: {home}-{away}.")
+    passed = set(brief.scores) | {(a, h) for h, a in brief.scores}
+    for h, a in sorted(told - passed):
+        problems.append(f"The recap says {h}-{a}, which this match never was.")
+    talk = sorted({m.group(0).lower() for t in fields.values() for m in TABLE_TALK.finditer(t)})
+    if talk:
+        words = ", ".join(f'"{w}"' for w in talk)
+        problems.append(
+            f"The recap talks about the table ({words}); the matchday recap covers that."
         )
     return problems
 

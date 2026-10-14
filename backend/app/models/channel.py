@@ -144,3 +144,10 @@ class HoldRequest(Contract):
 
 class PinRequest(Contract):
     match_id: str | None = None
+
+
+class ClockRequest(Contract):
+    """Move the matchday clock (a demo control): `minute` as the scorebug shows it, or None for
+    the moment the day's last match ends."""
+
+    minute: float | None = Field(default=None, ge=0)

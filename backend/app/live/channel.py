@@ -587,6 +587,12 @@ class ChannelDirector:
                 s.pending = s.pending.model_copy(update={"package": package})
             s.version += 1
 
+    def reset(self) -> None:
+        """Start afresh at the next sync: the clock jumped (the producer's demo control)."""
+        with self.lock:
+            self.state = None
+            self.stories, self.story_asked, self.log = {}, {}, []
+
     def agent_note(self, agent: str, match_id: str | None, detail: str) -> None:
         """A Watcher's or the Director's own report, such as a model call it had to retry."""
         if agent in ("watcher", "director"):

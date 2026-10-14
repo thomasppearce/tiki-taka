@@ -36,6 +36,16 @@ class MatchdayClock:
         self._now = now
         self._started = self._last_read = now()
 
+    def jump(self, clock_ms: int) -> None:
+        """Run on from `clock_ms` (the producer's demo control: skip to the final whistle, or
+        back to the start). Everyone watching jumps with it: there is one clock."""
+        now = self._now()
+        if self.speed:
+            self._started = now - (clock_ms - self.start_ms) / 1000 / self.speed
+        else:
+            self.start_ms, self._started = clock_ms, now
+        self._last_read = now
+
     def clock_ms(self) -> int:
         """Match time now, in milliseconds since kickoff, looping every cycle."""
         now = self._now()

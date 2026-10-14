@@ -24,12 +24,19 @@ from app.live.channel import ChannelDirector
 from app.live.recap import RecapDesk
 from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
-from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
+from app.models.channel import (
+    Channel,
+    ClockRequest,
+    HoldRequest,
+    PinRequest,
+    Squads,
+    TakeRequest,
+)
 from app.models.desk import ApproveRequest, Desk
 from app.models.drill import DrillRequest, DrillState
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
-from app.models.recap import Recap
+from app.models.recap import MatchRecap, Recap
 from app.models.replay import Replay
 from app.models.table import LeagueTable
 
@@ -75,7 +82,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if runner:
         runner.stories = service.stories  # the graphics team knows the players' stories too
     app.state.matchday = service
-    app.state.recap = RecapDesk(service, writer, cache)
+    app.state.recap = RecapDesk(service, writer, channel.team if channel else None, cache)
     app.state.recap.start()
     yield
     if channel:
@@ -221,10 +228,31 @@ async def channel_stream(
 
 
 @app.get("/api/recap")
-def recap(request: Request) -> Recap:
-    """How the final day unfolded, once the last match ends: the outcomes, worked out by code,
-    and the story, written by the recap writer and checked (app/live/recap.py)."""
-    return request.app.state.recap.snapshot(_service(request).clock.clock_ms())
+def recap(request: Request, ended: bool = False) -> Recap:
+    """How the matchday unfolded, once its last match ends: where it left the table, worked out
+    by code, and the story, written by the recap writer and checked (app/live/recap.py).
+    `ended`: the finished day whatever the clock says (the /recap page)."""
+    return request.app.state.recap.snapshot(_service(request).clock.clock_ms(), ended)
+
+
+@app.get("/api/matches/{match_id}/recap")
+def match_recap(match_id: str, request: Request, ended: bool = False) -> MatchRecap:
+    """A match's recap at its final whistle, written by its Watcher and checked."""
+    service = _service(request)
+    _match(service, match_id)
+    return request.app.state.recap.match(match_id, service.clock.clock_ms(), ended)
+
+
+@app.post("/api/clock")
+def move_clock(body: ClockRequest, request: Request) -> dict[str, int]:
+    """A demo control: move the matchday clock to a minute, or (no minute) to just after the
+    day's last final whistle. One clock: everyone watching moves with it."""
+    service = _service(request)
+    target = service.over_ms + 2_000 if body.minute is None else round((body.minute - 1) * 60_000)
+    if target >= service.clock.cycle_ms:
+        raise HTTPException(status_code=422, detail="past the end of the matchday")
+    service.jump(target)
+    return {"clock_ms": service.clock.clock_ms()}
 
 
 @app.get("/api/drill")

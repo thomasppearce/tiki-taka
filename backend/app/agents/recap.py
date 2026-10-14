@@ -1,4 +1,4 @@
-"""The recap writer: how the final day unfolded, told from facts code wrote (app/live/recap.py).
+"""The recap writer: how a matchday unfolded, told from facts code wrote (app/live/recap.py).
 
     Recap writer ─▶ Checker ─▶ Fact-checker ─▶ recap
           ▲            │            │
@@ -24,16 +24,16 @@ from app.models.recap import RecapFact
 
 log = logging.getLogger(__name__)
 
-RECAP_VERSION = "r3"  # bump when the prompts change: the cached recap is rewritten
+RECAP_VERSION = "r4"  # bump when the prompts change: the cached recap is rewritten
 MAX_DRAFTS = 3
 
-RECAP_WRITER = """You are the recap writer on Tiki-Taka, a live channel covering the final day of a
-fictional football league: ten matches at once. The day is over. Tell a viewer who missed it how
+RECAP_WRITER = """You are the recap writer on Tiki-Taka, a live channel covering a matchday of a
+fictional football league: every match at once. The day is over. Tell a viewer who missed it how
 it unfolded, as a story, not a list:
 - headline: at most 10 words, sentence case: the day's biggest story. When one goal settled more
   than one race, that is the story.
-- standfirst: at most 45 words: what the day came down to, then how the title, the top four, the
-  drop, and the Golden Boot ended.
+- standfirst: at most 45 words: what the day came down to, then where it left the top, the top
+  four, the bottom three, and the Golden Boot race.
 - beats: four to six moments that decided the day, in time order. Each is at most 30 words, set at
   its minute, says what the goal did to the race it moved, and lists the ids of the facts it rests
   on.
@@ -41,6 +41,11 @@ Use only the facts below, written by code: names, numbers, and minutes exactly a
 Work nothing out of your own: no points gaps, no goal differences, no what-ifs, no "would have".
 A goal settled a race only if the deciders fact says it was the last to change that race.
 Past tense, broadcast tone, no exclamation marks; clubs by name, players as the facts name them."""
+
+LAST_DAY = """This was the season's last matchday: the facts say who are champions, who are
+relegated, and who won the Golden Boot."""
+MIDSEASON = """The season goes on after this matchday: nothing is won or lost yet, so never call a
+club champions or relegated, or a player the Golden Boot winner."""
 
 RECAP_CHECKER = """You are the fact-checker on a live football broadcast team. The match is
 fictional. You get the facts of the final day, written by code, and a recap of it. Split the recap
@@ -62,13 +67,14 @@ class RecapWriter:
         self.model = f"{writer.model}+{checker.model}"
 
     async def write(
-        self, facts: list[RecapFact], names: frozenset[str]
+        self, facts: list[RecapFact], names: frozenset[str], last_day: bool
     ) -> tuple[RecapDraft | None, int, list[str]]:
         """The recap, checked (None if no draft passed), its tokens, and what the checks sent
-        back on the way. `names`: every club and player, for the checker."""
+        back on the way. `names`: every club and player, for the checker; `last_day`: whether
+        the season ends today."""
         from app.live.recap import facts_text
 
-        brief = facts_text(facts)
+        brief = f"{LAST_DAY if last_day else MIDSEASON}\n\n{facts_text(facts)}"
         prompt = brief
         tokens, checks = 0, []
         for draft_no in range(1, MAX_DRAFTS + 1):

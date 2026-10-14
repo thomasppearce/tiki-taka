@@ -272,6 +272,16 @@ export interface FantasyItem {
   event_ids: string[];
 }
 /**
+ * Move the matchday clock (a demo control): `minute` as the scorebug shows it, or None for
+ * the moment the day's last match ends.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "ClockRequest".
+ */
+export interface ClockRequest {
+  minute: number | null;
+}
+/**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "ClubRef".
  */
@@ -698,6 +708,22 @@ export interface PlayerRef {
   role: "gk" | "def" | "mid" | "fwd";
 }
 /**
+ * One match's recap at its final whistle: written by its Watcher and checked (or by code,
+ * from its goals, if every draft failed its checks or the agents are off).
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "MatchRecap".
+ */
+export interface MatchRecap {
+  match_id: string;
+  status: "pending" | "writing" | "ready";
+  written_by: ("agents" | "code") | null;
+  headline: string | null;
+  story: string | null;
+  claims: Claim[];
+  checks: string[];
+}
+/**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "Matchday".
  */
@@ -803,8 +829,9 @@ export interface PlayerPosition {
   speed_kmh: number | null;
 }
 /**
- * The day's story: written by the recap writer agent and checked (or by code, if every
- * draft failed its checks or the agents are off), beside the outcomes code worked out.
+ * How a matchday unfolded: written by the recap writer agent and checked (or by code, if
+ * every draft failed its checks or the agents are off), beside where code says the day left
+ * the table. On the season's last matchday that is how the season ended.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "Recap".
@@ -814,13 +841,24 @@ export interface Recap {
    * pending: matches still playing; writing: the agent is on it; ready.
    */
   status: "pending" | "writing" | "ready";
+  matchday: number | null;
+  /**
+   * The season's last matchday: the top is the champions.
+   */
+  season_over: boolean;
   written_by: ("agents" | "code") | null;
   headline: string | null;
   standfirst: string | null;
   beats: RecapBeat[];
-  champions: ClubRef | null;
+  top: ClubRef | null;
   top_four: ClubRef[];
-  relegated: ClubRef[];
+  /**
+   * The relegation places: relegated, if the season is over.
+   */
+  bottom_three: ClubRef[];
+  /**
+   * The leader (the winner).
+   */
   golden_boot: ScorerRow | null;
   facts: RecapFact[];
   /**

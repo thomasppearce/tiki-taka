@@ -129,3 +129,11 @@ class RecapDraft(BaseModel):
     beats: list[RecapBeatDraft] = Field(
         description="Four to six moments that decided the day, in time order."
     )
+
+
+class MatchRecapDraft(BaseModel):
+    """A Watcher's recap of its match, once it has ended."""
+
+    headline: str = Field(description="At most 10 words.")
+    story: str = Field(description="At most 50 words: how the match was won, lost, or drawn.")
+    claims: list[DraftClaim] = Field(description="Every factual statement, each with its evidence.")

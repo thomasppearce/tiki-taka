@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from app.agents.brief import EventFact, _fact, numbers_in
+from app.state.aggregator import team_stats
 
 if TYPE_CHECKING:
     from app.generator.matchday import ScheduledMatch
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 BIG_CHANCE_XG = 0.1
 RECENT_MS = 5 * 60_000
 MAX_FACTS = 14
+MAX_CHANCES = 8  # a recap's brief: the biggest chances, beside every goal and card
 ZONE_NAMES = {
     "champions": "top (the champions' place)",
     "continental": "in the continental cup places",
@@ -38,6 +40,7 @@ class MatchBrief:
     scores: tuple[tuple[int, int], ...]  # every scoreline so far (home, away), the last is now
     goals: tuple[str, ...] = ()  # each goal, its scoreline, and what it did (code-written)
     stories: tuple[str, ...] = ()  # the players' stories here (the Golden Boot race...), by code
+    stats: str = ""  # each side's shots, xG, possession: in a recap's brief (full=True)
 
     @property
     def citable(self) -> dict[str, EventFact]:
@@ -57,6 +60,8 @@ class MatchBrief:
             lines.append(f"AS IT STANDS NOW: {self.standing}")
         lines.append(f"PRESSURE NOW: {self.pressure}")
         lines.append("GOALS SO FAR: " + (" | ".join(self.goals) or "none"))
+        if self.stats:
+            lines.append(f"STATS: {self.stats}")
         if self.stories:
             lines.append("PLAYER STORIES: " + " | ".join(self.stories))
         if table:
@@ -81,8 +86,11 @@ class MatchBrief:
         return numbers_in(self.text())
 
 
-def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | None) -> MatchBrief:
-    """Everything an agent may say about one match at match time `t`."""
+def match_brief(
+    service: "MatchdayService", match_id: str, t: int, story: str | None, full: bool = False
+) -> MatchBrief:
+    """Everything an agent may say about one match at match time `t`. `full`: the whole match,
+    for its recap: every goal and card and every big chance, however long ago, and the stats."""
     m = service.by_id[match_id]
     at = min(t, m.result.full_time_ms)
     ctx = service.desks[match_id].ctx
@@ -94,16 +102,27 @@ def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | 
     }
     clocks = [e.match_clock_ms for e in m.result.events]
     seen = m.result.events[: bisect_right(clocks, at)]
-    worth = [
-        e
-        for e in seen
-        if e.type in ("goal", "card")
-        or (
-            e.type == "shot"
-            and (impacts[e.event_id].threat >= BIG_CHANCE_XG or at - e.match_clock_ms <= RECENT_MS)
-        )
-    ]
-    facts = tuple(_fact(e, ctx, players) for e in worth[-MAX_FACTS:])
+    if full:
+        chances = sorted(
+            (e for e in seen if e.type == "shot" and impacts[e.event_id].threat >= BIG_CHANCE_XG),
+            key=lambda e: -impacts[e.event_id].threat,
+        )[:MAX_CHANCES]
+        kept = {e.event_id for e in chances}
+        worth = [e for e in seen if e.type in ("goal", "card") or e.event_id in kept]
+    else:
+        worth = [
+            e
+            for e in seen
+            if e.type in ("goal", "card")
+            or (
+                e.type == "shot"
+                and (
+                    impacts[e.event_id].threat >= BIG_CHANCE_XG
+                    or at - e.match_clock_ms <= RECENT_MS
+                )
+            )
+        ][-MAX_FACTS:]
+    facts = tuple(_fact(e, ctx, players) for e in worth)
     home, away = m.result.score_at(at)
     scores = [(0, 0)]
     goals: list[str] = []
@@ -162,7 +181,19 @@ def match_brief(service: "MatchdayService", match_id: str, t: int, story: str | 
         scores=tuple(scores),
         goals=tuple(goals),
         stories=tuple(service.stories(match_id, t)),
+        stats=_stats(m, seen, impacts, at) if full else "",
     )
+
+
+def _stats(m: "ScheduledMatch", seen: list["MatchEvent"], impacts: dict, at: int) -> str:  # type: ignore[type-arg]
+    def side(club_id: str, name: str) -> str:
+        s = team_stats(seen, impacts, club_id, m.home.club_id, at)
+        return (
+            f"{name} {s.shots} shots ({s.xg:.2f} xG, {s.shots_on_target} on target), "
+            f"{round(s.possession_pct)}% possession"
+        )
+
+    return f"{side(m.home.club_id, m.home.name)}; {side(m.away.club_id, m.away.name)}"
 
 
 def _goal_line(

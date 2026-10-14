@@ -347,6 +347,29 @@
       "title": "Claim",
       "type": "object"
     },
+    "ClockRequest": {
+      "additionalProperties": false,
+      "description": "Move the matchday clock (a demo control): `minute` as the scorebug shows it, or None for\nthe moment the day's last match ends.",
+      "properties": {
+        "minute": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "minute"
+      ],
+      "title": "ClockRequest",
+      "type": "object"
+    },
     "ClubRef": {
       "additionalProperties": false,
       "properties": {
@@ -1432,6 +1455,83 @@
       "title": "MatchEvent",
       "type": "object"
     },
+    "MatchRecap": {
+      "additionalProperties": false,
+      "description": "One match's recap at its final whistle: written by its Watcher and checked (or by code,\nfrom its goals, if every draft failed its checks or the agents are off).",
+      "properties": {
+        "match_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "writing",
+            "ready"
+          ],
+          "type": "string"
+        },
+        "written_by": {
+          "anyOf": [
+            {
+              "enum": [
+                "agents",
+                "code"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "story": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "type": "array"
+        },
+        "checks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "match_id",
+        "status",
+        "written_by",
+        "headline",
+        "story",
+        "claims",
+        "checks"
+      ],
+      "title": "MatchRecap",
+      "type": "object"
+    },
     "MatchSignal": {
       "additionalProperties": false,
       "properties": {
@@ -2046,7 +2146,7 @@
     },
     "Recap": {
       "additionalProperties": false,
-      "description": "The day's story: written by the recap writer agent and checked (or by code, if every\ndraft failed its checks or the agents are off), beside the outcomes code worked out.",
+      "description": "How a matchday unfolded: written by the recap writer agent and checked (or by code, if\nevery draft failed its checks or the agents are off), beside where code says the day left\nthe table. On the season's last matchday that is how the season ended.",
       "properties": {
         "status": {
           "description": "pending: matches still playing; writing: the agent is on it; ready.",
@@ -2056,6 +2156,23 @@
             "ready"
           ],
           "type": "string"
+        },
+        "matchday": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "season_over": {
+          "default": false,
+          "description": "The season's last matchday: the top is the champions.",
+          "type": "boolean"
         },
         "written_by": {
           "anyOf": [
@@ -2100,7 +2217,7 @@
           },
           "type": "array"
         },
-        "champions": {
+        "top": {
           "anyOf": [
             {
               "$ref": "#/$defs/ClubRef"
@@ -2117,7 +2234,8 @@
           },
           "type": "array"
         },
-        "relegated": {
+        "bottom_three": {
+          "description": "The relegation places: relegated, if the season is over.",
           "items": {
             "$ref": "#/$defs/ClubRef"
           },
@@ -2132,7 +2250,8 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "The leader (the winner)."
         },
         "facts": {
           "items": {
@@ -2150,13 +2269,15 @@
       },
       "required": [
         "status",
+        "matchday",
+        "season_over",
         "written_by",
         "headline",
         "standfirst",
         "beats",
-        "champions",
+        "top",
         "top_four",
-        "relegated",
+        "bottom_three",
         "golden_boot",
         "facts",
         "checks"

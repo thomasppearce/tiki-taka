@@ -1,7 +1,14 @@
 """Data contracts (CLAUDE.md section 5): the single source of truth for all shared types."""
 
 from app.models.audit import AuditRecord
-from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
+from app.models.channel import (
+    Channel,
+    ClockRequest,
+    HoldRequest,
+    PinRequest,
+    Squads,
+    TakeRequest,
+)
 from app.models.desk import ApproveRequest, Desk, OnAir
 from app.models.drill import DrillRequest, DrillState
 from app.models.events import EventAttributes, MatchEvent
@@ -11,7 +18,7 @@ from app.models.matchday import Matchday, MatchDetail
 from app.models.moments import Moment
 from app.models.overlays import OverlayCommand
 from app.models.proposals import AudienceBody, Claim, LocalizedText, Proposal
-from app.models.recap import Recap
+from app.models.recap import MatchRecap, Recap
 from app.models.replay import Replay
 from app.models.table import LeagueTable
 from app.models.tracking import PlayerPosition, TrackingFrame
@@ -42,7 +49,9 @@ CONTRACTS = (
     Replay,
     DrillRequest,
     DrillState,
+    ClockRequest,
     Recap,
+    MatchRecap,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -52,8 +61,10 @@ __all__ = [
     "AudienceBody",
     "AuditRecord",
     "Channel",
+    "ClockRequest",
     "DrillRequest",
     "DrillState",
+    "MatchRecap",
     "Recap",
     "HoldRequest",
     "PinRequest",

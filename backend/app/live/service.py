@@ -194,6 +194,17 @@ class MatchdayService:
             impacts=[impacts[e.event_id] for e in recent],
         )
 
+    def jump(self, clock_ms: int) -> None:
+        """Move the matchday clock (the producer's demo control). The desks and the channel
+        start afresh from there, rather than replay everything in between; fans' whip-arounds
+        are rebuilt on their next visit."""
+        self.clock.jump(clock_ms)
+        for desk in self.desks.values():
+            desk.reset()
+        self.channel.reset()
+        with self._whips_lock:
+            self._whips.clear()
+
     def table(self) -> LeagueTable:
         """The league as it stands now, the day's swings so far, and what is at stake."""
         return self.table_at(self.clock.clock_ms())
