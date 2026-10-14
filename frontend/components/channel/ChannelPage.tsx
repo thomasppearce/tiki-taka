@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
 import { CrewLog } from "@/components/channel/CrewLog";
+import { FinalDayRecap } from "@/components/channel/FinalDayRecap";
 import { CutControls } from "@/components/channel/CutControls";
 import { FantasyXi } from "@/components/channel/FantasyXi";
 import { GoldenBoot } from "@/components/channel/GoldenBoot";
@@ -30,6 +31,7 @@ import type {
 import { useChannel } from "@/lib/live/useChannel";
 import { useMatchday } from "@/lib/live/useMatchday";
 import { useSquads } from "@/lib/live/useSquads";
+import { useRecap } from "@/lib/live/useRecap";
 import { GUEST_PREFS, useFanPrefs, useRole } from "@/lib/role";
 import { lensOf, useWhip } from "@/lib/whip";
 
@@ -49,6 +51,7 @@ export function ChannelPage() {
   const live = useChannel(lens);
   const { matchday } = useMatchday();
   const squads = useSquads();
+  const recap = useRecap();
   const [picking, setPicking] = useState(false);
 
   const cards = useMemo(
@@ -122,6 +125,9 @@ export function ChannelPage() {
         </SiteHeader>
         <main className="mx-auto grid w-full max-w-[1680px] flex-1 grid-cols-1 gap-3 p-3 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
           <div className="grid min-w-0 gap-3">
+            {recap && recap.status !== "pending" && (
+              <FinalDayRecap recap={recap} fixtureOf={fixtureOf} />
+            )}
             {producer && (
               <CutControls
                 channel={channel}
