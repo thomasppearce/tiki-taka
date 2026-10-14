@@ -11,9 +11,10 @@ import {
   MonitorPlay,
   ShieldCheck,
   Translate,
+  WarningOctagon,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import { Panel } from "@/components/ui/Panel";
 import { SwapText } from "@/components/ui/SwapText";
@@ -36,25 +37,30 @@ const STATUS_META: Record<
   done: { label: "Done", Icon: CheckCircle, tone: "text-good" },
   working: { label: "Working", Icon: CircleNotch, tone: "text-ink-2" },
   retrying: { label: "Retrying", Icon: ArrowsClockwise, tone: "text-serious" },
+  down: { label: "Down", Icon: WarningOctagon, tone: "text-critical" },
   idle: { label: "Idle", Icon: Circle, tone: "text-ink-3" },
 };
 
 /**
  * The agent pipeline for the latest moment, then the decision log (audit trail). `engine` says
  * who is writing: the agent team on Microsoft Foundry (and its model), or the scripted fallback.
+ * `drill` sits between the two: the failure drill, for the producer.
  */
 export function AgentActivity({
   agents,
   log,
   engine,
+  drill,
   className = "",
 }: {
   agents: AgentState[];
   log: AuditLine[];
   engine: string | null;
+  drill?: ReactNode;
   className?: string;
 }) {
   const retrying = agents.filter((a) => a.status === "retrying").length;
+  const down = agents.filter((a) => a.status === "down").length;
 
   return (
     <Panel
@@ -62,7 +68,7 @@ export function AgentActivity({
       aside={
         <span className="flex items-center gap-3">
           {engine && <span className="text-xs text-ink-3">{engine}</span>}
-          <Health retrying={retrying} />
+          <Health retrying={retrying} down={down} />
         </span>
       }
       className={`min-h-0 ${className}`}
@@ -82,6 +88,7 @@ export function AgentActivity({
           </Fragment>
         ))}
       </ol>
+      {drill}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5">
         <h3 className="sr-only">Decision log</h3>
         <ol className="grid grid-cols-[auto_6rem_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-xs">
@@ -100,7 +107,14 @@ export function AgentActivity({
   );
 }
 
-function Health({ retrying }: { retrying: number }) {
+function Health({ retrying, down }: { retrying: number; down: number }) {
+  if (down > 0)
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-critical">
+        <WarningOctagon size={14} />
+        {down} down
+      </span>
+    );
   return retrying > 0 ? (
     <span className="flex items-center gap-1.5 text-xs text-serious">
       <ArrowsClockwise size={14} />
@@ -121,7 +135,11 @@ function AgentStep({ state }: { state: AgentState }) {
   return (
     <li
       className={`flex min-w-0 flex-1 flex-col gap-1 rounded-md border px-2.5 py-2 ${
-        state.status === "retrying" ? "border-serious/50" : "border-line"
+        state.status === "down"
+          ? "border-critical/50"
+          : state.status === "retrying"
+            ? "border-serious/50"
+            : "border-line"
       }`}
     >
       <span className="flex items-center justify-between gap-x-2 gap-y-0.5 lg:flex-col lg:items-start">

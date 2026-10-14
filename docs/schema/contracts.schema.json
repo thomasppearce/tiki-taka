@@ -569,6 +569,91 @@
       "title": "Desk",
       "type": "object"
     },
+    "DrillRequest": {
+      "additionalProperties": false,
+      "description": "Start a drill: `blip` fails the agent's next model call once (the retry recovers it);\n`down` fails every call for a few minutes (the system falls back).",
+      "properties": {
+        "agent": {
+          "enum": [
+            "interpreter",
+            "explainer",
+            "fact_checker",
+            "producer",
+            "localizer",
+            "watcher",
+            "director"
+          ],
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "blip",
+            "down"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "mode"
+      ],
+      "title": "DrillRequest",
+      "type": "object"
+    },
+    "DrillState": {
+      "additionalProperties": false,
+      "description": "The drill now: which agent is failing and how, or none.",
+      "properties": {
+        "agent": {
+          "anyOf": [
+            {
+              "enum": [
+                "interpreter",
+                "explainer",
+                "fact_checker",
+                "producer",
+                "localizer",
+                "watcher",
+                "director"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "blip",
+                "down"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "seconds_left": {
+          "default": 0,
+          "description": "Until a `down` drill ends by itself.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent",
+        "mode",
+        "seconds_left"
+      ],
+      "title": "DrillState",
+      "type": "object"
+    },
     "EventAttributes": {
       "additionalProperties": false,
       "description": "Measurements attached to an event. Which ones are set depends on the event type.",

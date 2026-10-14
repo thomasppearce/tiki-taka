@@ -31,6 +31,7 @@ FoundryChatClient; WorkflowBuilder(start_executor=..., output_from=[...]).add_ed
 condition=...); executors are Executor subclasses with @handler methods.
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -46,13 +47,23 @@ from agent_framework import (
     WorkflowContext,
     handler,
 )
+from agent_framework.exceptions import (
+    AgentContentFilterException,
+    AgentInvalidAuthException,
+    AgentInvalidRequestException,
+    ChatClientContentFilterException,
+    ChatClientInvalidAuthException,
+    ChatClientInvalidRequestException,
+)
 from agent_framework.foundry import FoundryChatClient
 from azure.core.credentials import TokenCredential
 from azure.identity import AzureCliCredential, ManagedIdentityCredential
+from opentelemetry import trace
 from pydantic import BaseModel
 
 from app.agents.brief import MomentBrief
 from app.agents.checker import check_draft, check_localized
+from app.agents.drill import DRILL, AgentUnavailable, agent_key
 from app.agents.schemas import Draft, FactCheck, Interpretation, Localized, Placement
 
 MAX_DRAFTS = 3
@@ -60,6 +71,16 @@ PROMPT_VERSION = "v8"  # bump when prompts change, so cached runs are regenerate
 KNOWLEDGE_BASE = "matchdesk-kb"  # app/rag/knowledge_base.py builds it
 KNOWLEDGE_MCP_API = "2026-08-01-preview"  # the knowledge base MCP endpoint is in preview
 SEARCH_SCOPE = "https://search.azure.com/.default"
+RETRY_AFTER_S = 1.5
+# Errors a second try can't fix: credentials, a request the service rejects, a content filter.
+NOT_RETRIED = (
+    AgentContentFilterException,
+    AgentInvalidAuthException,
+    AgentInvalidRequestException,
+    ChatClientContentFilterException,
+    ChatClientInvalidAuthException,
+    ChatClientInvalidRequestException,
+)
 
 log = logging.getLogger(__name__)
 
@@ -227,10 +248,17 @@ class AgentTeam:
         )
 
     async def ask(
-        self, name: str, instructions: str, prompt: str, schema: type[T]
+        self,
+        name: str,
+        instructions: str,
+        prompt: str,
+        schema: type[T],
+        report: Reporter | None = None,
     ) -> tuple[T, int]:
         """One structured call. A separate Agent per call keeps concurrent runs independent."""
-        value, tokens, _ = await self.ask_with_tools(name, instructions, prompt, schema, None)
+        value, tokens, _ = await self.ask_with_tools(
+            name, instructions, prompt, schema, None, report
+        )
         return value, tokens
 
     async def ask_with_tools(
@@ -240,8 +268,52 @@ class AgentTeam:
         prompt: str,
         schema: type[T],
         tools: list[MCPStreamableHTTPTool] | None,
+        report: Reporter | None = None,
     ) -> tuple[T, int, list[str]]:
-        """A structured call that may use tools; also returns what the tools gave back."""
+        """A structured call that may use tools; also returns what the tools gave back.
+
+        Every call gets one retry: a dropped connection, a busy model, or a malformed answer
+        usually clears on a second try. The retry is reported to the audit log (`report`) and
+        recorded on the trace; if the second try fails too, the error goes up to the runner,
+        which falls back. The failure drill (drill.py) fails calls here, before they leave."""
+        for attempt in range(2):
+            try:
+                DRILL.check(name)
+                answer = await self.call(name, instructions, prompt, schema, tools)
+            except NOT_RETRIED:
+                raise
+            except Exception as error:
+                why = str(error) if isinstance(error, AgentUnavailable) else type(error).__name__
+                if attempt:
+                    if report:
+                        report(agent_key(name), "agent_failure", f"Call failed again ({why})")
+                    raise
+                trace.get_current_span().add_event(
+                    "model call failed, retrying", {"tiki_taka.agent": name, "tiki_taka.error": why}
+                )
+                if report:
+                    report(
+                        agent_key(name),
+                        "agent_failure",
+                        f"Call failed ({why}); retrying in {RETRY_AFTER_S:g} s",
+                    )
+                log.warning("%s call failed, retrying: %s", name, why)
+                await asyncio.sleep(RETRY_AFTER_S)
+                continue
+            if attempt and report:
+                report(agent_key(name), "retry", "Retry succeeded")
+            return answer
+        raise AssertionError("unreachable")
+
+    async def call(
+        self,
+        name: str,
+        instructions: str,
+        prompt: str,
+        schema: type[T],
+        tools: list[MCPStreamableHTTPTool] | None,
+    ) -> tuple[T, int, list[str]]:
+        """One try at a structured call: the model, through Foundry."""
         # A stable id per role (each call gets its own Agent), so traces group by agent.
         agent = Agent(
             client=self.client,
@@ -332,7 +404,7 @@ class _Interpreter(Executor):
         start = time.perf_counter()
         prompt = f"{run.brief.text()}\n\nIs this worth a graphic now? What is its angle?"
         run.interpretation, tokens = await self.team.ask(
-            "Interpreter", INTERPRETER, prompt, Interpretation
+            "Interpreter", INTERPRETER, prompt, Interpretation, self.report
         )
         run.tokens += tokens
         verdict = "Angle" if run.interpretation.worth_airing else "Passed"
@@ -374,7 +446,7 @@ class _Explainer(Executor):
         first = run.drafts == 0
         knowledge = [self.team.knowledge] if self.team.knowledge and first else None
         run.draft, tokens, found = await self.team.ask_with_tools(
-            "Explainer", EXPLAINER, prompt, Draft, knowledge
+            "Explainer", EXPLAINER, prompt, Draft, knowledge, self.report
         )
         if first:
             run.background = "\n".join(found)
@@ -440,7 +512,9 @@ class _FactChecker(Executor):
             f"{run.brief.text()}\n\nTHE GRAPHIC\nHEADLINE: {run.draft.headline}\n"
             f"BODY: {run.draft.body}"
         )
-        verdict, tokens = await self.team.ask("Fact-checker", FACT_CHECKER, prompt, FactCheck)
+        verdict, tokens = await self.team.ask(
+            "Fact-checker", FACT_CHECKER, prompt, FactCheck, self.report
+        )
         run.tokens += tokens
         run.problems = verdict.problems
         run.rejected_by = "fact-checker"
@@ -478,7 +552,9 @@ class _Producer(Executor):
             f"GRAPHIC: {run.draft.headline} | {run.draft.body}\n\n"
             f"{run.brief.queue or 'QUEUE: empty. No decisions yet.'}"
         )
-        run.placement, tokens = await self.team.ask("Producer", PRODUCER, prompt, Placement)
+        run.placement, tokens = await self.team.ask(
+            "Producer", PRODUCER, prompt, Placement, self.report
+        )
         run.tokens += tokens
         p = run.placement
         self.report(
@@ -504,7 +580,9 @@ class _Localizer(Executor):
             f"HEADLINE: {run.draft.headline}\nBODY: {run.draft.body}\n"
             f"FACTS YOU MAY USE: {'; '.join(c.text for c in run.draft.claims)}"
         )
-        run.localized, tokens = await self.team.ask("Localizer", LOCALIZER, prompt, Localized)
+        run.localized, tokens = await self.team.ask(
+            "Localizer", LOCALIZER, prompt, Localized, self.report
+        )
         run.tokens += tokens
         problems = check_localized(run.localized, run.brief)
         if problems:

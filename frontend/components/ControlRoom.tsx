@@ -4,6 +4,10 @@ import { MotionConfig } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AgentActivity } from "@/components/control-room/AgentActivity";
+import {
+  type DrillTarget,
+  FailureDrill,
+} from "@/components/control-room/FailureDrill";
 import { MomentumTimeline } from "@/components/control-room/MomentumTimeline";
 import { ProgramMonitor } from "@/components/control-room/ProgramMonitor";
 import type { CardActions } from "@/components/control-room/ProposalCard";
@@ -41,6 +45,17 @@ type Baseline = NonNullable<LiveMatch["baseline"]>;
  * tracking stream, and the queue, the on-air graphic, the agents, and the decision log come from
  * the proposal desk. Approving, editing, and rejecting go to the desk's API.
  */
+const SCRIPTED = "the desk queues the scripted copy";
+
+/** The graphics team's model agents, for the failure drill (the code checker is code). */
+const GRAPHICS_TEAM: DrillTarget[] = [
+  { agent: "interpreter", label: "Interpreter", fallback: SCRIPTED },
+  { agent: "explainer", label: "Explainer", fallback: SCRIPTED },
+  { agent: "fact_checker", label: "Fact-checker", fallback: SCRIPTED },
+  { agent: "producer", label: "Producer", fallback: SCRIPTED },
+  { agent: "localizer", label: "Localizer", fallback: SCRIPTED },
+];
+
 export function ControlRoom({ matchId }: { matchId: string }) {
   const live = useLiveMatch(matchId);
   if (!live.info || !live.baseline)
@@ -211,6 +226,7 @@ function Room({
               agents={agentStates(desk, FEEDS[feed].label)}
               log={auditLines(desk)}
               engine={engine}
+              drill={<FailureDrill targets={GRAPHICS_TEAM} />}
               className="order-5 lg:order-none"
             />
           </div>

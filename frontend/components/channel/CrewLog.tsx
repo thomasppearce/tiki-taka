@@ -9,8 +9,26 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
+import {
+  type DrillTarget,
+  FailureDrill,
+} from "@/components/control-room/FailureDrill";
 import { Panel } from "@/components/ui/Panel";
 import type { Channel, ChannelLog } from "@/lib/contracts.generated";
+
+/** The channel's model agents, for the failure drill. */
+const CHANNEL_CREW: DrillTarget[] = [
+  {
+    agent: "watcher",
+    label: "Watchers",
+    fallback: "each match's last story stands",
+  },
+  {
+    agent: "director",
+    label: "Director",
+    fallback: "the cut goes ahead on the code's pick",
+  },
+];
 
 const AGENT: Record<ChannelLog["agent"], { label: string; icon: Icon }> = {
   director: { label: "Director", icon: FilmSlate },
@@ -43,6 +61,7 @@ export function CrewLog({
         </span>
       }
     >
+      {channel.agents && <FailureDrill targets={CHANNEL_CREW} />}
       {channel.log.length ? (
         <ol className="max-h-[26rem] overflow-y-auto px-3">
           {channel.log.map((entry, i) => {

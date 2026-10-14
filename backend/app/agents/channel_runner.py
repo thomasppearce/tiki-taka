@@ -21,7 +21,9 @@ from opentelemetry.trace import Span
 
 from app.agents.channel_brief import MatchBrief
 from app.agents.channel_team import CHANNEL_PROMPT_VERSION, ChannelTeam
+from app.agents.drill import DRILL, failure_reason
 from app.agents.schemas import CutDecision, StoryUpdate
+from app.agents.team import Reporter
 from app.agents.tracing import ended, run_span
 
 if TYPE_CHECKING:
@@ -110,7 +112,8 @@ class ChannelRunner:
         self, channel: "ChannelDirector", match_id: str, key: str, brief: MatchBrief
     ) -> None:
         with run_span("watcher", match_id=match_id, key=key, matchday=self.matchday) as span:
-            cached = self._cached(f"story:{key}")
+            drilled = DRILL.on(("watcher",))  # live and not kept in a failure drill (drill.py)
+            cached = None if drilled else self._cached(f"story:{key}")
             if cached:
                 update = StoryUpdate.model_validate(cached["value"]) if cached["value"] else None
                 self._story_result(channel, match_id, key, update, cached, cached=True)
@@ -119,14 +122,16 @@ class ChannelRunner:
             start = time.perf_counter()
             try:
                 update, tokens, problems, sent_back = await asyncio.wait_for(
-                    self.team.story(brief), self.story_timeout_s
+                    self.team.story(brief, _crew_log(channel, match_id)), self.story_timeout_s
                 )
             except Exception as error:
-                reason = "timed out" if isinstance(error, TimeoutError) else type(error).__name__
+                reason = failure_reason(error)
                 channel.story_failed(match_id, key, reason)
                 ended(span, "error", f"{reason}: {STORY_FALLBACK}", cached=False)
                 return
-            run = self._remember(f"story:{key}", update, problems, sent_back, start, tokens)
+            run = self._remember(
+                f"story:{key}", update, problems, sent_back, start, tokens, keep=not drilled
+            )
             self._story_result(channel, match_id, key, update, run, cached=False)
             _ended(span, run, cached=False, fallback=STORY_FALLBACK)
 
@@ -168,7 +173,8 @@ class ChannelRunner:
             candidates=[b.match_id for b in briefs],
             matchday=self.matchday,
         ) as span:
-            cached = self._cached(f"decision:{key}")
+            drilled = DRILL.on(("director",))
+            cached = None if drilled else self._cached(f"decision:{key}")
             if cached:
                 await asyncio.sleep(min(CACHED_DECISION_DELAY_S, cached["seconds"]))
                 decision = CutDecision.model_validate(cached["value"]) if cached["value"] else None
@@ -178,14 +184,17 @@ class ChannelRunner:
             start = time.perf_counter()
             try:
                 decision, tokens, problems, sent_back = await asyncio.wait_for(
-                    self.team.decide(reason, on_air, briefs), self.decision_timeout_s
+                    self.team.decide(reason, on_air, briefs, _crew_log(channel, None)),
+                    self.decision_timeout_s,
                 )
             except Exception as error:
-                why = "timed out" if isinstance(error, TimeoutError) else type(error).__name__
+                why = failure_reason(error)
                 channel.decision_failed(key, why)
                 ended(span, "error", f"{why}: {DECISION_FALLBACK}", cached=False)
                 return
-            run = self._remember(f"decision:{key}", decision, problems, sent_back, start, tokens)
+            run = self._remember(
+                f"decision:{key}", decision, problems, sent_back, start, tokens, keep=not drilled
+            )
             self._decision_result(channel, key, decision, run, cached=False)
             _ended(span, run, cached=False, fallback=DECISION_FALLBACK)
 
@@ -238,6 +247,7 @@ class ChannelRunner:
         sent_back: list[str],
         start: float,
         tokens: int,
+        keep: bool = True,
     ) -> dict[str, Any]:
         run = {
             "value": value.model_dump() if value else None,
@@ -247,6 +257,8 @@ class ChannelRunner:
             "tokens": tokens,
             "generated_at": datetime.now(UTC).isoformat(),
         }
+        if not keep:
+            return run
         runs = self._runs()
         runs[key] = run
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -275,3 +287,8 @@ def _ended(span: Span, run: dict[str, Any], cached: bool, fallback: str) -> None
         tokens=run["tokens"],
         sent_back=len(run.get("sent_back", [])),
     )
+
+
+def _crew_log(channel: "ChannelDirector", match_id: str | None) -> "Reporter":
+    """A model call's retry, for the crew log (the graphics team's go to the desk's audit)."""
+    return lambda agent, action, detail: channel.agent_note(agent, match_id, detail)

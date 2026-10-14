@@ -340,6 +340,31 @@ export interface OnAir {
   approved_by: string;
 }
 /**
+ * Start a drill: `blip` fails the agent's next model call once (the retry recovers it);
+ * `down` fails every call for a few minutes (the system falls back).
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "DrillRequest".
+ */
+export interface DrillRequest {
+  agent: "interpreter" | "explainer" | "fact_checker" | "producer" | "localizer" | "watcher" | "director";
+  mode: "blip" | "down";
+}
+/**
+ * The drill now: which agent is failing and how, or none.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "DrillState".
+ */
+export interface DrillState {
+  agent: ("interpreter" | "explainer" | "fact_checker" | "producer" | "localizer" | "watcher" | "director") | null;
+  mode: ("blip" | "down") | null;
+  /**
+   * Until a `down` drill ends by itself.
+   */
+  seconds_left: number;
+}
+/**
  * Measurements attached to an event. Which ones are set depends on the event type.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema

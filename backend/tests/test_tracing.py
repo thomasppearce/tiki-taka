@@ -39,7 +39,9 @@ class FakeTeam:
     def __init__(self, fail: bool = False) -> None:
         self.fail = fail
 
-    async def story(self, brief: Any) -> tuple[StoryUpdate, int, list[str], list[str]]:
+    async def story(
+        self, brief: Any, report: Any = None
+    ) -> tuple[StoryUpdate, int, list[str], list[str]]:
         if self.fail:
             raise RuntimeError("the model is down")
         return StoryUpdate(story="Level at the break.", claims=[]), 900, [], ["cited evt_9"]

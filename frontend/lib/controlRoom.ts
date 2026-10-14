@@ -30,7 +30,7 @@ export type AgentName = Proposal["produced_by"][number];
 
 export type AgentState = {
   agent: AgentName;
-  status: "done" | "working" | "retrying" | "idle";
+  status: "done" | "working" | "retrying" | "down" | "idle";
   detail: string;
 };
 
@@ -175,6 +175,11 @@ export function agentStates(
       r.action === "created" ||
       (r.actor === "producer" && r.detail?.startsWith("Held back")),
   );
+  // The run gave up and the scripted copy went out (an agent was down): whoever never got to
+  // report was skipped, not done.
+  const fellBack = run.some(
+    (r) => r.actor === "orchestrator" && r.action === "agent_failure",
+  );
   let next = true;
   const states = PIPELINE.map((agent): AgentState => {
     // The agent's own reports (decisions the producer logs, like expiries, don't count).
@@ -185,8 +190,22 @@ export function agentStates(
           r.action === "agent_failure" ||
           r.action === "retry"),
     );
-    if (latest?.action === "agent_failure")
-      return { agent, status: "retrying", detail: latest.detail ?? "Retrying" };
+    if (latest?.action === "agent_failure") {
+      // An agent whose last word was a failed model call, on a run that has ended, went down
+      // (a failure drill, or an outage). Other failures are a check sending work back.
+      const down = finished && (latest.detail ?? "").startsWith("Call failed");
+      return {
+        agent,
+        status: down ? "down" : "retrying",
+        detail: latest.detail ?? "Retrying",
+      };
+    }
+    if (!latest && finished && fellBack)
+      return {
+        agent,
+        status: "idle",
+        detail: "Skipped: the scripted copy went out",
+      };
     if (latest || finished)
       return { agent, status: "done", detail: latest?.detail ?? "Done" };
     if (next) {

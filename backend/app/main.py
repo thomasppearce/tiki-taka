@@ -14,6 +14,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.agents.channel_runner import ChannelRunner
 from app.agents.channel_team import ChannelTeam
+from app.agents.drill import DRILL
 from app.agents.runner import AgentRunner
 from app.agents.team import AgentTeam
 from app.agents.tracing import start_tracing
@@ -23,6 +24,7 @@ from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
 from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
 from app.models.desk import ApproveRequest, Desk
+from app.models.drill import DrillRequest, DrillState
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
 from app.models.replay import Replay
@@ -207,6 +209,26 @@ async def channel_stream(
             yield ServerSentEvent(data=service.table(), event="table")
         tick += 1
         await asyncio.sleep(CHANNEL_INTERVAL_S)
+
+
+@app.get("/api/drill")
+def drill() -> DrillState:
+    """The failure drill now: which agent is failing on purpose, and how (app/agents/drill.py)."""
+    return DRILL.state()
+
+
+@app.post("/api/drill")
+def start_drill(body: DrillRequest) -> DrillState:
+    """Make an agent fail on purpose: `blip` fails its next model call once (the retry recovers
+    it); `down` fails every call for three minutes (the system falls back)."""
+    DRILL.start(body.agent, body.mode)
+    return DRILL.state()
+
+
+@app.post("/api/drill/end")
+def end_drill() -> DrillState:
+    DRILL.end()
+    return DRILL.state()
 
 
 @app.get("/api/matches/{match_id}")

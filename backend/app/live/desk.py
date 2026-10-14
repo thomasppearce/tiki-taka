@@ -373,7 +373,7 @@ class ProposalDesk:
                 self._create(c, graphic.copy, graphic.priority, graphic.ttl_ms, graphic.produced_by)
             elif status != "passed":  # the Interpreter's pass is already in the log
                 why = {
-                    "failed_checks": "The checker rejected every draft",
+                    "failed_checks": "The checks rejected every draft",
                     "error": f"The agent team failed ({reason or 'error'})",
                 }.get(status, f"The agent team {status}")
                 self._log(

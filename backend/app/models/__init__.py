@@ -3,6 +3,7 @@
 from app.models.audit import AuditRecord
 from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
 from app.models.desk import ApproveRequest, Desk, OnAir
+from app.models.drill import DrillRequest, DrillState
 from app.models.events import EventAttributes, MatchEvent
 from app.models.insight import EventImpact, KeyMoment, TeamStats
 from app.models.live import LiveEvent
@@ -38,6 +39,8 @@ CONTRACTS = (
     PinRequest,
     Squads,
     Replay,
+    DrillRequest,
+    DrillState,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -47,6 +50,8 @@ __all__ = [
     "AudienceBody",
     "AuditRecord",
     "Channel",
+    "DrillRequest",
+    "DrillState",
     "HoldRequest",
     "PinRequest",
     "TakeRequest",

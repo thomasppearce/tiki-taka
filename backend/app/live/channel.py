@@ -26,7 +26,7 @@ import threading
 from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, cast
 
 from app.agents.channel_brief import MatchBrief, match_brief
 from app.detmath import exp
@@ -586,6 +586,12 @@ class ChannelDirector:
                 package = _restory(s.pending.package, old, story)
                 s.pending = s.pending.model_copy(update={"package": package})
             s.version += 1
+
+    def agent_note(self, agent: str, match_id: str | None, detail: str) -> None:
+        """A Watcher's or the Director's own report, such as a model call it had to retry."""
+        if agent in ("watcher", "director"):
+            with self.lock:
+                self._log(cast("LogAgent", agent), match_id, detail)
 
     def story_failed(self, match_id: str, key: str, reason: str) -> None:
         with self.lock:

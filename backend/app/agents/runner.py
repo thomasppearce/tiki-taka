@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any
 from opentelemetry.trace import Span
 
 from app.agents.brief import build_brief
+from app.agents.drill import DRILL, failure_reason
 from app.agents.team import PROMPT_VERSION, AgentTeam, Outcome
 from app.agents.tracing import ended, run_span
 from app.live.copy import Copy
@@ -125,7 +126,10 @@ class AgentRunner:
             span.add_event(f"{agent} {action}", {"detail": detail})
             desk.agent_step(candidate.index, generation, agent, action, detail)
 
-        cached = self._cache(match_id).get(candidate.moment_id)
+        # In a failure drill the run is live (the failure is real) and isn't kept (drill.py).
+        drilled = DRILL.on(TEAM)
+        span.set_attribute("tiki_taka.drill", DRILL.agent or "")
+        cached = None if drilled else self._cache(match_id).get(candidate.moment_id)
         if cached:
             for agent, action, detail, at_s in cached["steps"]:
                 await asyncio.sleep(max(0.0, at_s - (time.perf_counter() - start)))
@@ -144,13 +148,14 @@ class AgentRunner:
         try:
             outcome = await asyncio.wait_for(self.team.run(brief, live), self.timeout_s)
         except Exception as error:
-            reason = "timed out" if isinstance(error, TimeoutError) else type(error).__name__
+            reason = failure_reason(error)
             log.warning("agent team failed on %s: %s", candidate.moment_id, error)
             desk.agent_result(candidate.index, generation, None, "error", reason)
             ended(span, "error", f"{reason}: the desk airs its scripted copy", cached=False)
             return
         graphic = to_graphic(outcome) if outcome.status == "proposed" else None
-        self._remember(match_id, candidate.moment_id, outcome, graphic, steps)
+        if not drilled:
+            self._remember(match_id, candidate.moment_id, outcome, graphic, steps)
         desk.agent_result(candidate.index, generation, graphic, outcome.status)
         ended(
             span,

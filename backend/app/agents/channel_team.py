@@ -21,7 +21,7 @@ from collections.abc import Sequence
 from app.agents.channel_brief import MatchBrief
 from app.agents.channel_checker import check_decision, check_story
 from app.agents.schemas import CutDecision, StoryUpdate
-from app.agents.team import AgentTeam
+from app.agents.team import AgentTeam, Reporter
 
 CHANNEL_PROMPT_VERSION = "c12"  # bump when prompts or runs change: cached runs regenerate
 
@@ -81,17 +81,21 @@ class ChannelTeam:
         self.model = team.model if self.watchers is team else f"{team.model}+{self.watchers.model}"
 
     async def story(
-        self, brief: MatchBrief
+        self, brief: MatchBrief, report: Reporter | None = None
     ) -> tuple[StoryUpdate | None, int, list[str], list[str]]:
         """The Watcher's story, checked; None if it fails the checker twice. Also what the checker
         found in the first draft, if it sent it back."""
         prompt = brief.text(watcher=True)
-        update, tokens = await self.watchers.ask("Watcher", WATCHER, prompt, StoryUpdate)
+        update, tokens = await self.watchers.ask("Watcher", WATCHER, prompt, StoryUpdate, report)
         update = _receipts_only(update)
         problems = sent_back = check_story(update, brief)
         if problems:
             update, more = await self.watchers.ask(
-                "Watcher", WATCHER, _redo(prompt, update.model_dump_json(), problems), StoryUpdate
+                "Watcher",
+                WATCHER,
+                _redo(prompt, update.model_dump_json(), problems),
+                StoryUpdate,
+                report,
             )
             tokens += more
             update = _receipts_only(update)
@@ -99,7 +103,11 @@ class ChannelTeam:
         return (None if problems else update), tokens, problems, sent_back
 
     async def decide(
-        self, reason: str, on_air: str, briefs: Sequence[MatchBrief]
+        self,
+        reason: str,
+        on_air: str,
+        briefs: Sequence[MatchBrief],
+        report: Reporter | None = None,
     ) -> tuple[CutDecision | None, int, list[str], list[str]]:
         """The Director's choice and words, checked; None if it fails the checker twice. Also what
         the checker found in the first draft, if it sent it back."""
@@ -107,7 +115,9 @@ class ChannelTeam:
         candidates = "\n\n".join(b.text(label=f"[{i + 1}] ") for i, b in enumerate(briefs))
         prompt = f"ON AIR NOW: {on_air}\nWHY THE CODE WANTS TO CUT: {reason}\n\n{candidates}"
         instructions = DIRECTOR_GOAL if goal else DIRECTOR
-        decision, tokens = await self.team.ask("Director", instructions, prompt, CutDecision)
+        decision, tokens = await self.team.ask(
+            "Director", instructions, prompt, CutDecision, report
+        )
         decision = _receipts_only(decision)
         problems = sent_back = check_decision(decision, briefs)
         if problems:
@@ -116,6 +126,7 @@ class ChannelTeam:
                 instructions,
                 _redo(prompt, decision.model_dump_json(), problems),
                 CutDecision,
+                report,
             )
             tokens += more
             decision = _receipts_only(decision)

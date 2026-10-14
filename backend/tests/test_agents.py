@@ -289,7 +289,7 @@ class ScriptedTeam(AgentTeam):
             Localized: Localized(**{name: f"{scorer} scores" for name in Localized.model_fields}),
         }
 
-    async def ask_with_tools(  # type: ignore[override]
+    async def call(  # type: ignore[override]
         self, name: str, instructions: str, prompt: str, schema: type, tools: Sequence[Any] | None
     ) -> tuple[Any, int, list[str]]:
         self.calls.append((name, prompt, bool(tools)))
