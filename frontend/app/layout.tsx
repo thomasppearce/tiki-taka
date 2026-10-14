@@ -22,7 +22,7 @@ const barlowCondensed = Barlow_Condensed({
 export const metadata: Metadata = {
   title: "Tiki-Taka",
   description:
-    "The final day, ten matches at once: AI agents decide where to cut, and say why.",
+    "Every match of the matchday at once: AI agents decide where to cut, and say why.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

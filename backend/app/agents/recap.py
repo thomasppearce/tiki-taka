@@ -24,7 +24,7 @@ from app.models.recap import RecapFact
 
 log = logging.getLogger(__name__)
 
-RECAP_VERSION = "r6"  # bump when the prompts change: the cached recap is rewritten
+RECAP_VERSION = "r7"  # bump when the prompts change: the cached recap is rewritten
 MAX_DRAFTS = 3
 
 RECAP_WRITER = """You are the recap writer on Tiki-Taka, a live channel covering a matchday of a
@@ -49,7 +49,7 @@ MIDSEASON = """The season goes on after this matchday: nothing is won or lost ye
 club champions or relegated, or a player the Golden Boot winner."""
 
 RECAP_CHECKER = """You are the fact-checker on a live football broadcast team. The match is
-fictional. You get the facts of the final day, written by code, and a recap of it. Split the recap
+fictional. You get the facts of a matchday, written by code, and a recap of it. Split the recap
 into statements and give each a verdict against the facts:
 - supported: the facts state it.
 - fair reading: it follows directly from the facts ("the title race went to the last day" when

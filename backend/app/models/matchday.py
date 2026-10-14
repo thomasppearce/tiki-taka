@@ -52,6 +52,10 @@ class LeagueGroup(Contract):
 
 class Matchday(Contract):
     clock_ms: int = Field(ge=0)
+    matchday_number: int = Field(ge=1, description="Which round of the season this is.")
+    last_matchday: bool = Field(
+        description="The season's last: the title and the drop are decided."
+    )
     leagues: list[LeagueGroup]
 
 

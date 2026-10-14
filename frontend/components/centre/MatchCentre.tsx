@@ -47,10 +47,13 @@ export function MatchCentre() {
       </SiteHeader>
       <main className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-8 px-4 py-6">
         <div className="flex max-w-[70ch] flex-col gap-2">
-          <h1 className="text-xl font-semibold text-ink">Final day</h1>
+          <h1 className="text-xl font-semibold text-ink">
+            {matchdayLabel(matchday)}
+          </h1>
           <p className="text-sm text-ink-2">
-            The last day of the Meridian League season: ten matches at once,
-            with the title and the last relegation place still to be decided.
+            {matchday.last_matchday
+              ? "The last day of the Meridian League season: ten matches at once, with the title, the top four, and the drop decided today."
+              : `Matchday ${matchday.matchday_number} of the Meridian League: ten matches at once, and the table moves with every goal.`}{" "}
             The featured match has the full AI agent team proposing graphics,
             each with the events that justify it, and a human producer deciding
             what goes on air.
@@ -161,4 +164,12 @@ function Side({
       </div>
     </div>
   );
+}
+
+/** "Matchday 38 · Final day" on the season's last, "Matchday 12" otherwise. */
+export function matchdayLabel(day: {
+  matchday_number: number;
+  last_matchday: boolean;
+}): string {
+  return `Matchday ${day.matchday_number}${day.last_matchday ? " · Final day" : ""}`;
 }

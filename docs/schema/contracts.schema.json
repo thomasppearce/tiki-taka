@@ -1061,6 +1061,15 @@
           "minimum": 0,
           "type": "integer"
         },
+        "matchday_number": {
+          "description": "Which round of the season this is.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "last_matchday": {
+          "description": "The season's last: the title and the drop are decided.",
+          "type": "boolean"
+        },
         "rows": {
           "items": {
             "$ref": "#/$defs/TableRow"
@@ -1087,6 +1096,8 @@
       },
       "required": [
         "clock_ms",
+        "matchday_number",
+        "last_matchday",
         "rows",
         "swings",
         "stakes",
@@ -1585,6 +1596,15 @@
           "minimum": 0,
           "type": "integer"
         },
+        "matchday_number": {
+          "description": "Which round of the season this is.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "last_matchday": {
+          "description": "The season's last: the title and the drop are decided.",
+          "type": "boolean"
+        },
         "leagues": {
           "items": {
             "$ref": "#/$defs/LeagueGroup"
@@ -1594,6 +1614,8 @@
       },
       "required": [
         "clock_ms",
+        "matchday_number",
+        "last_matchday",
         "leagues"
       ],
       "title": "Matchday",

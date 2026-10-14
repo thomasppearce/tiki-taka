@@ -129,3 +129,14 @@ def test_viewers_joining_in_the_same_minute_get_the_same_channel(service: Matchd
     assert [(c.cut_id, c.match_id) for c in cuts_early] == [
         (c.cut_id, c.match_id) for c in cuts_late
     ]
+
+
+def test_the_channel_knows_which_matchday_it_covers(client: TestClient) -> None:
+    from app.agents.channel_team import channel_intro
+
+    day = client.get("/api/matchday").json()
+    assert day["matchday_number"] == 38 and day["last_matchday"] is True
+    assert client.get("/api/table").json()["matchday_number"] == 38
+    assert "the season's last" in channel_intro(38, True)
+    midseason = channel_intro(12, False)
+    assert "matchday 12" in midseason and "title" not in midseason

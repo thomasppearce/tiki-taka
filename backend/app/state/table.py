@@ -1,6 +1,6 @@
 """As it stands: the league table with today's scores added, and what each goal changes.
 
-The final day is decided in the table, so this is what the whip-around runs on. Everything here
+A matchday is decided in the table, so this is what the whip-around runs on. Everything here
 is code, not a model: the table, the swings (every goal that moved a club into or out of a zone,
 with the goal's event id, so agents can cite it), and the stakes (for each live match, what one
 more goal for either side would change right now). The Director weighs stakes as "does it

@@ -25,11 +25,23 @@ from app.agents.team import FACT_CHECKER, AgentTeam, Reporter
 
 MAX_RECAP_DRAFTS = 3
 
-CHANNEL_PROMPT_VERSION = "c12"  # bump when prompts or runs change: cached runs regenerate
+CHANNEL_PROMPT_VERSION = "c13"  # bump when prompts or runs change: cached runs regenerate
 
-CHANNEL = """Tiki-Taka is a live channel covering the final day of a fictional football league:
-ten matches at once, with the title, the last relegation place, and fourth place still to be
-decided."""
+
+def channel_intro(matchday: int, last: bool) -> str:
+    """What the channel is covering, from the data: any matchday, and on the season's last, what
+    is decided today. Every agent's instructions start with it."""
+    if last:
+        return (
+            f"Tiki-Taka is a live channel covering matchday {matchday}, the season's last, of a "
+            "fictional football league: every match at once, with the title, the top four, and "
+            "the relegation places decided today."
+        )
+    return (
+        f"Tiki-Taka is a live channel covering matchday {matchday} of a fictional football "
+        "league: every match at once, as the table moves with every goal."
+    )
+
 
 RULES = """Rules: use only facts in the brief and never invent a statistic. Claims are for what
 happened on the pitch: each one cites the ids of the brief's events that prove it. The score, the
@@ -46,7 +58,7 @@ anything out that the brief doesn't say: no points gaps, no goal differences, no
 your own. Present tense, broadcast tone, no exclamation marks; names (players, clubs) capitalized
 as in the brief, and clubs by name, never by their three-letter codes."""
 
-WATCHER = f"""{CHANNEL}
+WATCHER = f"""\
 You are the Watcher for one match. Write its story so far on the pitch for a viewer the channel
 is about to cut to: at most 35 words, about what has happened: the score as it is now (as the
 MATCH line gives it), the goals, who is on top, the chances, the cards. The channel shows the
@@ -54,19 +66,19 @@ table and what is at stake beside your story, so never mention the table, positi
 zones, or the title.
 {RULES}"""
 
-DIRECTOR = f"""{CHANNEL}
+DIRECTOR = f"""\
 You are the Director, deciding where the channel cuts. The code proposes the first candidate; the
-others are the next best. Choose the match whose next few minutes matter most to the title, the
-last relegation place, fourth place, or the Golden Boot race, weighing PRESSURE NOW (how hard a
-side is pushing) against AT STAKE (what a goal would change). Keep the proposal unless another
-candidate is clearly the bigger story. Then, for the match you choose, write:
+others are the next best. Choose the match whose next few minutes matter most to the top of
+the table, the top four, the relegation places, or the Golden Boot race, weighing PRESSURE NOW
+(how hard a side is pushing) against AT STAKE (what a goal would change). Keep the proposal
+unless another candidate is clearly the bigger story. Then, for the match you choose, write:
 - why: at most 18 words, why we're going there now;
 - at_stake: at most 25 words, that match's AT STAKE line in plain words, or null if a goal there
   changes nothing; keep exactly who climbs and who drops for each scorer, as the line says;
 - claims: every factual statement in why, citing that match's event ids.
 {RULES}"""
 
-DIRECTOR_GOAL = f"""{CHANNEL}
+DIRECTOR_GOAL = f"""\
 You are the Director. The channel is cutting to a goal. Write:
 - why: at most 18 words: who scored, for whom, and what it means;
 - at_stake: at most 25 words: what the goal changed in the table (its TABLE MOVES line), or what
@@ -76,7 +88,7 @@ Set match_id to the match's id.
 {RULES}"""
 
 
-WATCHER_RECAP = f"""{CHANNEL}
+WATCHER_RECAP = f"""\
 You are the Watcher for one match, and it has ended. Write its recap for a viewer who missed it:
 - headline: at most 10 words, sentence case: the match's story.
 - story: at most 50 words: the final score as the MATCH line gives it, the goals and what each did
@@ -91,7 +103,11 @@ The match is over: write in the past tense. Write for the viewer, never about yo
 
 
 class ChannelTeam:
-    def __init__(self, team: AgentTeam, watchers: AgentTeam | None = None) -> None:
+    def __init__(
+        self, team: AgentTeam, watchers: AgentTeam | None = None, intro: str | None = None
+    ) -> None:
+        # What the channel is covering: set from the matchday (channel_intro) by the app.
+        self.intro = intro or channel_intro(1, False)
         self.team = team  # the Director's
         self.watchers = watchers or team
         self.model = team.model if self.watchers is team else f"{team.model}+{self.watchers.model}"
@@ -102,13 +118,15 @@ class ChannelTeam:
         """The Watcher's story, checked; None if it fails the checker twice. Also what the checker
         found in the first draft, if it sent it back."""
         prompt = brief.text(watcher=True)
-        update, tokens = await self.watchers.ask("Watcher", WATCHER, prompt, StoryUpdate, report)
+        update, tokens = await self.watchers.ask(
+            "Watcher", self._with_intro(WATCHER), prompt, StoryUpdate, report
+        )
         update = _receipts_only(update)
         problems = sent_back = check_story(update, brief)
         if problems:
             update, more = await self.watchers.ask(
                 "Watcher",
-                WATCHER,
+                self._with_intro(WATCHER),
                 _redo(prompt, update.model_dump_json(), problems),
                 StoryUpdate,
                 report,
@@ -130,7 +148,7 @@ class ChannelTeam:
         goal = reason == "goal"
         candidates = "\n\n".join(b.text(label=f"[{i + 1}] ") for i, b in enumerate(briefs))
         prompt = f"ON AIR NOW: {on_air}\nWHY THE CODE WANTS TO CUT: {reason}\n\n{candidates}"
-        instructions = DIRECTOR_GOAL if goal else DIRECTOR
+        instructions = self._with_intro(DIRECTOR_GOAL if goal else DIRECTOR)
         decision, tokens = await self.team.ask(
             "Director", instructions, prompt, CutDecision, report
         )
@@ -159,7 +177,7 @@ class ChannelTeam:
         prompt, tokens, checks = base, 0, []
         for n in range(1, MAX_RECAP_DRAFTS + 1):
             draft, used = await self.watchers.ask(
-                "Watcher", WATCHER_RECAP, prompt, MatchRecapDraft, report
+                "Watcher", self._with_intro(WATCHER_RECAP), prompt, MatchRecapDraft, report
             )
             tokens += used
             draft = _receipts_only(draft)
@@ -180,6 +198,9 @@ class ChannelTeam:
             checks.append(f"The {who} sent draft {n} back: {problems[0]}")
             prompt = _redo(base, draft.model_dump_json(), problems)
         return None, tokens, checks
+
+    def _with_intro(self, instructions: str) -> str:
+        return f"{self.intro}\n{instructions}"
 
 
 def _receipts_only[A: (StoryUpdate, CutDecision, MatchRecapDraft)](answer: A) -> A:

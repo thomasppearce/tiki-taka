@@ -1,4 +1,4 @@
-"""The live league table: the final day's scores added to the season so far, as it stands."""
+"""The live league table: the matchday's scores added to the season so far, as it stands."""
 
 from typing import Literal
 
@@ -89,6 +89,10 @@ class GoldenBoot(Contract):
 
 class LeagueTable(Contract):
     clock_ms: int = Field(ge=0)
+    matchday_number: int = Field(ge=1, description="Which round of the season this is.")
+    last_matchday: bool = Field(
+        description="The season's last: the title and the drop are decided."
+    )
     rows: list[TableRow]
     swings: list[TableSwing] = Field(description="Every zone change so far today, oldest first.")
     stakes: list[Stake] = Field(description="For each live match and side, what a goal would do.")

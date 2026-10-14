@@ -4,6 +4,7 @@ import { MotionConfig } from "motion/react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
+import { matchdayLabel } from "@/components/centre/MatchCentre";
 import { CrewLog } from "@/components/channel/CrewLog";
 import { MatchdayRecap } from "@/components/channel/MatchdayRecap";
 import { CutControls } from "@/components/channel/CutControls";
@@ -36,7 +37,7 @@ import { GUEST_PREFS, useFanPrefs, useRole } from "@/lib/role";
 import { lensOf, useWhip } from "@/lib/whip";
 
 /**
- * Tiki-Taka: the final day as one channel. The Director cuts between the ten matches and says
+ * Tiki-Taka: a matchday as one channel (the demo's is the season's last). The Director cuts between the ten matches and says
  * why; the table moves as it stands; every match is a click away. The producer gets the cut
  * controls; guests get the channel; a signed-in fan can make it their own, cut by what matters
  * to their club or by their fantasy XI.
@@ -108,7 +109,7 @@ export function ChannelPage() {
     return (
       <div className="flex min-h-dvh flex-col bg-page">
         <SiteHeader />
-        <FeedState status={live.status} what="the final day" />
+        <FeedState status={live.status} what="the matchday" />
         {picker}
       </div>
     );
@@ -128,7 +129,9 @@ export function ChannelPage() {
       <div className="flex min-h-dvh flex-col bg-page">
         <SiteHeader>
           <p className="flex items-center gap-3 text-sm whitespace-nowrap">
-            <span className="text-ink">Final day</span>
+            <span className="text-ink">
+              {table ? matchdayLabel(table) : "Matchday"}
+            </span>
             <span className="hidden text-ink-3 sm:inline">Meridian League</span>
             <span className="font-mono text-ink-2 tabular-nums">{`${minute}'`}</span>
           </p>

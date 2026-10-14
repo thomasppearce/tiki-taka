@@ -871,7 +871,12 @@ class ChannelDirector:
                 else:
                     why = f"{club} are pushing into the final third."
             elif reason == "kickoff" and at < 60_000:
-                why = f"The final day kicks off, and we start at {fixture}."
+                day = (
+                    "The season's last matchday"
+                    if self.service.last_matchday
+                    else f"Matchday {self.service.matchday_number}"
+                )
+                why = f"{day} kicks off, and we start at {fixture}."
             else:  # a check-in, the producer's call, or joining a day under way
                 why = scoreline
             if side:  # what's at stake in the whole table; the lens says what it means for you

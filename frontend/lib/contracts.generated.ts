@@ -510,6 +510,14 @@ export interface MatchCard {
  */
 export interface LeagueTable {
   clock_ms: number;
+  /**
+   * Which round of the season this is.
+   */
+  matchday_number: number;
+  /**
+   * The season's last: the title and the drop are decided.
+   */
+  last_matchday: boolean;
   rows: TableRow[];
   /**
    * Every zone change so far today, oldest first.
@@ -736,6 +744,14 @@ export interface MatchRecap {
  */
 export interface Matchday {
   clock_ms: number;
+  /**
+   * Which round of the season this is.
+   */
+  matchday_number: number;
+  /**
+   * The season's last: the title and the drop are decided.
+   */
+  last_matchday: boolean;
   leagues: LeagueGroup[];
 }
 /**

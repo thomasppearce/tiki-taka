@@ -67,7 +67,7 @@ class _Match:
 
 
 class FantasyScorer:
-    """Scores any player at any moment of the final day."""
+    """Scores any player at any moment of the matchday."""
 
     def __init__(self, matches: Sequence["ScheduledMatch"]) -> None:
         self.players: dict[str, tuple[Player, Club]] = {}

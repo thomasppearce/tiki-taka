@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.agents.channel_runner import ChannelRunner
-from app.agents.channel_team import ChannelTeam
+from app.agents.channel_team import ChannelTeam, channel_intro
 from app.agents.drill import DRILL
 from app.agents.recap import RecapWriter
 from app.agents.runner import AgentRunner
@@ -75,6 +75,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
     service = MatchdayService(agents=runner)
     service.channel.agents = channel
+    if channel:  # the channel's agents know which matchday they're covering
+        channel.team.intro = channel_intro(service.matchday_number, service.last_matchday)
     # Cached agent runs are only reused for the same simulated matchday.
     for cached in (runner, channel):
         if cached:

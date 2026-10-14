@@ -11,7 +11,7 @@ from itertools import pairwise
 
 from app.generator.matchday import ScheduledMatch, build_matchday, fingerprint
 from app.generator.player_season import season_records
-from app.generator.season import TEAM_OF_THE_SEASON, table_before_final_day
+from app.generator.season import LEAGUE_GAMES, TEAM_OF_THE_SEASON, table_before_final_day
 from app.generator.world import Club
 from app.live.channel import ChannelDirector
 from app.live.clock import MatchdayClock
@@ -75,6 +75,9 @@ class MatchdayService:
                 for p in club.squad:
                     self.surnames[p.player_id] = p.name.split(" ", 1)[-1]
         self.season = table_before_final_day()
+        # Which matchday this is, from the season so far; on the last, the season is decided.
+        self.matchday_number = max(r.played for r in self.season) + 1
+        self.last_matchday = self.matchday_number >= LEAGUE_GAMES
         # The players' season before today, and the Golden Boot race through the day.
         self.player_seasons = season_records(self.clubs.values())
         self.season_goals = {p: r.goals for p, r in self.player_seasons.items() if r.goals}
@@ -145,7 +148,12 @@ class MatchdayService:
                 LeagueGroup(league_id=m.league.league_id, name=m.league.name, matches=[]),
             )
             group.matches.append(self.card(m.match_id))
-        return Matchday(clock_ms=self.clock.clock_ms(), leagues=list(leagues.values()))
+        return Matchday(
+            clock_ms=self.clock.clock_ms(),
+            matchday_number=self.matchday_number,
+            last_matchday=self.last_matchday,
+            leagues=list(leagues.values()),
+        )
 
     def card(self, match_id: str) -> MatchCard:
         m = self.by_id[match_id]
@@ -273,6 +281,8 @@ class MatchdayService:
                     )
         return LeagueTable(
             clock_ms=now,
+            matchday_number=self.matchday_number,
+            last_matchday=self.last_matchday,
             rows=rows,
             swings=[s for s in self.swings if s.match_clock_ms <= now],
             stakes=sorted(stakes, key=lambda s: -s.weight),
