@@ -196,7 +196,15 @@ class MatchdayService:
 
     def table(self) -> LeagueTable:
         """The league as it stands now, the day's swings so far, and what is at stake."""
-        return self._table(self.clock.clock_ms() // 1000)
+        return self.table_at(self.clock.clock_ms())
+
+    def table_at(self, clock_ms: int) -> LeagueTable:
+        return self._table(clock_ms // 1000)
+
+    @property
+    def over_ms(self) -> int:
+        """When the last match ends: the day is over."""
+        return max(m.result.full_time_ms for m in self.matches)
 
     @lru_cache(maxsize=64)  # noqa: B019
     def _table(self, second: int) -> LeagueTable:

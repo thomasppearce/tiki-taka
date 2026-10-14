@@ -110,3 +110,22 @@ class CutDecision(BaseModel):
         description="At most 25 words, from that candidate's AT STAKE lines; null if none."
     )
     claims: list[DraftClaim] = Field(description="Every factual statement, each with its evidence.")
+
+
+class RecapBeatDraft(BaseModel):
+    minute: int = Field(description="The minute it happened, as its facts give it.")
+    text: str = Field(description="At most 30 words.")
+    fact_ids: list[str] = Field(description="Ids of the facts it rests on.")
+
+
+class RecapDraft(BaseModel):
+    """The recap writer's story of the day."""
+
+    headline: str = Field(description="At most 10 words.")
+    standfirst: str = Field(
+        description="At most 45 words: how the title, the top four, the relegation places, and "
+        "the Golden Boot were settled."
+    )
+    beats: list[RecapBeatDraft] = Field(
+        description="Four to six moments that decided the day, in time order."
+    )

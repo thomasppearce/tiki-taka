@@ -2044,6 +2044,207 @@
       "title": "Proposal",
       "type": "object"
     },
+    "Recap": {
+      "additionalProperties": false,
+      "description": "The day's story: written by the recap writer agent and checked (or by code, if every\ndraft failed its checks or the agents are off), beside the outcomes code worked out.",
+      "properties": {
+        "status": {
+          "description": "pending: matches still playing; writing: the agent is on it; ready.",
+          "enum": [
+            "pending",
+            "writing",
+            "ready"
+          ],
+          "type": "string"
+        },
+        "written_by": {
+          "anyOf": [
+            {
+              "enum": [
+                "agents",
+                "code"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "standfirst": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "beats": {
+          "items": {
+            "$ref": "#/$defs/RecapBeat"
+          },
+          "type": "array"
+        },
+        "champions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClubRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "top_four": {
+          "items": {
+            "$ref": "#/$defs/ClubRef"
+          },
+          "type": "array"
+        },
+        "relegated": {
+          "items": {
+            "$ref": "#/$defs/ClubRef"
+          },
+          "type": "array"
+        },
+        "golden_boot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScorerRow"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/RecapFact"
+          },
+          "type": "array"
+        },
+        "checks": {
+          "description": "What the checkers sent back on the way, if anything.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "status",
+        "written_by",
+        "headline",
+        "standfirst",
+        "beats",
+        "champions",
+        "top_four",
+        "relegated",
+        "golden_boot",
+        "facts",
+        "checks"
+      ],
+      "title": "Recap",
+      "type": "object"
+    },
+    "RecapBeat": {
+      "additionalProperties": false,
+      "properties": {
+        "minute": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "text": {
+          "type": "string"
+        },
+        "fact_ids": {
+          "description": "The facts this beat rests on.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "minute",
+        "match_id",
+        "text",
+        "fact_ids"
+      ],
+      "title": "RecapBeat",
+      "type": "object"
+    },
+    "RecapFact": {
+      "additionalProperties": false,
+      "description": "One fact written by code: an outcome, a goal that moved the table or the Golden Boot, or\na final score. The recap's beats cite these by id.",
+      "properties": {
+        "fact_id": {
+          "description": "A goal ('<match_id>:<event_id>'), a final score ('ft:<match_id>'), or an outcome ('final:<what>').",
+          "type": "string"
+        },
+        "minute": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id",
+        "minute",
+        "match_id",
+        "text"
+      ],
+      "title": "RecapFact",
+      "type": "object"
+    },
     "Replay": {
       "additionalProperties": false,
       "properties": {

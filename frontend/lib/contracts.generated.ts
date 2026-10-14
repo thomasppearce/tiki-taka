@@ -803,6 +803,61 @@ export interface PlayerPosition {
   speed_kmh: number | null;
 }
 /**
+ * The day's story: written by the recap writer agent and checked (or by code, if every
+ * draft failed its checks or the agents are off), beside the outcomes code worked out.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "Recap".
+ */
+export interface Recap {
+  /**
+   * pending: matches still playing; writing: the agent is on it; ready.
+   */
+  status: "pending" | "writing" | "ready";
+  written_by: ("agents" | "code") | null;
+  headline: string | null;
+  standfirst: string | null;
+  beats: RecapBeat[];
+  champions: ClubRef | null;
+  top_four: ClubRef[];
+  relegated: ClubRef[];
+  golden_boot: ScorerRow | null;
+  facts: RecapFact[];
+  /**
+   * What the checkers sent back on the way, if anything.
+   */
+  checks: string[];
+}
+/**
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "RecapBeat".
+ */
+export interface RecapBeat {
+  minute: number;
+  match_id: string | null;
+  text: string;
+  /**
+   * The facts this beat rests on.
+   */
+  fact_ids: string[];
+}
+/**
+ * One fact written by code: an outcome, a goal that moved the table or the Golden Boot, or
+ * a final score. The recap's beats cite these by id.
+ *
+ * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * via the `definition` "RecapFact".
+ */
+export interface RecapFact {
+  /**
+   * A goal ('<match_id>:<event_id>'), a final score ('ft:<match_id>'), or an outcome ('final:<what>').
+   */
+  fact_id: string;
+  minute: number | null;
+  match_id: string | null;
+  text: string;
+}
+/**
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "Replay".
  */

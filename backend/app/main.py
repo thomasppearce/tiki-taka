@@ -15,11 +15,13 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from app.agents.channel_runner import ChannelRunner
 from app.agents.channel_team import ChannelTeam
 from app.agents.drill import DRILL
+from app.agents.recap import RecapWriter
 from app.agents.runner import AgentRunner
 from app.agents.team import AgentTeam
 from app.agents.tracing import start_tracing
 from app.generator.matchday import ScheduledMatch
 from app.live.channel import ChannelDirector
+from app.live.recap import RecapDesk
 from app.live.service import MatchdayService
 from app.models import MatchEvent, OverlayCommand
 from app.models.channel import Channel, HoldRequest, PinRequest, Squads, TakeRequest
@@ -27,6 +29,7 @@ from app.models.desk import ApproveRequest, Desk
 from app.models.drill import DrillRequest, DrillState
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
+from app.models.recap import Recap
 from app.models.replay import Replay
 from app.models.table import LeagueTable
 
@@ -45,6 +48,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # otherwise, and in tests (MATCHDESK_AGENTS=off), every match uses the scripted producer.
     runner: AgentRunner | None = None
     channel: ChannelRunner | None = None
+    writer: RecapWriter | None = None
+    cache: Path | None = None
     if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
         cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
         team = AgentTeam.from_env()
@@ -57,6 +62,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         watchers = AgentTeam.from_env("FOUNDRY_WATCHER_MODEL", knowledge=False)
         channel = ChannelRunner(ChannelTeam(team, watchers), cache_dir=cache)
         channel.start()
+        # The recap writer has no deadline either: the accurate model writes, the fast one checks.
+        writer = RecapWriter(watchers, team)
     app.state.agents = runner
     # Simulating the whole matchday takes a few seconds; do it once, before serving.
     service = MatchdayService(agents=runner)
@@ -68,6 +75,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if runner:
         runner.stories = service.stories  # the graphics team knows the players' stories too
     app.state.matchday = service
+    app.state.recap = RecapDesk(service, writer, cache)
+    app.state.recap.start()
     yield
     if channel:
         await channel.stop()
@@ -209,6 +218,13 @@ async def channel_stream(
             yield ServerSentEvent(data=service.table(), event="table")
         tick += 1
         await asyncio.sleep(CHANNEL_INTERVAL_S)
+
+
+@app.get("/api/recap")
+def recap(request: Request) -> Recap:
+    """How the final day unfolded, once the last match ends: the outcomes, worked out by code,
+    and the story, written by the recap writer and checked (app/live/recap.py)."""
+    return request.app.state.recap.snapshot(_service(request).clock.clock_ms())
 
 
 @app.get("/api/drill")
