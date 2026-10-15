@@ -83,8 +83,8 @@ resource project 'Microsoft.CognitiveServices/accounts/projects@2026-07-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    displayName: 'Match Desk'
-    description: 'The agent team behind the Match Desk broadcast control room.'
+    displayName: 'Tiki-Taka'
+    description: 'The agent team behind Tiki-Taka: a whip-around channel for every matchday, with Watcher and Director agents, a graphics team, and recaps.'
   }
 }
 
