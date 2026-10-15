@@ -1,0 +1,2542 @@
+{
+ "generated_at": "2026-10-15T17:03:10+00:00",
+ "matchday": "73e2d515d426",
+ "fast_model": "gpt-5.4-mini",
+ "accurate_model": "agents-luna",
+ "judge_model": "agents-luna",
+ "evaluators": [
+  "groundedness",
+  "relevance",
+  "coherence"
+ ],
+ "reports": {
+  "team": "https://ai.azure.com/nextgen/r/_zjdJjMfTSWq4IM9Ovf-cw,rg-matchdesk,,matchdesk-amgcx4ym3b4s6,matchdesk/build/evaluations/eval_a6e5f6cd31884f82840d2e0d3df3d104/run/evalrun_60a6e88b05224a8cbaf2aff92e5bcab9",
+  "solo_fast": "https://ai.azure.com/nextgen/r/_zjdJjMfTSWq4IM9Ovf-cw,rg-matchdesk,,matchdesk-amgcx4ym3b4s6,matchdesk/build/evaluations/eval_0f89d712b1f84f00b20d9540756e3c7e/run/evalrun_ac4dd486c0964e46a477d2ece9a23f13",
+  "solo_accurate": "https://ai.azure.com/nextgen/r/_zjdJjMfTSWq4IM9Ovf-cw,rg-matchdesk,,matchdesk-amgcx4ym3b4s6,matchdesk/build/evaluations/eval_8e0428ece06d45f689373bfd1dbfddfd/run/evalrun_4b62aeb14aa04257a3bc06e3d200c1d9"
+ },
+ "answers": [
+  {
+   "system": "team",
+   "t": 3533000,
+   "minute": 59,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_10"
+   ],
+   "match_id": null,
+   "kept_proposal": null,
+   "why": "",
+   "at_stake": "",
+   "story": "",
+   "airs": false,
+   "problems": [],
+   "held_back": [
+    "the Director's decision failed the checks: \"Blackwood completes his hat-trick.\" cites evt_001337, which are not in the brief."
+   ],
+   "seconds_to_cut": 3.745216375013115,
+   "watcher_seconds": 10.137521291006124,
+   "tokens": 5718,
+   "error": null,
+   "scores": {},
+   "passes": {},
+   "reasons": {}
+  },
+  {
+   "system": "solo_fast",
+   "t": 3533000,
+   "minute": 59,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_10",
+   "kept_proposal": true,
+   "why": "Blackwood scores for Elmswick Rangers, making it 3-1 and sealing the lead.",
+   "at_stake": "",
+   "story": "Elmswick Rangers lead 3-1 after Blackwood’s second-half hat-trick; Copperfield FC answered once through Grimshaw, but Blackwood has restored control and now adds a third at 59'.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 4.013628167012939,
+   "watcher_seconds": 0.0,
+   "tokens": 7795,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 3.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly reports the 3-1 score, Blackwood's 59th-minute goal, and Grimshaw's equalizer. However, it incorrectly calls Blackwood's goals a second-half hat-trick: his goals were at 13', 39', and 59', so only the last was in the second half. This factual error makes the response unreliable despite its other accurate details.",
+    "relevance": "The response correctly reports the 3-1 score, Blackwood’s goal at 59', and that nothing is at stake in the table. However, it incorrectly calls this a second-half hat-trick: Blackwood’s earlier goals came at 13' and 39', so only his third goal was in the second half.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY, and its ideas flow logically from the 3-1 score to the match narrative. However, calling Blackwood’s hat-trick a “second-half” hat-trick conflicts with the listed goals at 13' and 39', which makes that detail inaccurate. This does not substantially disrupt the response’s overall coherence."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 3533000,
+   "minute": 59,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_10",
+   "kept_proposal": true,
+   "why": "Blackwood scores for Elmswick Rangers, extending their lead over Copperfield FC to 3-1.",
+   "at_stake": "",
+   "story": "Elmswick Rangers lead Copperfield FC 3-1: Blackwood opens, Grimshaw equalises, and Blackwood restores then extends the lead. His latest finish comes from 5 m.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 15.976469582994469,
+   "watcher_seconds": 0.0,
+   "tokens": 8655,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 5.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Blackwood scored Elmswick Rangers' latest goal to make it 3-1, and correctly summarizes the scoring sequence and his 5 m finish. “AT STAKE: nothing” is a concise rendering of the context’s statement that the next goal changes nothing in the table. The response is relevant and fully supported by the context.",
+    "relevance": "The response accurately summarizes the 3-1 score, identifies Blackwood’s goals and Grimshaw’s equalizer, and correctly notes that the next goal has no table impact. It omits the current standings, pressure context, and Prentice’s season milestone, so it is relevant but not fully comprehensive.",
+    "coherence": "Let's think step by step: The response presents the score and match context clearly, then summarizes the goals in chronological order and connects Blackwood's latest finish to the 3-1 lead. The statement that nothing is at stake is also clear and consistent with the supplied information. The ideas are concise, logically ordered, and easy to follow."
+   }
+  },
+  {
+   "system": "team",
+   "t": 3615000,
+   "minute": 61,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard, and this goal could drag Corrin Bay back into the relegation zone.",
+   "at_stake": "if Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 at 61' after Radcliffe's 32' opener, his 100th league goal for Corrin Bay. Millbrook Town are pushing hard; Radcliffe has three shots saved, and Albrecht-Owusu is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.7919153750117403,
+   "watcher_seconds": 8.75467229099013,
+   "tokens": 12173,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 1-0 score at 61', Radcliffe's 32' goal and 100th league goal for Corrin Bay, Millbrook Town pushing hard, and the stated relegation implications if Millbrook score next. It also correctly notes Radcliffe's three saved shots and Albrecht-Owusu's yellow card. The details are supported by the context.",
+    "relevance": "The response accurately summarizes the score, pressure, table stakes, Radcliffe’s milestone and shots, and the booking. However, saying “this goal” could drag Corrin Bay into relegation is confusing, since the relevant risk is if Millbrook Town score next, not the goal already scored.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections that distinguish the immediate pressure, relegation stakes, and match story. The sentences connect the score, Radcliffe's milestone, Millbrook Town's pressure, and the relevant events in a logical and easy-to-follow way. It directly addresses the supplied match context, so it is coherent, though concise rather than exceptionally elaborate."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 3615000,
+   "minute": 61,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard with relegation pressure after Corrin Bay's opener.",
+   "at_stake": "If Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead 1-0 after Radcliffe's 32' opener, his 100th league goal for the club. Millbrook Town are pushing hard, but only a late Arkell shot has threatened lately.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.3275781249976717,
+   "watcher_seconds": 0.0,
+   "tokens": 7896,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states the 1-0 score, Radcliffe's 100th league goal, Millbrook Town's current pressure, and the consequences if Millbrook Town score next. However, it says only Arkell's late shot has threatened lately, overlooking Radcliffe's saved shot at 47'. That makes the summary mostly relevant but includes an unsupported implication about the recent threats.",
+    "relevance": "The response uses the match state, current pressure, relegation consequences, and Radcliffe’s milestone to provide a focused update. It also references Arkell’s latest shot for context. These details directly address the supplied match information and explain why the next goal matters.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the match context in a logical order: pressure and relegation stakes, followed by the score and player story. Its statements connect smoothly and are easy to follow. The response is coherent and relevant, though it is concise rather than exceptionally developed, so it fits level 4."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 3615000,
+   "minute": 61,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard, and Arkell's 60' effort makes this the urgent cut.",
+   "at_stake": "If Millbrook Town score next, Westmere Athletic climb out of the relegation zone; Corrin Bay drop into it.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 after Radcliffe's 32' opener. Millbrook Town are pushing; Arkell's 60' shot is off target.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 14.048316583008273,
+   "watcher_seconds": 0.0,
+   "tokens": 9240,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Millbrook Town are pushing hard, Arkell's 60th-minute shot was off target, the score is 1–0 to Corrin Bay, and a Millbrook Town goal would send Corrin Bay into the relegation zone while Westmere Athletic climb out. The phrase “urgent cut” is a subjective framing, not an unsupported factual claim. The response is relevant and contains no material inaccuracies.",
+    "relevance": "The response accurately summarizes the 1-0 score, cites Arkell’s off-target 60th-minute attempt and Millbrook’s pressure, and explains the consequential relegation-table stakes if they score next. It provides a focused, useful match update.",
+    "coherence": "Let's think step by step: The response is organized into clear sections and accurately connects Millbrook Town's pressure and Arkell's shot to the match context and stakes. The phrase “makes this the urgent cut” is awkward and unclear, but the rest is easy to follow and logically presented."
+   }
+  },
+  {
+   "system": "team",
+   "t": 3702000,
+   "minute": 62,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Mortensen puts Redstack Rovers back in front.",
+   "at_stake": "",
+   "story": "Rovers lead Coldforge FC 2-1 at 62': Ayodele opens, Ibekwe equalises, Mortensen puts Rovers back in front. Ibekwe's effort was saved; Coldforge have three cards, including one red.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.7712159999937285,
+   "watcher_seconds": 18.547620249999454,
+   "tokens": 7053,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Mortensen put Redstack Rovers back in front, that the score is 2-1 at 62', and that Ayodele opened the scoring before Ibekwe equalised. “At stake: nothing” correctly reflects that the next goal changes nothing in the table. It also correctly notes Ibekwe had a saved shot and that Coldforge received three cards, including one red. The response is grounded in the provided context without adding unsupported details.",
+    "relevance": "The response accurately summarizes the 62nd-minute goal, current 2-1 score, scoring sequence, and table stakes. It also includes relevant card context. Mentioning Ibekwe’s saved effort is accurate, though it could clarify that this was his earlier attempt rather than the equalising goal.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the scoreline and goal sequence in a logical order. It also connects the table stakes and disciplinary context to the match update. The phrase “Ibekwe's effort was saved” is slightly ambiguous because he also scored; it presumably refers to his earlier attempt, but the response does not specify that. Overall, it remains coherent and easy to follow."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 3702000,
+   "minute": 62,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Mortensen puts Redstack Rovers back in front for a 2-1 lead.",
+   "at_stake": "",
+   "story": "Coldforge FC trail 1-2 after Mortensen's 62' strike, with Redstack Rovers pressing hard and the home side quiet. Yellow cards and a red have already shaped a tense second half.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.4918170829769224,
+   "watcher_seconds": 0.0,
+   "tokens": 7879,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states that Mortensen put Redstack Rovers ahead 2-1, that Coldforge FC are trailing while Redstack are pushing hard, and that the next goal changes nothing in the table. It also accurately notes the yellow cards and red card recorded in the match. The description of the match as tense and the cards as shaping the second half is interpretive, but does not conflict with the context.",
+    "relevance": "The response accurately summarizes Mortensen’s goal, the 1-2 score, Redstack’s pressure, Coldforge’s quiet spell, and the fact that the next goal does not affect the table. Its mention of the cards adds relevant match context.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and directly summarizes the current score, the match pressure, and the fact that the next goal has no table impact. The sentences connect logically and are easy to follow. The reference to events shaping the second half is slightly imprecise because the red card occurred in the first half, but this does not substantially disrupt coherence."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 3702000,
+   "minute": 62,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Mortensen scores for Redstack Rovers, putting them back in front after Coldforge FC's equaliser.",
+   "at_stake": "",
+   "story": "Redstack Rovers lead Coldforge FC 2-1. Ayodele opens, Ibekwe equalises, then Mortensen restores the lead. Clemenceau sees red for Coldforge FC; Underhill's effort is saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 11.8105076670181,
+   "watcher_seconds": 0.0,
+   "tokens": 9032,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Mortensen put Redstack Rovers back in front after Ibekwe's equaliser, and correctly summarizes the 2-1 score, the goal sequence, Clemenceau's red card, and Underhill's saved effort. “Nothing” accurately reflects that the next goal changes nothing in the table. The response is relevant and complete for the supplied match context.",
+    "relevance": "The response accurately summarizes the current 2-1 score, the sequence of goals, Coldforge's red card, and the stated table stakes. It directly reflects the key match context, though it omits the reported pressure shift and Ayodele's tenth goal of the season.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the current score, scoring sequence, disciplinary event, and saved effort in a logical order. Its statements connect smoothly and are easy to follow, so it is coherent and directly addresses the match update."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4016000,
+   "minute": 67,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Weatherall scores again for Porthallow Athletic, making it 3-1.",
+   "at_stake": "",
+   "story": "Porthallow Athletic lead 3-1 at 67': Weatherall opens, Alderton equalises, then Weatherall puts Porthallow back in front and adds a third. Porthallow are relentless; Alderton's effort is saved, and Ainsworth is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.537829416018212,
+   "watcher_seconds": 11.255655582994223,
+   "tokens": 6108,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately summarizes the 3-1 score at 67', Weatherall's three goals, Alderton's equalizer, Porthallow's relentless pressure, Alderton's saved shot, and Ainsworth's yellow card. Saying the next goal changes nothing in the table is consistent with the context's stakes. No unsupported or incorrect details are added.",
+    "relevance": "The response accurately summarizes Weatherall’s goal extending Porthallow’s lead to 3–1 and correctly says the next goal would not change the table. Its story also captures the scoring sequence, Porthallow’s pressure, Alderton’s saved attempt, and Ainsworth’s booking.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and the STORY presents the scoring sequence in chronological order. The statements about the current score and what is at stake are concise and understandable. The final mention of Alderton's saved effort and Ainsworth's booking is a little abrupt, but it does not make the overall response difficult to follow."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4016000,
+   "minute": 67,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Weatherall completes his hat-trick for Porthallow Athletic, stretching a 3-1 lead.",
+   "at_stake": "",
+   "story": "Porthallow Athletic lead 3-1 after Weatherall’s first-half opener, Alderton’s reply, then Weatherall restoring control and completing his hat-trick. Ashmoor Athletic have little answer, with Porthallow relentless.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.630627042002743,
+   "watcher_seconds": 0.0,
+   "tokens": 7989,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Weatherall completed a hat-trick and that Porthallow lead 3-1, matching the listed goals. Its account of Alderton's equalizer, Porthallow restoring the lead, and Ashmoor being quiet also aligns with the context. “AT STAKE: nothing” is a concise rendering of the note that the next goal changes nothing in the table. No unsupported or incorrect details are introduced.",
+    "relevance": "The response accurately summarizes the 3-1 score, Weatherall’s hat-trick, the sequence of goals, and the contrasting pressure on the teams. It also correctly notes that the next goal would not affect the table, while adding a concise narrative of the match.",
+    "coherence": "Let's think step by step: The response is logically organized into the match event, table implications, and broader match story. Its sentences connect the goals in chronological order and clearly explain Weatherall’s hat-trick and Porthallow’s 3-1 lead. The concise wording is easy to follow, so it is coherent, though not especially elaborate."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4016000,
+   "minute": 67,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Weatherall scores for Porthallow Athletic, extending their lead over Ashmoor Athletic.",
+   "at_stake": "",
+   "story": "Porthallow Athletic lead Ashmoor Athletic 3-1. Weatherall opens, Alderton equalises, then Weatherall puts Porthallow back in front and scores again. Alderton is denied at 52'; Ainsworth is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 12.704458583990345,
+   "watcher_seconds": 0.0,
+   "tokens": 9244,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 3-1 score and the sequence of goals: Weatherall opened the scoring, Alderton equalised, and Weatherall scored twice more. It correctly notes Alderton's saved shot at 52' and Ainsworth's yellow card. “AT STAKE: nothing” is consistent with the context stating that the next goal changes nothing in the table.",
+    "relevance": "The response accurately summarizes the 3-1 score, Weatherall’s goals, Alderton’s equaliser, and the key 52nd-minute save and booking. It also correctly says the next goal has no table impact, though it omits standings, pressure, and the player milestone details.",
+    "coherence": "Let's think step by step: The response presents the match score and key events in a clear sequence, from Weatherall’s opener through Alderton’s equaliser and Weatherall’s two later goals. The notes about the saved shot and booking are understandable, and “AT STAKE: nothing” clearly conveys that the next goal would not change the table. The response is concise and coherent, though not especially detailed."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4095000,
+   "minute": 69,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town are relentless, with Ambrose chasing the Golden Boot.",
+   "at_stake": "",
+   "story": "Still 0-0 at 69': Halvern Town keep pressing, with Ambrose—level atop the Golden Boot race—testing Brackenford; Toussaint has had two efforts saved, and Ferrante is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 4.472356709011365,
+   "watcher_seconds": 9.223610875022132,
+   "tokens": 12947,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 0-0 score at 69 minutes, Halvern Town's relentless pressure, Ambrose's place at the top of the Golden Boot race, Toussaint's two saved efforts, and Ferrante's booking. Saying the next goal changes nothing in the table is consistent with the context. The summary is relevant and contains no unsupported claims.",
+    "relevance": "The response accurately summarizes the 0-0 match at 69', Halvern Town’s pressure, Ambrose’s Golden Boot context, Toussaint’s two saved shots, Ferrante’s booking, and the lack of table stakes from the next goal. It is concise and directly grounded in the supplied events.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and the story connects the current 0-0 score, Halvern Town's pressure, and the relevant player and match details. Its statements are easy to follow and consistent with the supplied events. The concise, note-like format is coherent, though it does not show the more developed flow expected for the highest rating."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4095000,
+   "minute": 69,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": false,
+   "why": "Mistral Bay are pushing hard, and a Coast derby goal still matters if the leader adds another.",
+   "at_stake": "the next goal changes nothing in the table",
+   "story": "Lanterne Port FC lead 2-0 after Verhoeven’s brace, while Mistral Bay keep pressing and have just seen Conroy denied.",
+   "airs": true,
+   "problems": [
+    "Nothing in the table is at stake in this match (the next goal changes nothing), but the cut talks about it (\"table\"); say why on the pitch, and leave at_stake null."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.5592721669818275,
+   "watcher_seconds": 0.0,
+   "tokens": 8102,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 4.0,
+    "coherence": 3.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states that Mistral Bay are pressing, Lanterne Port FC lead 2–0 after Verhoeven scored twice, and Conroy's shot was saved. However, it says another goal by the leader would still matter, which conflicts with the context's explicit statement that the next goal changes nothing in the table. This makes the response mostly relevant but includes an unsupported or misleading claim.",
+    "relevance": "The response accurately captures the 2-0 score, Verhoeven’s brace, Mistral Bay’s pressure, and Conroy’s saved shot, and it correctly states that the next goal changes nothing in the table. The phrasing that a goal still matters is slightly ambiguous but does not undermine the overall relevance.",
+    "coherence": "Let's think step by step: The response is clearly structured into labeled sections and the story connects the 2-0 score, Verhoeven’s brace, and Conroy’s saved shot. However, the WHY section says a goal would still matter if Lanterne Port FC scores again, which contradicts the provided statement that the next goal changes nothing in the table. This inconsistency weakens the logical coherence, though the response remains understandable overall."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4095000,
+   "minute": 69,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": false,
+   "why": "Mistral Bay are pushing hard, and Conroy's 69' effort is saved in the Coast derby.",
+   "at_stake": "",
+   "story": "Lanterne Port FC lead 2-0, with Verhoeven scoring both goals; Conroy's 69' shot is saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 15.743837249989156,
+   "watcher_seconds": 0.0,
+   "tokens": 9494,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Mistral Bay are pushing, Conroy's 69th-minute shot was saved, it is the Coast derby, and Lanterne Port FC lead 2-0 with Verhoeven scoring both goals. “Nothing” correctly summarizes that the next goal changes nothing in the table. No unsupported details are added.",
+    "relevance": "The response accurately summarizes the current pressure, Conroy’s saved 69th-minute effort, the 2-0 score, and the fact that the next goal would not affect the table. It uses the key match context, though it offers little elaboration beyond the supplied facts.",
+    "coherence": "Let's think step by step: The response presents the match pressure, Conroy's saved effort, the score and scorer, and the table stakes in a clear, orderly way. Its brief labeled sections are easy to follow and directly reflect the query, so it is coherent, though not especially detailed or sophisticated."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4141000,
+   "minute": 70,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Ibekwe levels for Coldforge FC, making it 2-2.",
+   "at_stake": "",
+   "story": "At 2-2, Ayodele's 10th goal of the season opens it; Ibekwe equalises, Mortensen puts Redstack Rovers back in front, then Ibekwe levels again. Zamorano is denied by a save; Thornhill and Farquhar are booked, and Clemenceau is sent off.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.9004270829900634,
+   "watcher_seconds": 12.521188957995037,
+   "tokens": 6268,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Ibekwe's 70th-minute equaliser to make it 2-2, the scoring sequence, Ayodele's 10th goal of the season, Zamorano's saved shot, the two yellow cards and Clemenceau's red card. Its note that nothing is at stake is consistent with the context stating that the next goal changes nothing in the table. It directly and fully addresses the provided match information without unsupported claims.",
+    "relevance": "The response accurately captures the 2-2 score, the sequence of goals, the unchanged table stakes, and notable match events, including Zamorano’s saved shot and Clemenceau’s sending-off. It provides a concise, coherent match narrative that directly reflects the supplied context.",
+    "coherence": "Let's think step by step: The response directly summarizes the 2-2 score and presents the goals in a clear sequence, followed by relevant match events and the table implication. The ideas are easy to follow, though the disciplinary events are listed out of chronological order and “opens it” is slightly compressed wording for Ayodele opening the scoring. Overall, it is coherent and well organized."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4141000,
+   "minute": 70,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Ibekwe equalises for Coldforge FC in a frantic comeback.",
+   "at_stake": "",
+   "story": "Coldforge FC and Redstack Rovers are level at 2-2 after Ibekwe’s late equaliser. Coldforge are relentless; Redstack keep pushing, with the match also marked by a first-half red card and cautions.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.8187140410009306,
+   "watcher_seconds": 0.0,
+   "tokens": 8093,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately summarizes the 2-2 score and Ibekwe's 70th-minute equaliser, reflects the stated pressure from both teams, and correctly notes that the next goal changes nothing in the table. The red card and cautions are also supported by the events. The recap is relevant and contains no material unsupported claims.",
+    "relevance": "The response accurately captures the 2-2 score, Ibekwe’s equaliser, both teams’ attacking pressure, the earlier red card and cautions, and the lack of table impact from the next goal. It is concise and directly reflects the supplied match context.",
+    "coherence": "Let's think step by step: The response clearly summarizes the 2-2 score, identifies Ibekwe's equaliser, and states that nothing is at stake in the table. Its brief sections are logically connected and easy to follow, with relevant match context about the teams' pressure and disciplinary events. The presentation is coherent, though not especially detailed or sophisticated."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4141000,
+   "minute": 70,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": true,
+   "why": "Ibekwe equalises for Coldforge FC, answering Redstack Rovers’ second lead and bringing the game level again.",
+   "at_stake": "",
+   "story": "At 2-2, Ibekwe has twice equalised for Coldforge FC, first after Ayodele and then after Mortensen. Clemenceau has seen red; Zamorano’s late effort is saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 11.641295500012347,
+   "watcher_seconds": 0.0,
+   "tokens": 9129,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 5.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Ibekwe equalised for Coldforge FC after both Redstack Rovers goals, that Clemenceau was sent off, and that Zamorano's late shot was saved. “Nothing” at stake is consistent with the context saying the next goal would change nothing in the table. The response is relevant and contains no unsupported claims.",
+    "relevance": "The response accurately captures the 2-2 score, Ibekwe’s second equaliser, the red card, and Zamorano’s saved late effort. It also correctly notes that the next goal changes nothing in the table, providing a concise and context-aware match summary.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and directly summarizes the match state. It logically connects Ibekwe’s two equalizers to Redstack Rovers’ two leads, accurately notes that nothing is at stake in the table, and adds relevant match events in a clear, easy-to-follow sequence."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4220000,
+   "minute": 71,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook are pushing hard with relegation points at stake for both sides.",
+   "at_stake": "if Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 at 71' after Radcliffe's 32' opener, his 100th league goal for the club. Radcliffe has three efforts saved; Millbrook Town are pushing hard, and Albrecht-Owusu is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.7253953749896027,
+   "watcher_seconds": 10.082368040981237,
+   "tokens": 9257,
+   "error": null,
+   "scores": {
+    "groundedness": 4.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports the 1-0 score at 71', Radcliffe's 32' goal and 100th league goal for Corrin Bay, his three saved shots, Millbrook Town pushing hard, and Albrecht-Owusu's booking. However, saying relegation points are at stake “for both sides” is not supported by the context: the stated table consequence concerns Corrin Bay and Westmere Athletic if Millbrook score next, not Millbrook Town. The response is otherwise relevant and mostly accurate, so this is a minor overstatement.",
+    "relevance": "The response accurately captures the 1-0 score, match time, relegation implications, Radcliffe’s milestone goal, and the current pressure from Millbrook Town. It also supports the summary with relevant match events, making it a comprehensive and context-aware update.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections that connect the match pressure, relegation stakes, and key events. The story follows a logical sequence, moving from the current score and Radcliffe's goal milestone to the saved efforts and Millbrook Town's pressure. It is concise and easy to follow, though not especially elaborate, so it is coherent rather than exceptionally developed."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4220000,
+   "minute": 71,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard with relegation pressure on Corrin Bay.",
+   "at_stake": "If Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead 1-0 through Radcliffe’s 32' opener, his 100th league goal for the club. Millbrook Town are pressing, but only Orme’s late chance has threatened recently.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.5539934580156114,
+   "watcher_seconds": 0.0,
+   "tokens": 8239,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Millbrook Town are pushing hard, that a goal by them would send Corrin Bay into the relegation zone and Westmere Athletic out, and that Radcliffe’s 32nd-minute goal was his 100th league goal for Corrin Bay. However, it says only Orme’s late chance had threatened recently, while the context also records Radcliffe’s saved shot at 47 minutes. That makes the response mostly relevant but includes an unsupported inaccurate claim.",
+    "relevance": "The response accurately summarizes the 1-0 score, Radcliffe’s 100th league goal, Millbrook Town’s pressure, and the relegation consequences if they equalize. It also uses the recent events to contextualize the threat, making it directly relevant and informative.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections, and the ideas follow a logical order from the match pressure to the possible table impact and current narrative. The sentences are easy to follow and directly address the supplied match information. The presentation is coherent, though brief and not especially developed, so it fits a 4 rather than a 5."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4220000,
+   "minute": 71,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_5",
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard; their next goal sends Westmere Athletic out of the relegation zone.",
+   "at_stake": "If Millbrook Town score next, Westmere Athletic climb out of the relegation zone; Corrin Bay drop into it.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 through Radcliffe's 32' opener. Orme's 70' effort misses as Millbrook Town press for a response.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 11.29702774999896,
+   "watcher_seconds": 0.0,
+   "tokens": 9210,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Millbrook Town are pushing hard and that a Millbrook goal next would move Westmere Athletic out of the relegation zone while sending Corrin Bay into it. It also correctly reports Corrin Bay's 1-0 lead through Radcliffe's 32nd-minute goal and Orme's 70th-minute shot off target. The response is relevant and complete for the information it presents, with no unsupported claims.",
+    "relevance": "The response accurately summarizes the score, Radcliffe’s opener, Millbrook Town’s attacking pressure, and the consequential table impact of their next goal. It also ties Orme’s missed effort to Millbrook’s push, making the update both relevant and informative.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and each sentence follows logically from the match context. It connects Millbrook Town's pressure to the table consequences of their next goal, then summarizes the score and Orme's missed effort. The ideas are easy to follow and directly address the information provided, so this is coherent, though not unusually detailed or elaborate."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4300000,
+   "minute": 72,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_7",
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town are pushing hard, with Ambrose again forcing a save at 72'.",
+   "at_stake": "",
+   "story": "At 72', it’s 0-0. Halvern Town are pushing, with Ambrose twice forcing saves since 67'; Brackenford FC’s Toussaint has also had two efforts saved. Ferrante is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.333142667019274,
+   "watcher_seconds": 10.714202625007601,
+   "tokens": 13332,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states the 0-0 score at 72', Halvern Town's pressure, Ambrose's saved shots at 67' and 72', Toussaint's two saved efforts, and Ferrante's booking. Its statement that nothing is at stake is consistent with the context that the next goal changes nothing in the table.",
+    "relevance": "The response accurately summarizes the 0-0 score, Halvern Town’s pressure, Ambrose’s 72nd-minute saved shot, and the lack of table stakes. It also includes relevant recent chances and Ferrante’s booking, making it a clear, useful match update.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents related information in a logical order: current pressure and the latest shot, the score and recent chances, then the booking and table stakes. Its statements connect smoothly and are easy to follow. The response directly addresses the match context, so it is coherent, though concise rather than especially elaborate."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4300000,
+   "minute": 72,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_7",
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_7",
+   "kept_proposal": false,
+   "why": "Gullhaven are pressing for a leveller while Dunhallow cling to a huge away lead.",
+   "at_stake": "If Dunhallow United score next: Gullhaven FC stay 3rd; Dunhallow United stay 19th.",
+   "story": "Gullhaven FC trail 0-1 after Bexley's 16' opener, and they are probing for an equaliser. Dunhallow United have resisted, with Bexley’s strike still the difference.",
+   "airs": true,
+   "problems": [
+    "Nothing in the table is at stake in this match (the next goal changes nothing), but the cut talks about it (\"19th\", \"3rd\"); say why on the pitch, and leave at_stake null.",
+    "The story mentions an equaliser, but there hasn't been one: see GOALS SO FAR."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 3.3029407919966616,
+   "watcher_seconds": 0.0,
+   "tokens": 8380,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 3.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states that Gullhaven trail 0-1 after Bexley's 16th-minute goal and that Dunhallow scoring next would leave both teams in the same table positions. However, it says Gullhaven are pressing and probing for an equaliser while Dunhallow are merely resisting, which contradicts the context's pressure summary: Gullhaven are quiet and Dunhallow are building. Calling the away lead “huge” is also unsupported. These inaccuracies make the response unreliable despite some correct details.",
+    "relevance": "The response correctly reports the 0-1 score and Bexley’s opener, but it contradicts the supplied pressure assessment by saying Gullhaven are pressing and Dunhallow are clinging on. It also gives only the Dunhallow-next-goal scenario, although the data says either side’s next goal changes nothing in the table.",
+    "coherence": "Let's think step by step: The response is clearly structured into WHY, AT STAKE, and STORY, and its sentences connect logically to the match situation. It communicates the score, the goal, and the stated table impact in an orderly way. Although some claims do not align with the supplied pressure summary, the response itself remains easy to follow and coherent."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4300000,
+   "minute": 72,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_7",
+    "m_l1_9"
+   ],
+   "match_id": "m_l1_9",
+   "kept_proposal": false,
+   "why": "Ibekwe's 70' equaliser is followed by a blocked Redstack Rovers effort at 71'.",
+   "at_stake": "",
+   "story": "At 72', Coldforge FC and Redstack Rovers are level 2-2: Ayodele opens, Ibekwe equalises, Mortensen puts Redstack Rovers back in front, and Ibekwe equalises again. Clemenceau is sent off; Ekwueme's 71' effort is blocked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 15.580798375012819,
+   "watcher_seconds": 0.0,
+   "tokens": 9761,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 2-2 score, the sequence of goals, Clemenceau's red card, and Ekwueme's blocked effort at 71'. Its statement that nothing is at stake matches the context that the next goal changes nothing in the table. It adds no unsupported claims.",
+    "relevance": "The response accurately summarizes the 2-2 score, both sides’ scoring sequence, Clemenceau’s red card, and Ekwueme’s blocked effort, while noting that nothing changes in the table if another goal is scored. It omits standings and pressure details, but covers the central match update.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY, and the story presents the score changes in chronological order before noting the red card and latest blocked effort. Each detail connects logically to the match situation at 72'. The wording is concise and easy to follow; although “nothing” is terse, its meaning is clear in context."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4338000,
+   "minute": 73,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Desai levels it for Westmere Athletic, and their survival battle hangs on the next goal.",
+   "at_stake": "if Westmere Athletic score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Marlow opens for Northgate Rovers; Desai equalises at 73' to make it 1-1. Westmere Athletic are pushing hard, while Northgate Rovers have created chances; Westmere Athletic have two bookings.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.3182062089908868,
+   "watcher_seconds": 6.731892208015779,
+   "tokens": 3635,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Desai equalised at 73' and the score is 1-1, and it correctly describes the consequence if Westmere Athletic score next. It also matches the context that Westmere Athletic are pushing hard, Northgate Rovers had created chances, and Westmere Athletic have two bookings. The response is fully grounded in the provided information.",
+    "relevance": "The response accurately summarizes Desai’s equalizer, the 1-1 score, Westmere’s relegation stakes, and the teams’ current pressure. It also includes relevant match context about Marlow’s opener, Northgate’s chances, and Westmere’s bookings, making the update comprehensive and useful.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It connects Desai's equaliser to Westmere Athletic's relegation situation, then summarizes the score, each team's pressure, Northgate's chances, and Westmere's bookings. The ideas are relevant and easy to follow, with no significant breaks in logical flow."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4338000,
+   "minute": 73,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Desai levels for Westmere Athletic, and the relegation fight stays live.",
+   "at_stake": "if Westmere Athletic score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "1-1 here at 73'. Marlow’s opener had Northgate Rovers in front, but Desai has equalised for Westmere Athletic. Westmere keep pushing, while Northgate look quiet.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.3116956670128275,
+   "watcher_seconds": 0.0,
+   "tokens": 8368,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately summarizes the 1-1 score at 73 minutes, identifies Desai's equalizer and Marlow's opener, and reflects the stated pressure and relegation implications. It introduces no unsupported or incorrect details.",
+    "relevance": "The response accurately captures Desai’s equaliser, the 1-1 score, the teams’ contrasting pressure, and the immediate relegation stakes if Westmere score next. Its concise narrative is directly relevant to the match update, though it omits some secondary context such as the title race and Golden Boot standings.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, directly reflects the match situation, and connects the equalizer to the teams' current pressure and relegation stakes. The sentences flow logically and are easy to follow, so it is coherent, though not especially elaborate enough to warrant the highest rating."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4338000,
+   "minute": 73,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Desai equalises for Westmere Athletic, putting a possible escape from the relegation zone within reach.",
+   "at_stake": "A Westmere Athletic goal next sends them out of the relegation zone; Corrin Bay drop in.",
+   "story": "Marlow opens; Desai equalises for Westmere Athletic at 73', making it 1-1. Kallo has two saved efforts; Westmere Athletic have two yellow cards.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 12.689381208998384,
+   "watcher_seconds": 0.0,
+   "tokens": 9596,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Desai equalised at 73' to make it 1-1, and correctly describes the consequence if Westmere Athletic score next: they leave the relegation zone while Corrin Bay drop in. It also correctly notes Marlow's opener, Kallo's two saved efforts, and Westmere Athletic's two yellow cards. These details are supported by the context, with no unsupported claims.",
+    "relevance": "The response accurately captures the 1-1 equaliser, explains the immediate relegation stakes, and highlights relevant match stories and events. It connects Desai’s goal to Westmere Athletic’s chance to climb out of the drop zone, making the summary both relevant and useful.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. Its ideas follow logically from the match update: Desai's equaliser leaves Westmere Athletic close to escaping the relegation zone, and the final section summarizes relevant events in a clear sequence. The sentences are concise and easy to follow, though the response is brief rather than especially elaborate, so it is coherent but not exceptionally developed."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4420000,
+   "minute": 74,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town keep pressing, and a goal would send them top.",
+   "at_stake": "if Halvern Town score next: Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Still 0-0 at 74', with Halvern Town pushing hard: Ambrose has two shots saved, Haddock's latest effort is saved, and Ferrante is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 5.290259290981339,
+   "watcher_seconds": 12.964153374981834,
+   "tokens": 13404,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Halvern Town are pushing hard, remain 0-0 at 74', and would go top on goal difference if they score next. Ambrose had two shots saved, Haddock's latest shot was saved, and Ferrante received a yellow card. It directly answers the implied match-update request without adding unsupported details.",
+    "relevance": "The response directly captures the 0-0 situation, Halvern Town’s pressure, and the consequence of their next goal. Its match-event details are accurate and relevant, making this a concise, informative update.",
+    "coherence": "Let's think step by step: The response presents the match stakes and current situation in clear, labeled sections. Its statements connect logically: Halvern Town are pressing, a goal would put them top, and the cited events support the summary of Ambrose's saved shots, Haddock's latest saved effort, and Ferrante's booking. The concise presentation is easy to follow, so it is coherent."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4420000,
+   "minute": 74,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town are pushing hard with a title swing available if they score next.",
+   "at_stake": "If Halvern Town score next: Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Scoreless at 74' as Halvern Town keep pressing and Brackenford FC sit quiet. Both sides have had shots, and Halvern Town’s latest effort is saved.",
+   "airs": true,
+   "problems": [
+    "The story doesn't give the score as it is now: 0-0."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 4.072932833019877,
+   "watcher_seconds": 0.0,
+   "tokens": 8548,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 0-0 score at 74 minutes, Halvern Town pushing while Brackenford are quiet, and the consequence of a Halvern Town goal. It also correctly notes that both teams have had shots and that Haddock's latest effort was saved. No unsupported or contradictory details are added.",
+    "relevance": "The response accurately summarizes the 0-0 match at 74', Halvern Town’s pressure, and the consequence if they score next, while noting the latest saved effort. It is relevant and clear, though it omits the player storylines and other match context.",
+    "coherence": "Let's think step by step: The response is logically organized into the match pressure, stakes, and current story. The sentences connect clearly, and the claim that Halvern Town's latest effort was saved is supported by the 74th-minute event. It directly addresses the match situation and is easy to follow, though it is concise rather than especially detailed."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4420000,
+   "minute": 74,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town have late chances, and a goal would send them top.",
+   "at_stake": "If Halvern Town score next, Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "At 0-0, Ambrose's efforts at 67' and 72' are saved, as is Haddock's 74' shot. Brackenford FC's Toussaint has also had a shot saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 12.318190916994354,
+   "watcher_seconds": 0.0,
+   "tokens": 9680,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Halvern Town are pushing hard, and scoring next would put them top on goal difference. It correctly identifies Ambrose's saved shots at 67' and 72', Haddock's saved shot at 74', and Toussaint's saved shot for Brackenford at 62'. It adds no unsupported claims.",
+    "relevance": "The response accurately summarizes Halvern Town’s late pressure, highlights the relevant saved chances, and explains the league-table consequence of their scoring next. It is well aligned with the match context, though it does not mention other player stories or earlier events.",
+    "coherence": "Let's think step by step: The response presents the match situation in a clear order: Halvern Town's late chances, the consequence of a Halvern goal, and specific saved shots from both sides. The ideas connect logically and are easy to follow. It directly addresses the supplied match context, though its brevity and straightforward structure do not demonstrate especially sophisticated organization."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4438000,
+   "minute": 74,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": true,
+   "why": "Verhoeven scores again for Lanterne Port FC, stretching their away lead.",
+   "at_stake": "",
+   "story": "Lanterne Port FC lead 0-3; Verhoeven extends their lead at 60' and 74'. He has several central shots, and Mirabeau is sent off for Mistral Bay.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.799052209011279,
+   "watcher_seconds": 8.383147041982738,
+   "tokens": 5892,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Verhoeven scored at 60' and 74' to extend Lanterne Port FC's away lead to 0-3. It correctly summarizes that the next goal changes nothing in the table and notes Verhoeven's central shots and Mirabeau's red card. These details are supported by the context, with no relevant inaccuracies or omissions.",
+    "relevance": "The response accurately captures Lanterne Port FC’s 0-3 lead, Verhoeven’s goals at 60' and 74', his repeated central shooting, and Mirabeau’s red card. It also correctly notes that the next goal will not change the table, directly reflecting the match context.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the score, goal updates, and red card in a logical order. Its statements connect smoothly and are easy to follow, directly addressing the match situation. It is coherent, though brief rather than exceptionally developed."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4438000,
+   "minute": 74,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": true,
+   "why": "Verhoeven scores for Lanterne Port FC again, sealing the derby and deepening Mistral Bay's collapse.",
+   "at_stake": "",
+   "story": "Lanterne Port FC lead 3-0, with Verhoeven completing his hat-trick. Mistral Bay have no reply and are reduced to 10 after Mirabeau's red card; Lanterne Port FC keep pressing.",
+   "airs": true,
+   "problems": [
+    "\"Verhoeven completes his hat-trick.\" cites evt_000727, which are not in the brief.",
+    "\"Mistral Bay are reduced to 10 after Mirabeau's red card.\" says 10, which its cited events don't support.",
+    "\"Verhoeven completes his hat-trick.\" cites evt_000727, which are not in the brief.",
+    "\"Mistral Bay are reduced to 10 after Mirabeau's red card.\" says 10, which its cited events don't support.",
+    "The story says 10, which isn't in the brief."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.8467187079950236,
+   "watcher_seconds": 0.0,
+   "tokens": 8368,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Lanterne Port FC lead 3-0, Verhoeven has completed a hat-trick based on the three listed goals, Mirabeau was sent off, and the next goal changes nothing in the table. Its description of Lanterne Port FC continuing to press is also supported by the context. The phrasing about sealing the derby and Mistral Bay's collapse is interpretive but does not introduce a conflicting fact.",
+    "relevance": "The response accurately summarizes the 3-0 score, Verhoeven’s hat-trick, Mistral Bay’s red card, and Lanterne Port’s pressure, matching the supplied match context. Calling the derby “sealed” is premature at 74 minutes, but this is a minor overstatement.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY, and the statements connect logically: Verhoeven's goal makes it 3-0, while Mirabeau's red card leaves Mistral Bay with 10 players. It directly reflects the match context and states that the next goal has no table impact. The flow is clear, though the presentation is concise rather than especially detailed or sophisticated."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4438000,
+   "minute": 74,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": true,
+   "why": "Verhoeven scores for Lanterne Port FC, making it 3-0.",
+   "at_stake": "",
+   "story": "Lanterne Port FC lead 3-0. Verhoeven scores at 60' and 74'; Mirabeau is sent off.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 10.293987209006445,
+   "watcher_seconds": 0.0,
+   "tokens": 9329,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Verhoeven's goals at 60' and 74', the 3-0 score, Mirabeau's red card, and that the next goal changes nothing in the table. These claims are supported by the context and give a relevant, complete summary of the latest match developments.",
+    "relevance": "The response accurately reports Lanterne Port FC’s 3-0 lead, Verhoeven’s goals at 60' and 74', Mirabeau’s red card, and that the next goal changes nothing in the table. It omits Verhoeven’s 23' opener, so it does not fully convey his hat-trick.",
+    "coherence": "Let's think step by step: The response presents the score, key goals, and red card in a clear, orderly way that is easy to follow. Its labeled sections connect logically to the match update, though it omits the 23rd-minute goal and does not add much context, so it is coherent rather than exceptionally comprehensive."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4509000,
+   "minute": 76,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_7",
+   "kept_proposal": true,
+   "why": "Brodersen scores for Dunhallow United to make it 0-2.",
+   "at_stake": "",
+   "story": "Dunhallow United lead 0-2 at 76': Bexley opens, Brodersen extends. Buchholz has three efforts blocked or saved at 47'; Merriman, Ridgeway and Oakes have yellow cards.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.1729896670149174,
+   "watcher_seconds": 7.802403875015443,
+   "tokens": 5658,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states Brodersen's goal made the score 0-2, summarizes Bexley's opener, Buchholz's three blocked or saved efforts, and the yellow cards for Merriman, Ridgeway, and Oakes. Saying there is nothing at stake is consistent with the context that the next goal changes nothing in the table. It fully and accurately addresses the provided match information.",
+    "relevance": "The response accurately summarizes the 0-2 score, identifies both scorers, notes Buchholz’s chances and the yellow cards, and correctly states that the next goal changes nothing in the table. It omits the teams’ standings and pressure situation, but the match update is otherwise relevant and sufficient.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY, and the points follow a logical order. It accurately connects Brodersen's goal to the 0-2 score, states that the next goal changes nothing in the table, and summarizes earlier shots and cards in a readable way. The concise presentation is coherent, though it does not offer especially developed transitions or analysis."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4509000,
+   "minute": 76,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_8",
+   "kept_proposal": false,
+   "why": "Verhoeven scores for Lanterne Port FC, a third, as the Coast derby tilts away again.",
+   "at_stake": "null",
+   "story": "Mistral Bay trail 0-3 as Verhoeven scores three for Lanterne Port FC. The away side keep pushing, and Mirabeau has been sent off; the derby is one-way traffic.",
+   "airs": false,
+   "problems": [
+    "m_l1_8 is not a candidate; choose one of m_l1_7."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 3.2410827089915983,
+   "watcher_seconds": 0.0,
+   "tokens": 8458,
+   "error": null,
+   "scores": {},
+   "passes": {},
+   "reasons": {}
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4509000,
+   "minute": 76,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_7",
+   "kept_proposal": true,
+   "why": "Brodersen scores for Dunhallow United, extending their lead to 0-2.",
+   "at_stake": "",
+   "story": "Dunhallow United lead Gullhaven FC 0-2. Bexley opened the scoring; Brodersen has just extended their lead. Buchholz is blocked, saved, then blocked in a quick spell.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 11.295138000015868,
+   "watcher_seconds": 0.0,
+   "tokens": 9371,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Brodersen extended Dunhallow United's lead to 0-2, identifies Bexley as the opening scorer, and correctly summarizes Buchholz's blocked, saved, and blocked shots. “At stake: nothing” is a concise rendering of the context saying the next goal changes nothing in the table. The response is relevant and contains no unsupported claims.",
+    "relevance": "The response accurately captures Brodersen’s goal and the 0-2 score, correctly notes that another goal would not change the table, and adds relevant match context about Bexley and Buchholz’s chances.",
+    "coherence": "Let's think step by step: The response presents the current score, identifies both scorers, and then adds a relevant sequence of Buchholz chances. Its statements are logically connected and easy to follow, and “nothing” accurately summarizes the table stakes given in the query. The concise labeled format is clear, though it does not provide especially detailed transitions or analysis."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4625000,
+   "minute": 78,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_3",
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town are relentless and one goal can send them top on goal difference.",
+   "at_stake": "if Halvern Town score next: Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Still 0-0 at 78', with Halvern Town relentless. Ambrose has efforts blocked and saved, and Ferrante sees yellow. Ambrose is one behind Desai in the Golden Boot race.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.5223832500050776,
+   "watcher_seconds": 19.712411417014664,
+   "tokens": 11978,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 0-0 score at 78', Halvern Town's relentless pressure, and the consequence that a Halvern Town goal would send them top on goal difference. It also correctly notes Ambrose's blocked and saved efforts, Ferrante's yellow card, and Ambrose being one behind Desai in the Golden Boot race. No unsupported or contradictory details are introduced.",
+    "relevance": "The response accurately summarizes the 0-0 match state, Halvern Town’s pressure, the decisive consequence of their next goal, and relevant player stories from the events. It is concise but captures the central stakes and match narrative.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and directly connects Halvern Town's pressure to the consequence of scoring. The match update and player details are presented in a logical, easy-to-follow sequence, with no confusing transitions. It is concise but coherent, so it meets the level 4 description."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4625000,
+   "minute": 78,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_3",
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town are relentless and a goal would send them top.",
+   "at_stake": "If Halvern Town score next: Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "0-0 at 78', with Halvern Town relentless and pushing hard. They have sent several efforts at goal, while Brackenford have stayed quiet. The breakthrough would flip the summit.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 4.165202917007264,
+   "watcher_seconds": 0.0,
+   "tokens": 8506,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 5.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 0-0 score at 78', Halvern Town's relentless pressure, and Brackenford's comparatively quiet play. The events support that Halvern Town have had several efforts at goal, and the stated consequence of a Halvern Town goal—that they would go top on goal difference—is correct. The response is relevant and complete for the information it presents.",
+    "relevance": "The response accurately captures the 0-0 score at 78', Halvern Town's relentless pressure, Brackenford's relative quiet, and the specific league-table stakes if Halvern score. It turns the match context into a concise, relevant live update.",
+    "coherence": "Let's think step by step: The response clearly connects Halvern Town's relentless pressure with the significance of their next goal, then explains the league-table consequence. Its match summary follows a logical order, uses the supplied details accurately, and is easy to understand."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4625000,
+   "minute": 78,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_2",
+    "m_l1_3",
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Halvern Town keep testing Brackenford FC, with relentless pressure and a title-changing next goal.",
+   "at_stake": "Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "At 0-0, Halvern Town keep asking questions: Madigan, Ambrose and Haddock have had efforts saved, blocked or off target. Brackenford FC have also tested the keeper.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 13.00046279199887,
+   "watcher_seconds": 0.0,
+   "tokens": 9660,
+   "error": null,
+   "scores": {
+    "groundedness": 4.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects Halvern Town’s relentless pressure, the 0-0 score, the listed efforts from Madigan, Ambrose, and Haddock, and Brackenford’s saved shots. However, it states that Halvern Town go top without explicitly preserving the context’s condition that this happens only if Halvern Town score next. “Title-changing” also slightly overstates the stated consequence, which is moving to the top of the table on goal difference. Overall, it is mostly correct but misses an important qualifier.",
+    "relevance": "The response accurately captures Halvern Town’s relentless pressure, the 0-0 score, notable attempts from both sides, and the league-table consequence if Halvern score next. It turns the supplied match facts into concise, relevant live commentary.",
+    "coherence": "Let's think step by step: The response is clearly organized into stakes and match-story sections, and its ideas follow a logical progression from Halvern Town's pressure to the possible effect of a goal and the chances that have occurred. It accurately summarizes the listed events and notes Brackenford's effort as well. The wording is concise and easy to follow, though it does not develop the context in much depth, so it is coherent rather than exceptionally detailed."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4724000,
+   "minute": 79,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_2"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Ambrose puts Halvern Town ahead and, right now, sends them top.",
+   "at_stake": "Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Halvern Town lead 0-1 after Ambrose’s 79' opener, drawing level with Desai atop the Golden Boot race on 23. Halvern have had chances saved or blocked; Ferrante is booked, and Toussaint has made two saves.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.2259002909995615,
+   "watcher_seconds": 9.696345582982758,
+   "tokens": 4258,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states that Ambrose's 79th-minute goal gives Halvern Town a 0-1 lead and puts them top on goal difference, and its Golden Boot and Ferrante details are supported. However, it incorrectly says Toussaint has made two saves: the context identifies Toussaint as a Brackenford player whose two shots were saved, not as a goalkeeper making saves. This unsupported factual error makes the response unreliable.",
+    "relevance": "The response directly captures the 0–1 opener, Halvern Town’s move to the top, and Ambrose’s Golden Boot position, with relevant match context. However, it incorrectly says Toussaint made two saves; the events show Toussaint took shots that were saved.",
+    "coherence": "Let's think step by step: The response is organized under clear headings and presents the score, table impact, and match story in a logical order. Its sentences connect smoothly and are easy to follow. The claim that Toussaint made two saves appears to confuse him with the goalkeeper, but this is a factual error rather than a major coherence problem."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4724000,
+   "minute": 79,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_2"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Ambrose scores for Halvern Town, putting them top and dropping Northgate Rovers to second.",
+   "at_stake": "Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Halvern Town lead 1-0 through Ambrose's 79' opener, with Brackenford FC quiet and the visitors pushing hard. A late yellow has already gone to Ferrante.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.751950042002136,
+   "watcher_seconds": 0.0,
+   "tokens": 8508,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Ambrose's 79th-minute goal and the resulting table change: Halvern Town go top on goal difference and Northgate Rovers drop to second. It also correctly summarizes the 1-0 score, the teams' pressure, and Ferrante's yellow card at 56'. These details are supported by the context, with no material inaccuracies or omissions for the points stated.",
+    "relevance": "The response gives a concise, relevant match update: it identifies Ambrose’s opener, the resulting league-table change, and the current pressure and card context. It omits other player storylines, but those are not essential to the immediate update.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the goal, table change, match pressure, and card in a logical order. Its sentences connect smoothly and are easy to follow. The response directly addresses the match update without any coherence problems."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4724000,
+   "minute": 79,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_2"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": true,
+   "why": "Ambrose scores for Halvern Town, sending them top on goal difference as Northgate Rovers drop to 2nd.",
+   "at_stake": "Halvern Town go top on goal difference; Northgate Rovers drop to 2nd.",
+   "story": "Ambrose’s 79' opener gives Halvern Town a 0-1 lead. Madigan has one shot saved and two blocked; Toussaint’s two efforts are saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 9.69230754201999,
+   "watcher_seconds": 0.0,
+   "tokens": 9368,
+   "error": null,
+   "scores": {
+    "groundedness": 4.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly states that Ambrose's 79th-minute goal puts Halvern Town 0–1 ahead and sends them top on goal difference, with Northgate Rovers dropping to second. It also correctly says both of Toussaint's listed shots were saved. However, it miscounts Madigan's efforts: the context lists one saved shot and three blocked shots, not two blocked. The main answer is accurate, but this detail makes it incomplete and partially incorrect.",
+    "relevance": "The response accurately highlights Ambrose’s goal and Halvern Town moving top on goal difference, and it summarizes relevant earlier chances. However, it miscounts Madigan’s blocked shots: the events show three blocked, not two.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and its sentences connect the goal to Halvern Town moving top and to the match's player stories. It is easy to follow and directly addresses the key development. However, the shot summary miscounts Madigan's blocked attempts, and the response is concise rather than especially thorough, so it is coherent but not highly coherent."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4890000,
+   "minute": 82,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_6",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are relentless and a goal there flips the relegation picture.",
+   "at_stake": "if Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 at 82', Radcliffe's 32' opener is his 100th league goal for Corrin Bay. Millbrook Town press relentlessly, but Soderberg's 82' effort is off target; Albrecht-Owusu has been booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.161064499989152,
+   "watcher_seconds": 8.851973374985391,
+   "tokens": 12595,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the match state at 82', Corrin Bay's 1-0 lead, Radcliffe's 100th league goal for the club, Millbrook Town's relentless pressure, and the stated relegation consequences if Millbrook score next. It also correctly reports Soderberg's 82' shot as off target and Albrecht-Owusu's yellow card. No unsupported details are added.",
+    "relevance": "The response accurately summarizes the 82' score, relegation implications if Millbrook score next, Radcliffe's 100th league goal, and the latest off-target effort. It also explains why Millbrook's pressure matters, making the match update both relevant and informative.",
+    "coherence": "Let's think step by step: The response presents the match pressure, relegation stakes, score, goal milestone, and latest shot in a clear order. The labeled sections make the information easy to follow, and the details are connected logically to the live-match context. It is coherent and directly addresses the query, though it is a concise summary rather than an especially developed explanation."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4890000,
+   "minute": 82,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_6",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_2",
+   "kept_proposal": false,
+   "why": "Relentless Halvern pressure on a goal that sends them top.",
+   "at_stake": "if Brackenford FC score next: Northgate Rovers go top; Halvern Town drop to 2nd.",
+   "story": "Halvern Town lead 1-0 through Ambrose's 79' opener, and they keep pushing hard. Brackenford have been quiet, with only a few early looks and Ambrose now off target at 82'.",
+   "airs": false,
+   "problems": [
+    "m_l1_2 is not a candidate; choose one of m_l1_3, m_l1_6, m_l1_7."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 3.019314040982863,
+   "watcher_seconds": 0.0,
+   "tokens": 8710,
+   "error": null,
+   "scores": {},
+   "passes": {},
+   "reasons": {}
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4890000,
+   "minute": 82,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_6",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are probing late, with repeated attempts keeping the pressure on.",
+   "at_stake": "If Millbrook Town score next, Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Radcliffe's 32' opener has Corrin Bay ahead 1-0. Millbrook Town threaten late: Orme fires off target, Vasquez is blocked, and Soderberg misses.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 13.710948374995496,
+   "watcher_seconds": 0.0,
+   "tokens": 9827,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Millbrook Town are applying late pressure, the stated consequence if they score next is correct, and the cited shots by Orme, Vasquez, and Soderberg are described accurately. It also correctly identifies Radcliffe's 32nd-minute goal and the 1-0 score. The response is relevant and contains no unsupported details.",
+    "relevance": "The response accurately captures Millbrook Town’s late attacking pressure, the 1-0 score from Radcliffe’s goal, and the relegation consequences if Millbrook score next. It supports the summary with the relevant recent attempts and conveys why the match matters.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and directly reflects the match situation. It connects Millbrook Town's late pressure to the listed attempts, then summarizes the score and the relevant relegation stakes. The ideas are easy to follow, with no meaningful breaks in logic, though the concise format does not demonstrate especially elaborate transitions or depth."
+   }
+  },
+  {
+   "system": "team",
+   "t": 4985000,
+   "minute": 84,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_6",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Northgate are building and a late goal would send them top.",
+   "at_stake": "if Northgate Rovers score next: Northgate Rovers go top; Halvern Town drop to 2nd.",
+   "story": "At 84', it’s 1-1: Marlow opens the scoring, then Desai equalises. Northgate Rovers are building, with Kallo’s 83' effort saved; Westmere Athletic have two yellow cards.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.870321458001854,
+   "watcher_seconds": 12.269138000003295,
+   "tokens": 10022,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the provided context: Northgate Rovers are building, their next goal would put them top, the match is 1-1 at 84', Marlow scored first and Desai equalised, Kallo's 83' shot was saved, and Westmere Athletic have received two yellow cards. It introduces no unsupported or incorrect details.",
+    "relevance": "The response accurately summarizes the 1-1 score, Northgate’s attacking pressure, the saved 83rd-minute effort, and the league-table consequence of a Northgate goal. It omits Westmere’s relegation stakes and the players’ Golden Boot context, so it is relevant but not fully comprehensive.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It connects the current 1-1 score, the teams' momentum, the possible consequence of a Northgate goal, and the cited events in a logical order. The ideas are easy to follow, though the response is concise rather than exceptionally developed, so it is coherent but not highly coherent."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 4985000,
+   "minute": 84,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_6",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Northgate Rovers are building, and a goal sends them top or pulls Westmere Athletic clear of danger.",
+   "at_stake": "If Northgate Rovers score next: Northgate Rovers go top; Halvern Town drop to 2nd. If Westmere Athletic score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Northgate Rovers lead through Marlow’s opener, but Desai equalised and Westmere Athletic stay in the game. Northgate are pressing now, with Kallo drawing a late save.",
+   "airs": true,
+   "problems": [
+    "The story doesn't give the score as it is now: 1-1."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 4.378218665980967,
+   "watcher_seconds": 0.0,
+   "tokens": 8779,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 5.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the provided stakes: a Northgate goal would send them top, while a Westmere goal would lift them out of the relegation zone. It also correctly describes Northgate as building, notes Marlow's opener and Desai's equalizer, and cites Kallo's saved shot at 83'. It leaves out some context, such as the current 1-1 score and player-story details, but the included information is accurate and relevant to the match update.",
+    "relevance": "The response accurately captures the 1-1 score, current pressure, key scorers, and Kallo’s late save, while clearly stating the high-stakes consequences of the next goal for both teams. It turns the match information into a concise, useful update.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and its ideas follow a logical order: it states the immediate stakes, specifies what each possible next goal would mean, then summarizes the match story and recent pressure. The sentences connect smoothly and directly address the match situation. The reference to Marlow's opener is consistent with the later equaliser, and Kallo's late saved shot supports the description of Northgate pressing."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 4985000,
+   "minute": 84,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_6",
+    "m_l1_10"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Kallo's 83' shot is saved, while a goal could shift the title or relegation picture.",
+   "at_stake": "Northgate goal: Northgate Rovers go top; Halvern Town drop to 2nd. Westmere goal: Westmere Athletic climb out of the relegation zone; Corrin Bay drop in.",
+   "story": "Northgate Rovers and Westmere Athletic are level 1-1: Marlow opens, then Desai equalises. Kallo's 83' shot is saved; Westmere Athletic have bookings for Mbaye-Ross and Brannock.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 12.840094042010605,
+   "watcher_seconds": 0.0,
+   "tokens": 10171,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Kallo's 83rd-minute shot was saved, the 1-1 score and goal sequence, the implications of either team scoring next, and Westmere Athletic's two bookings. Its description of the title or relegation picture is consistent with the stated standings implications. No relevant detail is incorrect.",
+    "relevance": "The response accurately summarizes the 1-1 score, the recent saved shot, both goals, the bookings, and the consequences of either team scoring next. It directly uses the supplied match context and connects the late chance to the title and relegation stakes.",
+    "coherence": "Let's think step by step: The response is organized into clear sections, and each section presents related information in a logical order. It connects Kallo's saved shot with the possible standings impact, then summarizes the score, goals, and bookings. The ideas are easy to follow and directly reflect the provided match information."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5093000,
+   "minute": 85,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Quintero levels for Ironvale, preserving the draw as they push hard for the top-four swing.",
+   "at_stake": "if Ironvale United score next: Porthallow Athletic move into the top four; Tidewick Rovers drop out of the top four.",
+   "story": "At 85' it's 2-2: Dunleavy puts Tidewick 2-0 up, but Ashby pulls one back and Quintero equalises. Tidewick have chances; Ironvale are pushing hard. Quintero and Bergqvist are booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.848891708010342,
+   "watcher_seconds": 11.902429291978478,
+   "tokens": 4494,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports the 2-2 score at 85', recounts the goals by Dunleavy, Ashby, and Quintero, and reflects that Ironvale are pushing hard. It correctly states the conditional top-four consequence if Ironvale score next and notes the bookings for Quintero and Bergqvist. These details are supported by the context, with no material inaccuracies or omissions for the summary provided.",
+    "relevance": "The response accurately summarizes the 2-2 score, goal sequence, contrasting pressure, and bookings. It is relevant match commentary, though “top-four swing” could misleadingly suggest Ironvale themselves move into the top four; the stated consequence is that Porthallow would enter instead.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the equalizer, current draw, pressure, chances, and bookings in a logical order. Its claims align with the supplied match information, and the repeated top-four consequence is easy to understand. The wording is concise rather than especially detailed, but the ideas connect smoothly and address the situation clearly."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5093000,
+   "minute": 85,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Quintero equalises for Ironvale United, and a next goal could swing the top four.",
+   "at_stake": "If Ironvale United score next: Porthallow Athletic move into the top four; Tidewick Rovers drop out of the top four.",
+   "story": "Tidewick Rovers lead 2-2 until Quintero levels again at 85'. Ironvale United are pushing hard, with late cards and a flurry of chances, while Tidewick Rovers look quiet.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.985550959012471,
+   "watcher_seconds": 0.0,
+   "tokens": 8761,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 4.0,
+    "coherence": 3.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly identifies Quintero’s 85th-minute equaliser, Ironvale United’s pressure, and the stated top-four consequence if they score next. However, it says Tidewick Rovers “lead 2-2,” which is incorrect: the match is tied 2-2. This factual error prevents a fully grounded score.",
+    "relevance": "The response captures Quintero’s equalizer, Ironvale’s late pressure, and the top-four stakes accurately. The story is somewhat awkward and contradictory when it says Tidewick “lead 2-2” and that Quintero levels “again,” but the main match situation is conveyed.",
+    "coherence": "Let's think step by step: The response is organized into clear sections and connects the equaliser, the standings stakes, and the teams’ current pressure. However, the statement that Tidewick Rovers “lead 2-2” is contradictory, since a 2-2 score is a draw; this disrupts the otherwise understandable story. The overall response remains mostly followable, so it is partially coherent."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5093000,
+   "minute": 85,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Quintero equalises for Ironvale United at 85', making it 2-2.",
+   "at_stake": "If Ironvale United score next, Porthallow Athletic move into the top four and Tidewick Rovers drop out.",
+   "story": "At 2-2, Dunleavy makes it 2-0; Ashby pulls one back, then Quintero equalises for Ironvale United.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 11.84943054098403,
+   "watcher_seconds": 0.0,
+   "tokens": 9890,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Quintero’s 85th-minute equaliser and the 2-2 score, correctly states the stated consequence if Ironvale United score next, and summarizes the goals by Dunleavy, Ashby, and Quintero in line with the context. It is relevant and complete for the information it presents, with no unsupported claims.",
+    "relevance": "The response accurately captures the 85th-minute equalizer and the sequence of goals that brought the score to 2-2. It also highlights the key top-four consequence if Ironvale score again, adding useful standings context to the match update.",
+    "coherence": "Let's think step by step: The response presents the current score, the standings consequence if Ironvale United score next, and the goal sequence in clearly labeled sections. The ideas are relevant and easy to follow, with events ordered logically. It is coherent and direct, though brief rather than especially detailed or elaborately connected."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5190000,
+   "minute": 87,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_9",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard with the relegation zone still in play.",
+   "at_stake": "If Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead 1-0 at 87' after Radcliffe's 32' opener, his 100th league goal for Corrin Bay. Millbrook Town are pushing with four efforts since 70'; Albrecht-Owusu is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.9151121249888092,
+   "watcher_seconds": 9.928956957999617,
+   "tokens": 10010,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 1-0 score at 87', Radcliffe's 32nd-minute goal and 100th league goal for Corrin Bay, Millbrook Town's pressure, and the stated table consequences if Millbrook score next. The four listed efforts since 70' and Albrecht-Owusu's booking are also supported by the events. No unsupported or incorrect details are introduced.",
+    "relevance": "The response accurately summarizes the 87th-minute score, Radcliffe’s milestone goal, Millbrook Town’s recent attacking pressure, and the relegation consequences if they score next. It also cites the booking and adds useful context linking Millbrook’s pressure to the stakes.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and directly presents the current pressure, the possible table impact, and the match story. The ideas are connected logically, and the timeline and supporting details are easy to follow. It is coherent, though its brief, straightforward presentation does not show the especially developed flow expected for the highest rating."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5190000,
+   "minute": 87,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_9",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town are pushing hard, and one goal there flips relegation places.",
+   "at_stake": "if Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead through Radcliffe’s 32' opener, his 100th league goal for the club, but Millbrook Town are pushing hard and hunting an equaliser.",
+   "airs": true,
+   "problems": [
+    "The story mentions an equaliser, but there hasn't been one: see GOALS SO FAR.",
+    "The story doesn't give the score as it is now: 1-0."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.714841625012923,
+   "watcher_seconds": 0.0,
+   "tokens": 8814,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Millbrook Town are pushing hard, their next goal would send Westmere Athletic out of the relegation zone and drop Corrin Bay into it, and Corrin Bay lead through Radcliffe's 32nd-minute goal, his 100th league goal for the club. The description of Millbrook Town hunting an equaliser is consistent with the score and stated pressure. No unsupported or incorrect details are added.",
+    "relevance": "The response accurately summarizes the 1–0 score, Radcliffe’s 100th league goal, Millbrook Town’s pressure, and the precise relegation consequences if Millbrook score next. It turns the match data into a concise, useful live update.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections, and its statements follow logically from the match information. It connects Millbrook Town's pressure to the relegation implications, then summarizes Corrin Bay's lead and Radcliffe's milestone. The repeated stake information is slightly redundant, but it does not disrupt the flow."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5190000,
+   "minute": 87,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_3",
+    "m_l1_9",
+    "m_l1_8"
+   ],
+   "match_id": "m_l1_3",
+   "kept_proposal": true,
+   "why": "Millbrook Town keep coming, with efforts at 82' and 87'.",
+   "at_stake": "If Millbrook Town score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Corrin Bay lead Millbrook Town 1-0 after Radcliffe's 32' opener. Soderberg and Trelawney miss at 82' and 87'; Arkell's 82' effort is blocked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 13.436049457988702,
+   "watcher_seconds": 0.0,
+   "tokens": 10095,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the provided match state, Millbrook Town's late pressure, the 82' and 87' attempts, and the consequence if Millbrook score next. It correctly states that Soderberg and Trelawney were off target and Arkell's effort was blocked. No unsupported information is added.",
+    "relevance": "The response accurately summarizes the 1-0 score, cites Millbrook Town’s recent attacking efforts to explain the pressure, and clearly states the relegation implications if they score next. It uses the key match context without adding unsupported claims.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It connects Millbrook Town’s late efforts to the match situation, accurately states the potential table impact, and summarizes the score and events in a logical order. The concise presentation is easy to follow, though it does not require the more elaborate development associated with the highest rating."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5352000,
+   "minute": 90,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Okafor-Lind scores for Ashmoor Athletic, pulling one back at 90'.",
+   "at_stake": "",
+   "story": "Porthallow Athletic lead 3-2. Weatherall puts them back in front at 54' and extends the lead at 67'; Okafor-Lind pulls one back at 90'. Alderton and Corcoran have efforts saved; Ainsworth is booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 3.77805133300717,
+   "watcher_seconds": 10.347270916012349,
+   "tokens": 6105,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Okafor-Lind's 90th-minute goal, Porthallow's 3-2 lead, Weatherall's goals at 54' and 67', and that the next goal changes nothing in the table. Its mentions of saved efforts by Alderton and Corcoran and Ainsworth's booking are also supported by the events. It directly and completely summarizes the relevant context without unsupported claims.",
+    "relevance": "The response accurately summarizes the decisive 90th-minute goal, current score, key earlier goals, and selected match events. It also correctly states that the next goal has no table impact. It omits standings and Alderton's milestone, but remains sufficiently relevant to the match context.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It directly reports the late goal and current score, then gives relevant match context in a logical order. The sentences are easy to follow, though the brief format and limited transitions do not make it exceptionally developed."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5352000,
+   "minute": 90,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Weatherall has Porthallow Athletic ahead; his hat-trick pushes them to a vital win.",
+   "at_stake": "Nothing now changes the table.",
+   "story": "Porthallow Athletic lead 3-2 after Weatherall’s hat-trick and Okafor-Lind’s late reply. Both sides keep pushing, and the match stays lively in stoppage time.",
+   "airs": true,
+   "problems": [
+    "Nothing in the table is at stake in this match (the next goal changes nothing), but the cut talks about it (\"table\"); say why on the pitch, and leave at_stake null."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.420438417000696,
+   "watcher_seconds": 0.0,
+   "tokens": 8676,
+   "error": null,
+   "scores": {
+    "groundedness": 4.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Porthallow lead 3-2, Weatherall has scored a hat-trick, Okafor-Lind scored a late reply, and both teams are pushing. However, calling it a “vital win” is not established by the context, which only gives the current score at 90 minutes, and “stoppage time” is not explicitly specified. The answer is mostly grounded but includes a few unsupported claims.",
+    "relevance": "The response gives a concise, relevant match summary, including the 3-2 score, Weatherall’s hat-trick, and Okafor-Lind’s late goal, and notes that the table is unaffected. Calling the win “vital” is unsupported, and the match outcome is not yet confirmed.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and its sentences connect logically: it summarizes Porthallow's lead, the late reply, and the ongoing pressure. The claim that the hat-trick pushes Porthallow to a win slightly overstates the outcome while the match is still in stoppage time, but this does not substantially disrupt the overall flow or understanding."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5352000,
+   "minute": 90,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_6"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Okafor-Lind scores for Ashmoor Athletic, pulling one back late in Porthallow Athletic’s 3-2 lead.",
+   "at_stake": "",
+   "story": "Porthallow Athletic lead 3-2; Weatherall scores at 54' and 67', before Okafor-Lind pulls one back at 90'.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 13.387403875007294,
+   "watcher_seconds": 0.0,
+   "tokens": 9789,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reports Okafor-Lind’s 90th-minute goal for Ashmoor, Porthallow’s 3-2 lead, Weatherall’s goals at 54' and 67', and that the next goal changes nothing in the table. These details are supported by the context, with no incorrect claims.",
+    "relevance": "The response accurately summarizes the latest goal, the 3-2 scoreline, and the fact that the next goal changes nothing in the table. It is relevant and clear, though it omits standings, pressure, and other match context that could make the update more complete.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections, and its statements connect logically to the match information. It directly summarizes the late goal and the resulting 3-2 score, while noting that the next goal changes nothing in the table. The story repeats some information from WHY, but this does not make the response difficult to follow."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5460000,
+   "minute": 92,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Westmere are relentless with survival on the line and a goal flips both ends of the table.",
+   "at_stake": "If Westmere Athletic score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "At 1-1, Marlow's opener is answered by Desai; Desai's 91' effort is saved, while Northgate Rovers have Kallo efforts saved or blocked and Westmere Athletic collect two bookings.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.6288099999947008,
+   "watcher_seconds": 10.675919249973958,
+   "tokens": 10096,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Westmere are relentless, scoring would lift them out of the relegation zone, Marlow's opener was equalized by Desai, and Desai's 91st-minute shot was saved. It also correctly notes Northgate's saved or blocked Kallo attempts and Westmere's two bookings. The summary is relevant and contains no unsupported claims.",
+    "relevance": "The response accurately summarizes the 1-1 match, recent chances, bookings, and Westmere’s survival stakes, aligning with the stated pressure. It omits the equally significant consequence of a Northgate goal putting them top and some player-story context, so it is relevant but not fully comprehensive.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It connects Westmere's urgency to the relegation stakes, accurately states what a Westmere goal would change, and summarizes the relevant goals, late shot, Northgate chances, and bookings in a logical sequence. It is concise and easy to follow, though it does not cover every notable detail, so it is coherent rather than exceptionally thorough."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5460000,
+   "minute": 92,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Westmere are relentless, and one goal swings both the title and relegation picture.",
+   "at_stake": "If Northgate Rovers score next: Northgate Rovers go top; Halvern Town drop to 2nd. If Westmere Athletic score next: Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Northgate Rovers lead through Marlow’s opener, but Desai’s equaliser has Westmere Athletic relentless and probing late, with Marlow and Desai both involved in the Golden Boot race.",
+   "airs": true,
+   "problems": [
+    "The story doesn't give the score as it is now: 1-1."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.5627019169915,
+   "watcher_seconds": 0.0,
+   "tokens": 8827,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the match context: Westmere are described as relentless, the next-goal consequences for both teams are stated correctly, and Marlow's opener and Desai's equaliser are identified. It also correctly notes their Golden Boot involvement and Westmere's late pressure, consistent with the match information and recent shot. The reference to the title picture is a reasonable description of Northgate going top if they score. Overall, it is relevant and complete for a concise match update.",
+    "relevance": "The response accurately captures the 1-1 late-match situation, Westmere’s pressure, the Golden Boot context, and the decisive implications of either side scoring next. Its framing of the stakes adds useful context beyond merely restating the score.",
+    "coherence": "Let's think step by step: The response is clearly organized into WHY, AT STAKE, and STORY sections. It connects the late-match pressure to the consequences of either team scoring, then summarizes the goal and player narratives in a logical order. The ideas are easy to follow, though the phrasing about the title is a slight extrapolation from the stated race implications."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5460000,
+   "minute": 92,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_1",
+    "m_l1_8",
+    "m_l1_5"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Desai equalises, then has a 91' shot saved; that late chance makes this the cut.",
+   "at_stake": "Northgate Rovers go top; Halvern Town drop to 2nd. Westmere Athletic climb out of relegation; Corrin Bay drop into it.",
+   "story": "Marlow's opener is answered by Desai, who then has a 91' effort saved. Northgate Rovers and Westmere Athletic are level, 1-1.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 18.755537499993807,
+   "watcher_seconds": 0.0,
+   "tokens": 10661,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly reports that Desai equalised and had a shot saved at 91', and it accurately summarizes the 1-1 score. However, the standings consequences are conditional on a team scoring next in the context. The response states those consequences as though they have already occurred, which is inaccurate.",
+    "relevance": "The response accurately highlights Desai’s equaliser and saved 91st-minute effort, and connects the result to the standings stakes. However, it presents the consequences as unconditional rather than clarifying that each applies only if that team scores next.",
+    "coherence": "Let's think step by step: The response follows a clear structure, moving from the late chance to the stakes and then the match story. Its sentences are easy to follow and the story connects Marlow's opener with Desai's equaliser and saved shot. However, the AT STAKE section presents outcomes that apply only if either team scores next as though they are already happening, which weakens the logical accuracy of the presentation."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5483000,
+   "minute": 92,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Ashby puts Ironvale United ahead in stoppage time, turning a top-four swing into the final twist.",
+   "at_stake": "92': Porthallow Athletic move into the top four; Tidewick Rovers drop out of the top four.",
+   "story": "Ironvale United finish 3-2 winners after Tidewick Rovers reach 2-0: Ashby pulls one back, Quintero equalises, then Ashby puts Ironvale ahead for the first time. Vanterpool, Quintero and Bergqvist are booked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.7160871669766493,
+   "watcher_seconds": 10.183501249994151,
+   "tokens": 4310,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately summarizes the full-time 3-2 result, Tidewick Rovers' 2-0 lead, Ironvale United's comeback, and Ashby's 92nd-minute winner. It also correctly reports the top-four table change and the three yellow cards listed in the context. No unsupported or contradictory details are added.",
+    "relevance": "The response accurately captures the decisive stoppage-time goal, Ironvale’s comeback from 2-0 down, the final score, and the resulting top-four change. It also includes the cited bookings, providing a concise but complete match narrative relevant to the supplied context.",
+    "coherence": "Let's think step by step: The response presents the key late goal and table consequence, then summarizes the match’s comeback in chronological order. The sentences and labeled sections are clear and consistent with one another, and the bookings are included as a related detail. Overall, it is coherent and easy to follow, though its concise format and limited transitions do not rise to the exceptional organization described for a 5."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5483000,
+   "minute": 92,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Ashby scores for Ironvale United to complete the comeback and snatch the lead at the death.",
+   "at_stake": "",
+   "story": "Tidewick Rovers lead 2-3 no longer; Ironvale United turn it around after trailing 2-0. Ashby scores twice, Quintero levels it, and Tidewick’s late chance is saved.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.6496247079921886,
+   "watcher_seconds": 0.0,
+   "tokens": 8800,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 3.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly says Ironvale completed a comeback from 2-0, Ashby scored twice, Quintero equalised, and the next goal would change nothing in the table. However, it incorrectly claims Tidewick had a late chance saved: the listed saved shot was Rosales's attempt at 59', while Tidewick's 81' attempt was blocked. This makes the response partly inaccurate despite several correct details.",
+    "relevance": "The response captures the 2-0 comeback, Quintero’s equalizer, and Ashby’s two goals, so it is largely on-topic. However, it invents a late Tidewick chance being saved, which the events do not support, and its score phrasing is confusing.",
+    "coherence": "Let's think step by step: The response is organized into clear sections and presents the comeback in a logical sequence: Ironvale United equalize, then Ashby scores the winner. The phrase “Tidewick Rovers lead 2-3 no longer” is awkward and unclear, and the claim about a late Tidewick chance being saved does not fit the events provided. Despite these issues, the main story remains easy to follow."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5483000,
+   "minute": 92,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_4"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": true,
+   "why": "Ashby scores Ironvale United's 92' goal, moving Porthallow Athletic into the top four.",
+   "at_stake": "Porthallow Athletic move into the top four; Tidewick Rovers drop out.",
+   "story": "Dunleavy makes it 2-0; Ashby pulls one back, Quintero equalises, then Ashby scores again for a 3-2 Ironvale United win.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 16.708376167021925,
+   "watcher_seconds": 0.0,
+   "tokens": 10482,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Ashby's 92nd-minute goal gave Ironvale United a 3-2 win and that this result moved Porthallow Athletic into the top four while Tidewick Rovers dropped out. Its summary of the goals also matches the context, with no unsupported or incorrect details.",
+    "relevance": "The response accurately explains the decisive table impact and summarizes the key late goals that turned Tidewick’s 2–0 lead into a 3–2 Ironvale win. It directly uses the match context and covers the central outcome clearly.",
+    "coherence": "Let's think step by step: The response is clearly organized into concise sections that explain the table change and recount the goals in chronological order. The connections between the match result and the top-four movement are easy to follow, so it is coherent and directly addresses the query."
+   }
+  },
+  {
+   "system": "team",
+   "t": 5529000,
+   "minute": 93,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_1",
+   "kept_proposal": true,
+   "why": "Desai scores for Westmere Athletic, winning it at the death.",
+   "at_stake": "Westmere Athletic climb out of the relegation zone; Corrin Bay drop into the relegation zone.",
+   "story": "Westmere Athletic finish 2-1 winners: Marlow opens, Desai equalises at 73' and scores again at 93'. Northgate press early; Westmere collect two yellow cards.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 1.819451957999263,
+   "watcher_seconds": 9.650874292012304,
+   "tokens": 3943,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately states that Desai scored Westmere Athletic's late winner, gives the 2-1 result and both Desai goals after Marlow's opener, and correctly reports the relegation-zone table change and Westmere's two yellow cards. Its description of Northgate pressing early is consistent with the early shots recorded in the context. No unsupported or incorrect claims materially detract from the answer.",
+    "relevance": "The response accurately summarizes the late 2-1 Westmere win, identifies Desai’s decisive goal, and states the relegation-table consequences. It also captures Marlow’s opener, Desai’s equalizer, Northgate’s early pressure, and Westmere’s two yellow cards.",
+    "coherence": "Let's think step by step: The response is clearly organized into labeled sections and presents the match outcome, its table impact, and key events in a logical order. The story accurately connects Marlow's opener with Desai's equaliser and winning goal, while the early pressure and two yellow cards provide relevant context. It is concise and easy to follow, though not especially detailed or elaborately connected, so it is coherent rather than exceptionally coherent."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5529000,
+   "minute": 93,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": false,
+   "why": "Ashby scores for Ironvale United, turning defeat into a dramatic late lead.",
+   "at_stake": "Porthallow Athletic move into the top four; Tidewick Rovers drop out of the top four.",
+   "story": "Tidewick Rovers lead 2-0, but Ironvale United storm back through Ashby and Quintero, then Ashby strikes again at 92'. Tidewick finish rattled; Ironvale are relentless.",
+   "airs": false,
+   "problems": [
+    "m_l1_4 is not a candidate; choose one of m_l1_1.",
+    "The story doesn't give the score as it is now: 2-3."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 2.8622434999851976,
+   "watcher_seconds": 0.0,
+   "tokens": 8836,
+   "error": null,
+   "scores": {},
+   "passes": {},
+   "reasons": {}
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5529000,
+   "minute": 93,
+   "reason": "goal",
+   "candidates": [
+    "m_l1_1"
+   ],
+   "match_id": "m_l1_4",
+   "kept_proposal": false,
+   "why": "Ashby scores for Ironvale United at 92', and the table moves Porthallow Athletic into the top four as Tidewick Rovers drop out.",
+   "at_stake": "Porthallow Athletic move into the top four; Tidewick Rovers drop out of the top four.",
+   "story": "At full time, Ironvale United beat Tidewick Rovers 3-2. Dunleavy extends Tidewick's lead at 54'; Ashby pulls one back at 80', Quintero equalizes at 85', then Ashby puts Ironvale ahead for the first time at 92'.",
+   "airs": false,
+   "problems": [
+    "m_l1_4 is not a candidate; choose one of m_l1_1."
+   ],
+   "held_back": [],
+   "seconds_to_cut": 11.187585042003775,
+   "watcher_seconds": 0.0,
+   "tokens": 9875,
+   "error": null,
+   "scores": {},
+   "passes": {},
+   "reasons": {}
+  },
+  {
+   "system": "team",
+   "t": 5610000,
+   "minute": 94,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_6",
+    "m_l1_5",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_5",
+   "kept_proposal": false,
+   "why": "Kingsreach are pushing hard with top-four place on the line and a winner would flip the standings.",
+   "at_stake": "if Kingsreach score next: Kingsreach move into the top four; Porthallow Athletic drop out of the top four.",
+   "story": "At 1-1 in 94', Sillitoe opens for Seacrest Town and Spellman equalises; Sillitoe keeps finding chances, but Kingsreach are pushing hard, with Lambourne's 93' effort blocked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.8135570409940556,
+   "watcher_seconds": 11.089501667011064,
+   "tokens": 10183,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 4.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the 1-1 score at 94', the goals by Sillitoe and Spellman, Kingsreach's current pressure, and Lambourne's blocked 93' effort. It correctly states that if Kingsreach score next, they move into the top four and Porthallow Athletic drop out. The mention that a winner would flip the standings is a broad paraphrase, but the explicit at-stake detail makes the relevant consequence clear.",
+    "relevance": "The response accurately captures the 1-1 score, the goals, Kingsreach’s late pressure, Lambourne’s blocked effort, and the top-four stakes. The phrase “a winner would flip the standings” is slightly broad, since the supplied standings impact specifically concerns a Kingsreach goal, but the response is otherwise well aligned.",
+    "coherence": "Let's think step by step: The response is clearly organized into a rationale, stakes, and match-story sections. It connects the 1-1 score and late-game situation to Kingsreach's push for a top-four place, then summarizes the goals and recent chance. The phrase “a winner would flip the standings” is somewhat broad because the stated top-four change depends specifically on Kingsreach scoring, but the overall presentation is easy to follow."
+   }
+  },
+  {
+   "system": "solo_fast",
+   "t": 5610000,
+   "minute": 94,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_6",
+    "m_l1_5",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Ashmoor are pushing for a goal that could flip the top-four picture.",
+   "at_stake": "if Ashmoor Athletic score next: Tidewick Rovers move into the top four on goal difference; Porthallow Athletic drop out of the top four.",
+   "story": "Porthallow Athletic lead 3-2 after Weatherall’s brace, but Okafor-Lind has just pulled one back and Ashmoor are pressing late.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 2.527050042001065,
+   "watcher_seconds": 0.0,
+   "tokens": 8916,
+   "error": null,
+   "scores": {
+    "groundedness": 2.0,
+    "relevance": 3.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": false,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response correctly identifies Ashmoor's late pressure and the stated top-four consequence if Ashmoor scores next. It also accurately says Okafor-Lind pulled one back, but incorrectly calls Weatherall's goals a brace: the context lists three Weatherall goals, at 13', 54', and 67'. Because the response includes an incorrect detail, it is not fully grounded.",
+    "relevance": "The response captures the late 3-2 score, Ashmoor’s pressure, and the top-four stakes. However, it incorrectly calls Weatherall’s three goals a brace, a notable factual error in the match summary.",
+    "coherence": "Let's think step by step: The response is clearly organized into a reason, stakes, and match-story summary. It connects Ashmoor's late pressure to the possible change in the top-four standings and accurately summarizes the 3-2 situation. The phrasing that Weatherall scored a brace is factually inaccurate because he scored three goals, but the response remains easy to follow and logically structured, so this is primarily a factual issue rather than a coherence problem."
+   }
+  },
+  {
+   "system": "solo_accurate",
+   "t": 5610000,
+   "minute": 94,
+   "reason": "pressure",
+   "candidates": [
+    "m_l1_6",
+    "m_l1_5",
+    "m_l1_7"
+   ],
+   "match_id": "m_l1_6",
+   "kept_proposal": true,
+   "why": "Ashmoor's late reply and Alderton's blocked effort keep the pressure on Porthallow.",
+   "at_stake": "If Ashmoor Athletic score next: Tidewick Rovers move into the top four on goal difference; Porthallow Athletic drop out of the top four.",
+   "story": "Porthallow lead 3-2. Weatherall puts them back in front at 54' and extends the lead at 67'; Okafor-Lind pulls one back at 90', and Alderton's 93' shot is blocked.",
+   "airs": true,
+   "problems": [],
+   "held_back": [],
+   "seconds_to_cut": 15.008274666994112,
+   "watcher_seconds": 0.0,
+   "tokens": 10283,
+   "error": null,
+   "scores": {
+    "groundedness": 5.0,
+    "relevance": 5.0,
+    "coherence": 4.0
+   },
+   "passes": {
+    "groundedness": true,
+    "relevance": true,
+    "coherence": true
+   },
+   "reasons": {
+    "groundedness": "Let's think step by step: The response accurately reflects the context: Ashmoor scored at 90', Alderton's 93' shot was blocked, and Ashmoor are pushing hard. It correctly states the consequence if Ashmoor score next and summarizes the 3-2 score and relevant recent goals. Although it omits earlier goals, the details it gives are accurate and relevant to the current match situation.",
+    "relevance": "The response accurately summarizes the current 3-2 score, the key goals, and Alderton’s blocked late shot. It also highlights Ashmoor’s pressure and the top-four stakes if they score again, making the update directly relevant and informative.",
+    "coherence": "Let's think step by step: The response presents its points in clearly labeled sections, and the match events are ordered logically: Porthallow's two goals, Ashmoor's late goal, and Alderton's blocked shot. The explanation of the pressure and the top-four stakes is clear and consistent with the provided data. The concise presentation is easy to follow, though it does not require especially elaborate transitions or analysis."
+   }
+  }
+ ]
+}
