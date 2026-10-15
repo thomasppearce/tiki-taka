@@ -241,6 +241,6 @@ def test_the_producer_can_skip_to_the_final_whistle_and_back(
     assert skipped >= service.over_ms
     assert client.get("/api/recap").json()["status"] in ("writing", "ready")
     back = client.post("/api/clock", json={"minute": 55}).json()["clock_ms"]
-    assert 54 * 60_000 <= back < 55 * 60_000 + 5_000
+    assert 55 * 60_000 <= back < 55 * 60_000 + 5_000  # where a cold start begins
     assert client.get("/api/recap").json()["status"] == "pending"
     assert client.post("/api/clock", json={"minute": 500}).status_code == 422

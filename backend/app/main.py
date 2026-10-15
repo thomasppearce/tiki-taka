@@ -258,7 +258,9 @@ def move_clock(body: ClockRequest, request: Request) -> dict[str, int]:
     """A demo control: move the matchday clock to a minute, or (no minute) to just after the
     day's last final whistle. One clock: everyone watching moves with it."""
     service = _service(request)
-    target = service.over_ms + 2_000 if body.minute is None else round((body.minute - 1) * 60_000)
+    # Minutes played, as MATCH_START_MINUTE counts them: "55" is where a cold start begins, so
+    # a session from there replays the agents' cached runs.
+    target = service.over_ms + 2_000 if body.minute is None else round(body.minute * 60_000)
     if target >= service.clock.cycle_ms:
         raise HTTPException(status_code=422, detail="past the end of the matchday")
     service.jump(target)

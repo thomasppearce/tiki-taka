@@ -272,8 +272,9 @@ export interface FantasyItem {
   event_ids: string[];
 }
 /**
- * Move the matchday clock (a demo control): `minute` as the scorebug shows it, or None for
- * the moment the day's last match ends.
+ * Move the matchday clock (a demo control): to `minute` minutes played (as
+ * MATCH_START_MINUTE counts them: 55 is where a cold start begins), or, with no minute, to the
+ * moment the day's last match ends.
  *
  * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
  * via the `definition` "ClockRequest".

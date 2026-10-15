@@ -349,7 +349,7 @@
     },
     "ClockRequest": {
       "additionalProperties": false,
-      "description": "Move the matchday clock (a demo control): `minute` as the scorebug shows it, or None for\nthe moment the day's last match ends.",
+      "description": "Move the matchday clock (a demo control): to `minute` minutes played (as\nMATCH_START_MINUTE counts them: 55 is where a cold start begins), or, with no minute, to the\nmoment the day's last match ends.",
       "properties": {
         "minute": {
           "anyOf": [
