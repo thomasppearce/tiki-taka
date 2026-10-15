@@ -218,7 +218,9 @@ class MatchdayService:
         return self.table_at(self.clock.clock_ms())
 
     def table_at(self, clock_ms: int) -> LeagueTable:
-        return self._table(clock_ms // 1000)
+        """The table as of a moment, rounded up to the second so it includes everything up to
+        then (a winner in the last second before full time)."""
+        return self._table(-(-clock_ms // 1000))
 
     @property
     def over_ms(self) -> int:

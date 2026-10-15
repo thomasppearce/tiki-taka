@@ -148,7 +148,9 @@ def match_brief(
         if signal
         else "the match has ended"
     )
-    table = service._table(at // 1000)
+    # Rounded up to the second: a goal in the last second before full time is in the table
+    # that describes it (rounded down, the brief told the winner's story with the old table).
+    table = service._table(-(-at // 1000))
     stakes = tuple(
         f"if {service.club(s.scorer_club_id).name} score next: {s.summary}"
         for s in table.stakes

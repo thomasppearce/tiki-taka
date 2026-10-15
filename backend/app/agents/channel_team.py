@@ -25,7 +25,7 @@ from app.agents.team import FACT_CHECKER, AgentTeam, Reporter
 
 MAX_RECAP_DRAFTS = 3
 
-CHANNEL_PROMPT_VERSION = "c13"  # bump when prompts or runs change: cached runs regenerate
+CHANNEL_PROMPT_VERSION = "c14"  # bump when prompts or runs change: cached runs regenerate
 
 
 def channel_intro(matchday: int, last: bool) -> str:
@@ -47,7 +47,9 @@ RULES = """Rules: use only facts in the brief and never invent a statistic. Clai
 happened on the pitch: each one cites the ids of the brief's events that prove it. The score, the
 minute, and the AS IT STANDS, AT STAKE, and TABLE MOVES lines are context, written by code: use
 them in your text, but never list them as claims. A goal changes the table only as its TABLE MOVES
-line says; AT STAKE is about the next goal, not one already scored. PRESSURE NOW is for your
+line says; AT STAKE is about the next goal, not one already scored. When AT STAKE says the next
+goal changes nothing and there are no TABLE MOVES, nothing in the table rides on that match: say
+nothing about the title, the top four, or the drop, and at_stake is null. PRESSURE NOW is for your
 judgment. GOALS SO FAR says what each goal did (an opener, an equaliser, a side back in front): use
 it, and never describe how the lead changed hands any other way. Numbers only from the brief, and
 minutes written as the brief writes them (33'); a side that leads says its own goals first

@@ -90,7 +90,18 @@ def check_decision(decision: CutDecision, briefs: Sequence[MatchBrief]) -> list[
         options = ", ".join(b.match_id for b in briefs)
         return [f"{decision.match_id} is not a candidate; choose one of {options}."]
     text = {"why": decision.why, "at_stake": decision.at_stake or ""}
-    return _check(brief, decision.claims, text)
+    problems = _check(brief, decision.claims, text)
+    if not brief.stakes and not brief.moves:
+        # Nothing in the table rides on this match: "the title picture" here is made up.
+        talk = sorted({m.group(0).lower() for t in text.values() for m in TABLE_TALK.finditer(t)})
+        if talk:
+            words = ", ".join(f'"{w}"' for w in talk)
+            problems.append(
+                f"Nothing in the table is at stake in this match (the next goal changes nothing), "
+                f"but the cut talks about it ({words}); say why on the pitch, and leave at_stake "
+                "null."
+            )
+    return problems
 
 
 def _check(brief: MatchBrief, claims: list[DraftClaim], text: dict[str, str]) -> list[str]:

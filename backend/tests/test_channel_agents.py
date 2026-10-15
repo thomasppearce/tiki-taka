@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from typing import Any
 
-from app.agents.channel_brief import MatchBrief
+from app.agents.channel_brief import MatchBrief, match_brief
 from app.agents.channel_checker import check_decision, check_story
 from app.agents.schemas import CutDecision, DraftClaim, StoryUpdate
 from app.live.channel import CUT_COUNTDOWN_MS, LATE_DECISION_MS, ChannelDirector
@@ -200,3 +200,33 @@ def test_the_checker_knows_how_the_lead_changed_hands(service: MatchdayService) 
     one_way = match_brief(service, "m_l1_8", 70 * 60_000, None)  # Mistral Bay were never caught
     level = StoryUpdate(story="Mistral Bay lead 1-0 after an early equaliser.", claims=[])
     assert any("equaliser" in p for p in check_story(level, one_way))
+
+
+def test_a_late_winners_brief_has_the_table_after_it(service: MatchdayService) -> None:
+    """Desai's winner comes in the last second before full time: the brief that tells it must
+    already have Westmere out of the drop, and nothing left at stake in a finished match."""
+    m = service.by_id["m_l1_1"]
+    winner = [e for e in m.result.events if e.type == "goal"][-1]
+    t = (winner.match_clock_ms // 1000 + 1) * 1000  # the channel's tick after the goal
+    brief = match_brief(service, "m_l1_1", t, None)
+    assert "Westmere Athletic 17th" in brief.standing
+    assert not brief.stakes
+
+
+def test_a_cut_with_nothing_at_stake_must_not_talk_about_the_table(
+    service: MatchdayService,
+) -> None:
+    quiet = next(
+        b
+        for b in (match_brief(service, m.match_id, 69 * 60_000, None) for m in service.matches)
+        if not b.stakes and not b.moves
+    )
+    made_up = CutDecision(
+        match_id=quiet.match_id,
+        why="A goal here could swing the title picture.",
+        at_stake=None,
+        claims=[],
+    )
+    assert any("Nothing in the table is at stake" in p for p in check_decision(made_up, [quiet]))
+    on_the_pitch = made_up.model_copy(update={"why": "They are pushing hard for a winner."})
+    assert not any("Nothing in the table" in p for p in check_decision(on_the_pitch, [quiet]))
