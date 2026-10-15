@@ -48,3 +48,22 @@ def test_the_summary_counts_what_airs_and_what_was_wrong_with_it() -> None:
     assert "| Held back by the checks (the scripted copy airs instead) | 1 | no checks |" in page
     assert "| First draft passed both checks | 0/1 (0%) | no checks |" in page
     assert "| Drafts sent back by the fact-checker | 1 | no checks |" in page
+
+
+def test_the_whip_eval_replays_every_cut_the_director_is_asked_about(
+    service: MatchdayService,
+) -> None:
+    from app.evals.whip import decision_points
+
+    points = decision_points(service)
+    assert len(points) > 10
+    assert [p.t for p in points] == sorted(p.t for p in points)
+    for p in points:
+        assert 1 <= len(p.candidates) <= 3 and p.reason in (
+            "goal",
+            "pressure",
+            "penalty",
+            "check_in",
+        )
+        assert p.on_air
+    assert service.channel.agents is None  # the replay leaves the channel as it found it
