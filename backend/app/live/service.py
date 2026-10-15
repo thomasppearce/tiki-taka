@@ -260,7 +260,7 @@ class MatchdayService:
             )
         stakes = []
         for m in self.matches:
-            if self.now(m) >= m.result.full_time_ms:
+            if now >= m.result.full_time_ms:  # over by the table's time, not the clock's
                 continue
             for scorer, other in ((m.home, m.away), (m.away, m.home)):
                 after = dict(scores)

@@ -50,3 +50,14 @@ def test_the_table_endpoint(client: TestClient, at_minute: Pin) -> None:
     assert len(table.rows) == 20
     assert table.rows[0].club.short == "HVT"  # Halvern scored at 80'
     assert all(s.match_clock_ms <= table.clock_ms for s in table.swings)
+
+
+def test_a_table_for_a_moment_has_no_stakes_in_matches_over_by_then(
+    service: MatchdayService,
+) -> None:
+    """The table as of a moment (an agent's brief, an eval) doesn't depend on the live clock."""
+    m = service.by_id["m_l1_1"]
+    later = service.table_at(m.result.full_time_ms + 1_000)
+    assert not [s for s in later.stakes if s.match_id == "m_l1_1"]
+    earlier = service.table_at(m.result.full_time_ms - 60_000)
+    assert [s for s in earlier.stakes if s.match_id == "m_l1_1"]
