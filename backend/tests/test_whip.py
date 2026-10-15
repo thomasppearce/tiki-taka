@@ -102,3 +102,19 @@ def test_a_fans_whip_around_keeps_the_watchers_running(service: MatchdayService)
     whip = service.whip("club:t_crb")
     whip.sync(40 * 60_000)
     assert service.channel.state and service.channel.state.clock_ms == 40 * 60_000
+
+
+def test_a_rivals_goal_tells_the_fan_what_it_did_to_them(service: MatchdayService) -> None:
+    """Desai's 93rd-minute winner for Westmere sends Corrin Bay down: their fan hears it."""
+    from app.live.lens import ClubLens
+
+    winner = next(
+        e
+        for e in service.by_id["m_l1_1"].result.events
+        if e.type == "goal" and e.match_clock_ms // 60_000 + 1 == 93
+    )
+    fan = ClubLens(service, "t_crb")
+    line = fan.for_you("m_l1_1", winner.match_clock_ms + 5_000)
+    assert line == "That goal: Corrin Bay drop into the relegation zone."
+    before = fan.for_you("m_l1_1", winner.match_clock_ms - 120_000)
+    assert before is None or before.startswith("A goal for")

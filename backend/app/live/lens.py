@@ -92,6 +92,9 @@ class ChannelLens:
         return LensInfo(kind="channel")
 
 
+JUST_SCORED_MS = 60_000  # a goal this recent is still the news on a fan's channel
+
+
 class ClubLens:
     """A fan's club: what a goal anywhere would do to their club's place in the table."""
 
@@ -158,10 +161,35 @@ class ClubLens:
                     where += f", {OUT_OF[left.from_zone]}"
             return f"{self.name}'s match. As it stands, {self.name} are {where}."
         m = self.service.by_id[match_id]
+        moved = self._moved_by_goal(m, t)
+        if moved:
+            return f"That goal: {moved}."
         table = self.service._table(t // 1000)
         options = [(*self.stake(m, side.club_id, t, table), side.name) for side in (m.home, m.away)]
         weight, sentence, scorer = max(options, key=lambda o: o[0])
         return f"A goal for {scorer}: {sentence}." if sentence else None
+
+    def _moved_by_goal(self, m: ScheduledMatch, t: int) -> str | None:
+        """What a goal in another match, in the last minute, did to the fan's club: the line a
+        rival's winner deserves ("Corrin Bay drop into the relegation zone"), or None."""
+        goal = next(
+            (
+                e
+                for e in reversed(m.result.events)
+                if e.type == "goal" and t - JUST_SCORED_MS <= e.match_clock_ms <= t
+            ),
+            None,
+        )
+        if goal is None:
+            return None
+        season = self.service.season
+        before = self._place(standings(season, self.service._scores(goal.match_clock_ms - 1)))
+        after_table = standings(season, self.service._scores(goal.match_clock_ms))
+        after = self._place(after_table)
+        if before.position == after.position:
+            return None
+        change = Change(self.club_id, before.position, after.position, before.zone, after.zone)
+        return summarize([change], after_table, self.service._names).rstrip(".")
 
     def info(self, t: int) -> LensInfo:
         return LensInfo(kind="club", club_id=self.club_id)

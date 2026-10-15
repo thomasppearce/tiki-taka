@@ -7,6 +7,7 @@ import {
   Play,
   PushPinSlash,
 } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -83,17 +84,49 @@ export function CutControls({
  */
 function DemoClock() {
   const [busy, setBusy] = useState(false);
-  const move = (minute: number | null) => {
+  const [minute, setMinute] = useState("90");
+  const move = (to: number | null) => {
     setBusy(true);
-    void postJson("/api/clock", minute === null ? {} : { minute })
+    void postJson("/api/clock", to === null ? {} : { minute: to })
       .catch(() => undefined)
       .finally(() => setBusy(false));
   };
+  const typed = Number(minute);
+  const valid = Number.isFinite(typed) && typed >= 1 && typed <= 97;
   return (
     <div className="flex w-full flex-wrap items-center gap-2 border-t border-line pt-2">
       <span className="mr-auto text-xs text-ink-3">
-        Match clock (demo, moves everyone watching)
+        Match clock (demo, moves everyone watching) &middot;{" "}
+        <Link
+          href="/split"
+          className="text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink"
+        >
+          two fans side by side
+        </Link>
       </span>
+      <form
+        className="flex items-center gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (valid) move(typed);
+        }}
+      >
+        <label htmlFor="demo-minute" className="sr-only">
+          Minute to jump to
+        </label>
+        <input
+          id="demo-minute"
+          type="number"
+          min={1}
+          max={97}
+          value={minute}
+          onChange={(e) => setMinute(e.target.value)}
+          className="h-7 w-14 rounded-md border border-line bg-page px-1.5 text-label text-ink tabular-nums transition-[border-color] duration-150 ease-out hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-air"
+        />
+        <Button type="submit" disabled={busy || !valid}>
+          Jump
+        </Button>
+      </form>
       <Button onClick={() => move(55)} disabled={busy}>
         <ClockCounterClockwise size={14} /> Back to 55&prime;
       </Button>
