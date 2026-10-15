@@ -1,6 +1,6 @@
 # The laws the match engine enforces
 
-These are the rules every simulated Match Desk match is played under. They follow the spirit of
+These are the rules every simulated Tiki-Taka match is played under. They follow the spirit of
 the real laws of the game, simplified where the simulation needs it.
 
 ## Offside
@@ -24,10 +24,11 @@ stoppages, the ball is in play for roughly 60 of the 90-odd minutes, as in real 
 
 | Restart | Ball dead for |
 |---|---|
-| Throw | 10-18 s |
-| Goal kick | 18-28 s |
+| Throw | 9-17 s |
+| Goal kick | 17-27 s |
 | Corner | 25-35 s |
-| Free kick | 18-32 s |
+| Free kick | 20-32 s |
+| Penalty | 35-55 s |
 | Kickoff after a goal | 65 s |
 
 - A ball that crosses a touchline is a throw-in to the side that did not touch it last.

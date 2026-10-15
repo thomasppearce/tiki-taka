@@ -27,7 +27,7 @@ def build_schema() -> dict[str, Any]:
     """Serialization-mode schema: describes what the backend sends over the wire."""
     _, schema = models_json_schema(
         [(model, "serialization") for model in CONTRACTS],
-        title="MatchDeskContracts",
+        title="TikiTakaContracts",
         schema_generator=_NoFieldTitles,
     )
     return schema

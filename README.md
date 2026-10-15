@@ -87,7 +87,7 @@ flowchart LR
 
 | | Used for |
 |---|---|
-| **Microsoft Foundry** | The project, two model deployments (gpt-5.4-mini for the fast jobs, gpt-6-luna for the accurate ones), **tracing** (every agent run is a trace in Foundry, with each agent's prompt, answer, and tokens), and **evaluations** (groundedness, relevance, coherence) |
+| **Microsoft Foundry** | The project, two model deployments (gpt-5.4-mini for the fast jobs, gpt-6-luna for the accurate ones), **the agent team registered as agents** (each with its own page and traces under Build › Agents), **tracing** (every agent run is a trace in Foundry, with each agent's prompt, answer, and tokens), and **evaluations** (groundedness, relevance, coherence) |
 | **Microsoft Agent Framework** | Every agent (`Agent`, `FoundryChatClient`), the graphics team as a **workflow** (`WorkflowBuilder` with conditional edges for the redraft loop), the knowledge base as an **MCP tool**, `FoundryEvals`, and its OpenTelemetry instrumentation |
 | **Azure AI Search** (Foundry IQ) | The knowledge base the Explainer consults: club tactics, the laws, and what each metric means, generated from the same code the matches are played with |
 | **Azure Container Apps** | The backend, scaling to zero when idle; two scheduled **Container Apps jobs** keep it warm through judging |
@@ -110,7 +110,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 24+, and (for the agent
 
 ```bash
 make install        # backend (uv) + frontend (npm) dependencies
-make dev-backend    # API on http://localhost:8001 (no Foundry project, or MATCHDESK_AGENTS=off: code writes everything)
+make dev-backend    # API on http://localhost:8001 (no Foundry project, or TIKITAKA_AGENTS=off: code writes everything)
 make dev-frontend   # the app on http://localhost:3000 (a second terminal)
 make test           # backend tests
 make evals          # the graphics team vs a single agent, judged on Foundry (~$2)

@@ -2,7 +2,7 @@ SCHEMA := docs/schema/contracts.schema.json
 TS_TYPES := frontend/lib/contracts.generated.ts
 BANNER := /* Generated from backend/app/models by `make types`. Do not edit by hand. */
 
-.PHONY: install types check-types test lint format evals dev-backend dev-frontend \
+.PHONY: install types check-types test lint format evals register-agents dev-backend dev-frontend \
 	deploy-infra deploy-backend deploy-frontend deploy warm cold
 
 # Azure (infra/README.md). The image tag is the commit, so a deploy names exactly what it ran.
@@ -36,6 +36,9 @@ format: ## Auto-format both halves
 
 evals: ## The graphics team vs a single agent on every featured-match moment, judged on Foundry (~$2): docs/evals/graphics.md
 	cd backend && MATCHDAY_CACHE_DIR=.cache/matchday uv run python -m app.evals.graphics
+
+register-agents: ## List the agent team in the Foundry project (Build > Agents), matched to its traces
+	cd backend && uv run python -m app.agents.register
 
 dev-backend: ## Run the API on :8001 with reload (the simulated matchday is kept in backend/.cache)
 	cd backend && MATCHDAY_CACHE_DIR=.cache/matchday uv run uvicorn app.main:app --reload --port 8001 --timeout-graceful-shutdown 3

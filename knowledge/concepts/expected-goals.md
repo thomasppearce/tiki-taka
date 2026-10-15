@@ -4,7 +4,7 @@ Expected goals measures the quality of a chance: the probability that a shot fro
 
 ## What drives it
 
-Distance and angle matter most. A shot from close range in front of goal is worth far more than one from 25 metres or from a tight angle near the byline. Match Desk's model uses distance and angle only, so it describes the chance, not the finish.
+Distance and angle matter most. A shot from close range in front of goal is worth far more than one from 25 metres or from a tight angle near the byline. Tiki-Taka's model uses distance and angle only, so it describes the chance, not the finish.
 
 ## Reading it on air
 

@@ -1,6 +1,6 @@
 # Prep Notes (researched 2026-10-03)
 
-Pre-build research for Match Desk: rule findings, accounts to set up, pinned versions, current Agent Framework API, and the type-generation recipe. Versions were read from PyPI/npm on 2026-10-03; re-check anything older than a week before pinning.
+Pre-build research for Tiki-Taka (then called Match Desk): rule findings, accounts to set up, pinned versions, current Agent Framework API, and the type-generation recipe. Versions were read from PyPI/npm on 2026-10-03; re-check anything older than a week before pinning.
 
 ---
 

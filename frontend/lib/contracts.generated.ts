@@ -1,12 +1,12 @@
 /* Generated from backend/app/models by `make types`. Do not edit by hand. */
 
-export interface MatchDeskContracts {
+export interface TikiTakaContracts {
   [k: string]: unknown;
 }
 /**
  * Approve a proposal, optionally editing its copy for one feed's audience and language.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ApproveRequest".
  */
 export interface ApproveRequest {
@@ -17,7 +17,7 @@ export interface ApproveRequest {
 /**
  * The same insight written for each audience.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "AudienceBody".
  */
 export interface AudienceBody {
@@ -27,7 +27,7 @@ export interface AudienceBody {
 /**
  * One piece of copy per supported language. English is always present.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "LocalizedText".
  */
 export interface LocalizedText {
@@ -37,7 +37,7 @@ export interface LocalizedText {
 /**
  * A state change, who made it, and what it changed.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "AuditRecord".
  */
 export interface AuditRecord {
@@ -59,7 +59,7 @@ export interface AuditRecord {
 /**
  * A goal that changed the top of the Golden Boot race. Written by code, citable.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "BootSwing".
  */
 export interface BootSwing {
@@ -73,7 +73,7 @@ export interface BootSwing {
   summary: string;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Channel".
  */
 export interface Channel {
@@ -108,7 +108,7 @@ export interface Channel {
   lens: Lens;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Cut".
  */
 export interface Cut {
@@ -126,7 +126,7 @@ export interface Cut {
 /**
  * What the viewer is told when the feed cuts to a match.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "CutPackage".
  */
 export interface CutPackage {
@@ -159,7 +159,7 @@ export interface CutPackage {
 /**
  * A factual statement made by a proposal. Every claim cites the events that support it.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Claim".
  */
 export interface Claim {
@@ -172,7 +172,7 @@ export interface Claim {
 /**
  * The Director's next cut, counting down. The producer can take it now or hold it.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "PendingCut".
  */
 export interface PendingCut {
@@ -184,7 +184,7 @@ export interface PendingCut {
   replay_event_id: string | null;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "MatchSignal".
  */
 export interface MatchSignal {
@@ -197,7 +197,7 @@ export interface MatchSignal {
   score: number;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "SideSignal".
  */
 export interface SideSignal {
@@ -215,7 +215,7 @@ export interface SideSignal {
 /**
  * One line of the channel's log: who did what, when.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ChannelLog".
  */
 export interface ChannelLog {
@@ -227,7 +227,7 @@ export interface ChannelLog {
 /**
  * Whose whip-around this is: everyone's channel, a fan's club, or a fan's fantasy XI.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Lens".
  */
 export interface Lens {
@@ -243,7 +243,7 @@ export interface Lens {
   points: number;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "FantasyPlayer".
  */
 export interface FantasyPlayer {
@@ -263,7 +263,7 @@ export interface FantasyPlayer {
 /**
  * One line of a fantasy player's score, with the events that earned it.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "FantasyItem".
  */
 export interface FantasyItem {
@@ -276,14 +276,14 @@ export interface FantasyItem {
  * MATCH_START_MINUTE counts them: 55 is where a cold start begins), or, with no minute, to the
  * moment the day's last match ends.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ClockRequest".
  */
 export interface ClockRequest {
   minute: number | null;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ClubRef".
  */
 export interface ClubRef {
@@ -293,7 +293,7 @@ export interface ClubRef {
   color: string;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Desk".
  */
 export interface Desk {
@@ -311,7 +311,7 @@ export interface Desk {
  * A candidate graphic or line. It must make at least one cited claim: no narration without
  * receipts. `headline` and `body` are both written per audience and language.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Proposal".
  */
 export interface Proposal {
@@ -340,7 +340,7 @@ export interface Proposal {
 /**
  * An approved graphic on air. Each viewer renders it for their own feed profile.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "OnAir".
  */
 export interface OnAir {
@@ -354,7 +354,7 @@ export interface OnAir {
  * Start a drill: `blip` fails the agent's next model call once (the retry recovers it);
  * `down` fails every call for a few minutes (the system falls back).
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "DrillRequest".
  */
 export interface DrillRequest {
@@ -364,7 +364,7 @@ export interface DrillRequest {
 /**
  * The drill now: which agent is failing and how, or none.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "DrillState".
  */
 export interface DrillState {
@@ -378,7 +378,7 @@ export interface DrillState {
 /**
  * Measurements attached to an event. Which ones are set depends on the event type.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "EventAttributes".
  */
 export interface EventAttributes {
@@ -404,7 +404,7 @@ export interface EventAttributes {
 /**
  * How much one action changed the game for the acting team.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "EventImpact".
  */
 export interface EventImpact {
@@ -419,7 +419,7 @@ export interface EventImpact {
 /**
  * The season's top scorers as it stands, and the goals that changed the top of the race.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "GoldenBoot".
  */
 export interface GoldenBoot {
@@ -430,7 +430,7 @@ export interface GoldenBoot {
   swings: BootSwing[];
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ScorerRow".
  */
 export interface ScorerRow {
@@ -449,7 +449,7 @@ export interface ScorerRow {
   goals: number;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "HoldRequest".
  */
 export interface HoldRequest {
@@ -458,7 +458,7 @@ export interface HoldRequest {
 /**
  * A defining play, ranked by importance, with the events that make it up.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "KeyMoment".
  */
 export interface KeyMoment {
@@ -477,7 +477,7 @@ export interface KeyMoment {
   evidence_event_ids: [string, ...string[]];
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "LeagueGroup".
  */
 export interface LeagueGroup {
@@ -488,7 +488,7 @@ export interface LeagueGroup {
 /**
  * One match on the match centre: score, clock, a momentum ribbon, and its biggest moment.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "MatchCard".
  */
 export interface MatchCard {
@@ -506,7 +506,7 @@ export interface MatchCard {
   top_moment: KeyMoment | null;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "LeagueTable".
  */
 export interface LeagueTable {
@@ -531,7 +531,7 @@ export interface LeagueTable {
   golden_boot: GoldenBoot;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "TableRow".
  */
 export interface TableRow {
@@ -562,7 +562,7 @@ export interface TableRow {
 /**
  * A goal that changed the table's zones: who moved where. Written by code, citable.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "TableSwing".
  */
 export interface TableSwing {
@@ -581,7 +581,7 @@ export interface TableSwing {
 /**
  * One club moving into or out of a zone.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ZoneChange".
  */
 export interface ZoneChange {
@@ -594,7 +594,7 @@ export interface ZoneChange {
 /**
  * What one more goal for one side in one live match would change in the table right now.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Stake".
  */
 export interface Stake {
@@ -610,7 +610,7 @@ export interface Stake {
 /**
  * A match event as it happens, with how much it mattered.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "LiveEvent".
  */
 export interface LiveEvent {
@@ -620,7 +620,7 @@ export interface LiveEvent {
 /**
  * A single timed event in a synthetic match.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "MatchEvent".
  */
 export interface MatchEvent {
@@ -660,7 +660,7 @@ export interface MatchEvent {
 /**
  * Normalized pitch coordinates (0-100 on both axes). x runs in the home attacking direction.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "PitchPoint".
  */
 export interface PitchPoint {
@@ -670,7 +670,7 @@ export interface PitchPoint {
 /**
  * Everything needed to open a match: the card, stats, key moments, squads, and recent play.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "MatchDetail".
  */
 export interface MatchDetail {
@@ -683,7 +683,7 @@ export interface MatchDetail {
   impacts: EventImpact[];
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "TeamStats".
  */
 export interface TeamStats {
@@ -706,7 +706,7 @@ export interface TeamStats {
   red_cards: number;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "PlayerRef".
  */
 export interface PlayerRef {
@@ -720,7 +720,7 @@ export interface PlayerRef {
  * One match's recap at its final whistle: written by its Watcher and checked (or by code,
  * from its goals, if every draft failed its checks or the agents are off).
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "MatchRecap".
  */
 export interface MatchRecap {
@@ -740,7 +740,7 @@ export interface MatchRecap {
   checks: string[];
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Matchday".
  */
 export interface Matchday {
@@ -758,7 +758,7 @@ export interface Matchday {
 /**
  * Something worth surfacing, grounded in the events that triggered it.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Moment".
  */
 export interface Moment {
@@ -784,7 +784,7 @@ export interface Moment {
 /**
  * Rendered for one output feed: `profile_id` names the ViewerProfile it was made for.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "OverlayCommand".
  */
 export interface OverlayCommand {
@@ -802,7 +802,7 @@ export interface OverlayCommand {
   approved_at: string;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "OverlayPayload".
  */
 export interface OverlayPayload {
@@ -816,7 +816,7 @@ export interface OverlayPayload {
   spotlight: OverlayStat | null;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "OverlayStat".
  */
 export interface OverlayStat {
@@ -824,7 +824,7 @@ export interface OverlayStat {
   value: string;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "OverlayStyle".
  */
 export interface OverlayStyle {
@@ -833,7 +833,7 @@ export interface OverlayStyle {
   animation_out: "fade" | "slide_down" | "wipe";
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "PinRequest".
  */
 export interface PinRequest {
@@ -842,7 +842,7 @@ export interface PinRequest {
 /**
  * One player's position. Players can stand just off the pitch (throw-ins), hence the margin.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "PlayerPosition".
  */
 export interface PlayerPosition {
@@ -857,7 +857,7 @@ export interface PlayerPosition {
  * every draft failed its checks or the agents are off), beside where code says the day left
  * the table. On the season's last matchday that is how the season ended.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Recap".
  */
 export interface Recap {
@@ -891,7 +891,7 @@ export interface Recap {
   checks: string[];
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "RecapBeat".
  */
 export interface RecapBeat {
@@ -907,7 +907,7 @@ export interface RecapBeat {
  * One fact written by code: an outcome, a goal that moved the table or the Golden Boot, or
  * a final score. The recap's beats cite these by id.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "RecapFact".
  */
 export interface RecapFact {
@@ -920,7 +920,7 @@ export interface RecapFact {
   text: string;
 }
 /**
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Replay".
  */
 export interface Replay {
@@ -962,7 +962,7 @@ export interface Replay {
  * All 22 players and the ball at one match-clock instant. Streamed alongside MatchEvents so
  * the control room can draw formations moving in sync with the actions.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "TrackingFrame".
  */
 export interface TrackingFrame {
@@ -977,7 +977,7 @@ export interface TrackingFrame {
 /**
  * Every player in the league, for picking a fantasy XI, and a suggested XI.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "Squads".
  */
 export interface Squads {
@@ -991,7 +991,7 @@ export interface Squads {
 /**
  * Take the pending cut now (no match_id), or cut straight to a match.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "TakeRequest".
  */
 export interface TakeRequest {
@@ -1000,7 +1000,7 @@ export interface TakeRequest {
 /**
  * Setting `focus_player_id` turns on player-focus mode for the feed.
  *
- * This interface was referenced by `MatchDeskContracts`'s JSON-Schema
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
  * via the `definition` "ViewerProfile".
  */
 export interface ViewerProfile {

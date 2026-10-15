@@ -11,7 +11,7 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/app/.venv \
     PATH="/app/.venv/bin:$PATH" \
     MATCHDAY_CACHE_DIR=/app/.cache/matchday \
-    MATCHDESK_AGENT_CACHE=/app/.cache/agent-runs \
+    TIKITAKA_AGENT_CACHE=/app/.cache/agent-runs \
     MATCH_START_MINUTE=55
 
 COPY pyproject.toml uv.lock ./

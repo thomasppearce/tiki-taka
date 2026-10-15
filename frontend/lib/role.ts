@@ -20,7 +20,7 @@ const isRole = (value: unknown): value is Role =>
   value === "guest" || value === "fan" || value === "producer";
 
 export function useRole(): [Role, (role: Role) => void] {
-  return useStored<Role>("matchdesk.role", "guest", isRole);
+  return useStored<Role>("tikitaka.role", "guest", isRole);
 }
 
 /** A signed-in fan's feed: depth and language of the graphics, and a player to follow. */
@@ -47,5 +47,5 @@ const isPrefs = (value: unknown): value is FanPrefs => {
 };
 
 export function useFanPrefs(): [FanPrefs, (prefs: FanPrefs) => void] {
-  return useStored<FanPrefs>("matchdesk.fan", GUEST_PREFS, isPrefs);
+  return useStored<FanPrefs>("tikitaka.fan", GUEST_PREFS, isPrefs);
 }

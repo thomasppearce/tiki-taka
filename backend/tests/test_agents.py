@@ -2,12 +2,14 @@
 runner (a fake team stands in for Foundry, so no test calls a model)."""
 
 import asyncio
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
 from app.agents.brief import MomentBrief, build_brief, is_close, numbers_in
 from app.agents.checker import check_draft
+from app.agents.register import AGENTS
 from app.agents.runner import AgentRunner
 from app.agents.schemas import (
     Draft,
@@ -18,7 +20,7 @@ from app.agents.schemas import (
     Placement,
     StatementCheck,
 )
-from app.agents.team import AgentTeam, Outcome, Run
+from app.agents.team import AgentTeam, Outcome, Run, agent_id
 from app.live.desk import AGENT_DEADLINE_MS, ProposalDesk
 from app.live.service import MatchdayService
 from app.state.aggregator import key_moments
@@ -388,3 +390,18 @@ def test_two_rejections_then_a_pass_runs_each_step_once(service: MatchdayService
     agents = [agent for agent, action, _ in steps if action == "handoff"]
     assert agents.count("explainer") == 3
     assert agents.count("producer") == agents.count("localizer") == 1
+
+
+def test_every_role_is_registered_in_foundry_under_a_valid_name() -> None:
+    """Each role that calls a model has an entry in register.py, and its id is a name Foundry
+    accepts (letters, digits, hyphens, underscores): what links its traces to its agent page."""
+    sources = (Path(__file__).parents[1] / "app/agents").glob("*.py")
+    called = {
+        name
+        for source in sources
+        for name in re.findall(r'\.ask(?:_with_tools)?\(\s*"([^"]+)"', source.read_text())
+    }
+    assert called == set(AGENTS)
+    for name in AGENTS:
+        assert re.fullmatch(r"[A-Za-z0-9_-]+", agent_id(name)), name
+    assert agent_id("Recap writer") == "tiki-taka-recap-writer"

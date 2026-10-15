@@ -1,1 +1,1 @@
-"""Match Desk backend."""
+"""Tiki-Taka backend."""

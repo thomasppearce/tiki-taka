@@ -1,6 +1,6 @@
 # Synthetic match data
 
-Match Desk runs on football-realistic data it generates itself: no real match data, clubs, or players. This page explains how the generator works and how its realism is checked.
+Tiki-Taka runs on football-realistic data it generates itself: no real match data, clubs, or players. This page explains how the generator works and how its realism is checked.
 
 ## The world
 

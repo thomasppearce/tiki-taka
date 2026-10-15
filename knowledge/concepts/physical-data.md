@@ -2,7 +2,7 @@
 
 Tracking data records every player's position many times a second, which gives each player's speed, distance covered, and sprints.
 
-## Definitions used by Match Desk
+## Definitions used by Tiki-Taka
 
 - A sprint is running faster than 25.2 km/h for at least one second.
 - Top speed is the fastest a player reached during a sprint; elite players reach 33 to 36 km/h.

@@ -1,6 +1,6 @@
 # Field tilt
 
-Field tilt is the share of play in the final third that belongs to one team. Match Desk measures it as a team's share of all passes played into the attacking third: if Northgate play 30 such passes and Westmere 10, Northgate's field tilt is 75%.
+Field tilt is the share of play in the final third that belongs to one team. Tiki-Taka measures it as a team's share of all passes played into the attacking third: if Northgate play 30 such passes and Westmere 10, Northgate's field tilt is 75%.
 
 ## Why it matters
 

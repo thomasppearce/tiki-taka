@@ -33,7 +33,7 @@ const isWhip = (value: unknown): value is WhipPrefs => {
 };
 
 export function useWhip(): [WhipPrefs, (prefs: WhipPrefs) => void] {
-  return useStored<WhipPrefs>("matchdesk.whip", DEFAULT_WHIP, isWhip);
+  return useStored<WhipPrefs>("tikitaka.whip", DEFAULT_WHIP, isWhip);
 }
 
 /** The server's lens for these prefs, or null for the main channel (or an unfinished pick). */

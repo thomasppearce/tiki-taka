@@ -1,6 +1,6 @@
 # Momentum
 
-Momentum describes which team is on top at a given point in the match. Match Desk measures it from expected threat: each team's share of the threat created in recent minutes, smoothed so that one action doesn't swing it, on a scale from fully home (+1) to fully away (-1).
+Momentum describes which team is on top at a given point in the match. Tiki-Taka measures it from expected threat: each team's share of the threat created in recent minutes, smoothed so that one action doesn't swing it, on a scale from fully home (+1) to fully away (-1).
 
 ## Momentum shifts
 

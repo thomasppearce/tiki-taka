@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 # Tests never call Foundry: the featured match uses the scripted producer unless a test wires a
 # fake team in itself.
-os.environ["MATCHDESK_AGENTS"] = "off"
+os.environ["TIKITAKA_AGENTS"] = "off"
 
 from app.live.clock import MatchdayClock  # noqa: E402
 from app.live.service import MatchdayService  # noqa: E402

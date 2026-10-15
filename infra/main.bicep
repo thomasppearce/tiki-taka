@@ -1,4 +1,4 @@
-// Match Desk: the Azure resources the agent team runs on.
+// Tiki-Taka: the Azure resources the agent team runs on.
 //
 // - A Microsoft Foundry resource (AIServices) with one project, where the agents, tracing, and
 //   evaluations live, plus two model deployments: one for the agents, one for embeddings.
@@ -17,6 +17,7 @@ targetScope = 'resourceGroup'
 @description('Region for every resource. North Central US offers the models, quota, and AI Search Free with agentic retrieval.')
 param location string = resourceGroup().location
 
+// The project's working name: resource names can't change, so they keep it (the project is shown as Tiki-Taka).
 @description('Short name used to build resource names.')
 param name string = 'matchdesk'
 

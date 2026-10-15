@@ -106,7 +106,7 @@ def laws_page() -> str:
     )
     return f"""# The laws the match engine enforces
 
-These are the rules every simulated Match Desk match is played under. They follow the spirit of
+These are the rules every simulated Tiki-Taka match is played under. They follow the spirit of
 the real laws of the game, simplified where the simulation needs it.
 
 ## Offside

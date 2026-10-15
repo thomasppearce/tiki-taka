@@ -68,7 +68,7 @@ from app.agents.schemas import Draft, FactCheck, Interpretation, Localized, Plac
 
 MAX_DRAFTS = 3
 PROMPT_VERSION = "v8"  # bump when prompts change, so cached runs are regenerated
-KNOWLEDGE_BASE = "matchdesk-kb"  # app/rag/knowledge_base.py builds it
+KNOWLEDGE_BASE = "tikitaka-kb"  # app/rag/knowledge_base.py builds it
 KNOWLEDGE_MCP_API = "2026-08-01-preview"  # the knowledge base MCP endpoint is in preview
 SEARCH_SCOPE = "https://search.azure.com/.default"
 RETRY_AFTER_S = 1.5
@@ -86,6 +86,13 @@ log = logging.getLogger(__name__)
 
 Reporter = Callable[[str, str, str], None]  # (agent, action, detail)
 T = TypeVar("T", bound=BaseModel)
+
+
+def agent_id(name: str) -> str:
+    """A role's stable id: on its traces (gen_ai.agent.id), and its name in Foundry
+    (app/agents/register.py)."""
+    return "tiki-taka-" + name.lower().replace(" ", "-")
+
 
 INTERPRETER = """You are the Interpreter on a live football broadcast team. The match is fictional.
 You get a detected moment, the events behind it, the lead-up, the score, and stats.
@@ -317,7 +324,7 @@ class AgentTeam:
         # A stable id per role (each call gets its own Agent), so traces group by agent.
         agent = Agent(
             client=self.client,
-            id=f"tiki-taka-{name.lower()}",
+            id=agent_id(name),
             name=name,
             instructions=instructions,
             tools=tools,
@@ -348,7 +355,7 @@ class AgentTeam:
             WorkflowBuilder(
                 start_executor=interpreter,
                 output_from=[localizer, passed, failed],
-                name="match-desk-moment",
+                name="tiki-taka-moment",
             )
             .add_edge(interpreter, explainer, condition=_worth_airing)
             .add_edge(interpreter, passed, condition=lambda run: not _worth_airing(run))

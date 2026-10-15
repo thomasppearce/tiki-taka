@@ -41,9 +41,9 @@ from azure.search.documents.indexes.models import (
 )
 from dotenv import load_dotenv
 
-INDEX = "matchdesk-knowledge"
-KNOWLEDGE_SOURCE = "matchdesk-knowledge-ks"
-KNOWLEDGE_BASE = "matchdesk-kb"
+INDEX = "tikitaka-knowledge"
+KNOWLEDGE_SOURCE = "tikitaka-knowledge-ks"
+KNOWLEDGE_BASE = "tikitaka-kb"
 SEMANTIC_CONFIG = "default"
 PREVIEW_API = "2026-08-01-preview"
 SEARCH_SCOPE = "https://search.azure.com/.default"
@@ -133,7 +133,7 @@ def build(endpoint: str) -> int:
     indexes.create_or_update_knowledge_source(
         SearchIndexKnowledgeSource(
             name=KNOWLEDGE_SOURCE,
-            description="Match Desk's football knowledge: club tactical profiles, the laws the "
+            description="Tiki-Taka's football knowledge: club tactical profiles, the laws the "
             "match engine enforces, and explanations of tactics and metrics.",
             search_index_parameters=SearchIndexKnowledgeSourceParameters(
                 search_index_name=INDEX,
@@ -148,7 +148,7 @@ def build(endpoint: str) -> int:
     )
     knowledge_base = {
         "name": KNOWLEDGE_BASE,
-        "description": "Background knowledge for the Match Desk agents: how each fictional club "
+        "description": "Background knowledge for the Tiki-Taka agents: how each fictional club "
         "plays, the laws of the game as simulated, and what tactics and metrics mean.",
         "knowledgeSources": [{"name": KNOWLEDGE_SOURCE}],
         "outputMode": "extractiveData",

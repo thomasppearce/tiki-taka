@@ -1,6 +1,6 @@
 # Tiki-Taka: Project Brief for Claude Code
 
-> Name: **Tiki-Taka** (formerly Match Desk; renamed 2026-10-08 because another hackathon entry is called MatchDesk). The rename in code and UI happens with the whip-around frontend.
+> Name: **Tiki-Taka** (formerly Match Desk; renamed 2026-10-08 because another hackathon entry is called MatchDesk). Code, UI, and the knowledge base were renamed on 2026-10-15; the Azure resources keep `matchdesk` (names can't change) and the Foundry project is displayed as Tiki-Taka.
 > Built for **Inside the Game: Developer Hackathon** (Microsoft x Premier League).
 > Solo developer. Strong in Python, RAG, pipelines, data architecture, GCP, REST APIs. New to React/Next.js and Azure agent tooling, so explain non-obvious frontend and Azure choices briefly as you go.
 

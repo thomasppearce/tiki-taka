@@ -52,13 +52,13 @@ MAX_EVENT_IDS = 200
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     load_dotenv()  # Agent Framework doesn't load .env by itself
     # The agent team runs on Microsoft Foundry when a project is configured (backend/.env);
-    # otherwise, and in tests (MATCHDESK_AGENTS=off), every match uses the scripted producer.
+    # otherwise, and in tests (TIKITAKA_AGENTS=off), every match uses the scripted producer.
     runner: AgentRunner | None = None
     channel: ChannelRunner | None = None
     writer: RecapWriter | None = None
     cache: Path | None = None
-    if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("MATCHDESK_AGENTS") != "off":
-        cache = Path(os.environ.get("MATCHDESK_AGENT_CACHE", ".cache/agent-runs"))
+    if os.environ.get("FOUNDRY_PROJECT_ENDPOINT") and os.environ.get("TIKITAKA_AGENTS") != "off":
+        cache = Path(os.environ.get("TIKITAKA_AGENT_CACHE", ".cache/agent-runs"))
         team = AgentTeam.from_env()
         await start_tracing(team.client)  # every agent run as a trace in Foundry
         await team.connect()  # the knowledge base over MCP, when AI Search is configured
