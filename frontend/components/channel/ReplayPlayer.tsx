@@ -95,7 +95,13 @@ export function ReplayPlayer({
           className="absolute bottom-[var(--lower-third-bottom,4.5cqw)] left-[3.5cqw] w-max max-w-[88cqw] font-broadcast text-ink"
           initial={{ clipPath: "inset(0 100% 0 0)" }}
           animate={{ clipPath: "inset(0 0% 0 0)" }}
-          transition={{ duration: DURATION.verySlow, ease: EASE.smoothOut }}
+          // The match's own lower third fades out of this spot as the replay starts: wipe in
+          // once it has gone, so the two never stack.
+          transition={{
+            duration: DURATION.verySlow,
+            ease: EASE.smoothOut,
+            delay: DURATION.medium,
+          }}
         >
           <p className="flex text-[3.4cqw] leading-none font-bold uppercase">
             <span className="w-[0.7cqw] shrink-0 bg-air" />

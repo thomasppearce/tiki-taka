@@ -118,14 +118,24 @@ export function countsFrom(desk: Desk | null): Counts {
   };
 }
 
-export function onAirGraphic(desk: Desk | null): OnAirGraphic | null {
+/** A goal's graphic is labelled as one, whatever kind of graphic it is. */
+const GOAL_LABEL: Record<Lang, string> = { en: "Goal", es: "Gol" };
+
+/** The desk's graphic on air. `events` (the match's) tell a goal's graphic apart: its moment
+ * is named after the goal (app/state/aggregator.py: km_ + the event's number). */
+export function onAirGraphic(
+  desk: Desk | null,
+  events: readonly MatchEvent[] = [],
+): OnAirGraphic | null {
   const air = desk?.on_air;
   if (!air) return null;
   const proposal = air.proposal;
+  const goalId = `evt_${proposal.moment_id.slice(3)}`;
+  const goal = events.some((e) => e.event_id === goalId && e.type === "goal");
   return {
     id: `ovl_${proposal.proposal_id.slice(5)}`,
     template: air.template === "player_tag" ? "player_tag" : "lower_third",
-    label: ON_AIR_TYPE_LABEL[proposal.type],
+    label: goal ? GOAL_LABEL : ON_AIR_TYPE_LABEL[proposal.type],
     headline: proposal.headline,
     playerId: proposal.player_id,
     startedAtMs: air.start_clock_ms,

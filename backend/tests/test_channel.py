@@ -140,3 +140,18 @@ def test_the_channel_knows_which_matchday_it_covers(client: TestClient) -> None:
     assert "the season's last" in channel_intro(38, True)
     midseason = channel_intro(12, False)
     assert "matchday 12" in midseason and "title" not in midseason
+
+
+def test_joining_a_day_under_way_says_what_is_on_the_line(service: MatchdayService) -> None:
+    """A viewer arriving at 91' lands on the title decider: the opening card says why it matters,
+    not just the score, and the stake names the scorer once."""
+    director = ChannelDirector(service)
+    director.sync(90 * 60_000 + 30_000)
+    assert director.state
+    on_air = director.state.on_air
+    assert on_air.reason == "kickoff" and on_air.match_id == "m_l1_1"
+    why, stake = on_air.package.why, on_air.package.at_stake or ""
+    assert why.startswith("The title and the drop are on the line here: Northgate Rovers 1-1")
+    if stake.startswith("If "):
+        club = stake.removeprefix("If ").split(" score, ")[0]
+        assert stake.count(club) == 1, stake

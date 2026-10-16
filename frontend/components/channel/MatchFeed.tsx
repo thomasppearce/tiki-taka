@@ -21,8 +21,9 @@ import { useMatchFrame } from "@/lib/useMatchFrame";
 
 export type FeedView = { audience: Audience; lang: Lang };
 
-/** A goal on air gets its action replay this long after it goes in (the celebration first). */
-const ON_AIR_REPLAY_DELAY_MS = 5_000;
+/** A goal on air gets its action replay this long after it goes in: the celebration first,
+ * then the match's goal graphic (a few seconds after the goal) gets its moment on screen. */
+const ON_AIR_REPLAY_DELAY_MS = 9_000;
 
 /**
  * One match's picture inside the channel's monitor: the live camera, the scorebug, and the
@@ -102,7 +103,8 @@ function Picture({
     onReplay,
   );
   const replay = replays.current;
-  const onAir = graphics && !replay ? onAirGraphic(live.desk) : null;
+  const onAir =
+    graphics && !replay ? onAirGraphic(live.desk, live.events) : null;
   const tag =
     onAir?.template === "player_tag" && onAir.playerId
       ? {

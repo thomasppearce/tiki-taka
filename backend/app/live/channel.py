@@ -24,7 +24,7 @@ the channel (and so the Watchers) running while the fan watches, and calls no ag
 
 import threading
 from bisect import bisect_left, bisect_right
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -44,7 +44,7 @@ from app.models.channel import (
     PendingCut,
     SideSignal,
 )
-from app.models.table import LeagueTable
+from app.models.table import LeagueTable, Stake
 
 if TYPE_CHECKING:
     from app.agents.schemas import CutDecision, DraftClaim, StoryUpdate
@@ -839,7 +839,7 @@ class ChannelDirector:
                 )
                 if stake:
                     club = service.club(stake.scorer_club_id).name
-                    at_stake = f"Still to play for: a goal for {club}: {stake.summary}"
+                    at_stake = f"Still to play for: {_if_scored(club, stake.summary)}"
         else:
             signal = next((x for x in self.signals(at) if x.match_id == match_id), None)
             # The side that earned the cut: pressure where it matters.
@@ -878,7 +878,8 @@ class ChannelDirector:
                 )
                 why = f"{day} kicks off, and we start at {fixture}."
             else:  # a check-in, the producer's call, or joining a day under way
-                why = scoreline
+                races = _races(x for x in table.stakes if x.match_id == match_id)
+                why = f"{races} on the line here: {scoreline}" if races else scoreline
             if side:  # what's at stake in the whole table; the lens says what it means for you
                 general = {x.scorer_club_id: x for x in table.stakes if x.match_id == match_id}
                 staked = general.get(side.club_id) or max(
@@ -886,7 +887,7 @@ class ChannelDirector:
                 )
                 if staked:
                     club = service.club(staked.scorer_club_id).name
-                    at_stake = f"A goal for {club}: {staked.summary}"
+                    at_stake = _sentence(_if_scored(club, staked.summary))
         return CutPackage(
             why=why,
             at_stake=at_stake,
@@ -910,6 +911,30 @@ class ChannelDirector:
 
 def _minute(clock_ms: int) -> str:
     return f"{clock_ms // 60_000 + 1}'"
+
+
+RACES = {"champions": "the title", "continental": "the top four", "relegation": "the drop"}
+
+
+def _races(stakes: Iterable[Stake]) -> str | None:
+    """The races a goal in this match would change, as the start of a sentence: "The title and
+    the drop are" (the title race covers the top four)."""
+    zones = {z for x in stakes for c in x.changes for z in (c.from_zone, c.to_zone) if z}
+    if "champions" in zones:
+        zones.discard("continental")
+    names = [name for zone, name in RACES.items() if zone in zones]
+    if not names:
+        return None
+    joined = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+    return f"{joined[:1].upper()}{joined[1:]} {'is' if len(names) == 1 else 'are'}"
+
+
+def _if_scored(club: str, summary: str) -> str:
+    """What a goal for `club` would do, naming them once: "if Halvern Town score, they go top on
+    goal difference; ..." (a stake's summary leads with the scorer when it moves them)."""
+    if summary.startswith(f"{club} "):
+        return f"if {club} score, they {summary[len(club) + 1:]}"
+    return f"if {club} score, {summary}"
 
 
 def _sentence(text: str | None) -> str | None:

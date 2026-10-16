@@ -206,7 +206,7 @@ function Room({
                 source={live.source}
                 score={score}
                 view={FEEDS[feed]}
-                onAir={onAirGraphic(desk)}
+                onAir={onAirGraphic(desk, live.events)}
                 className="order-1 lg:order-none"
               />
               <TacticalPitch

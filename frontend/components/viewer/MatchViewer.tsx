@@ -142,7 +142,7 @@ function Viewer({
               source={live.source}
               score={score}
               view={view}
-              onAir={onAirGraphic(live.desk)}
+              onAir={onAirGraphic(live.desk, live.events)}
               focusPlayerId={followed?.player_id ?? null}
             />
             <div className="grid min-w-0 gap-3 xl:grid-cols-2 xl:items-start">
