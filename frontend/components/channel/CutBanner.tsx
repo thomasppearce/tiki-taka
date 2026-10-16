@@ -24,10 +24,13 @@ export function CutBanner({
   cut,
   fixture,
   forWhom = null,
+  goal = false,
 }: {
   cut: Cut;
   fixture: string;
   forWhom?: string | null;
+  /** A goal went in on the match already on air: the package is back, as a goal. */
+  goal?: boolean;
 }) {
   const { why, at_stake: atStake, for_you: forYou } = cut.package;
   return (
@@ -49,7 +52,7 @@ export function CutBanner({
         <div className="w-[0.7cqw] shrink-0 bg-air" />
         <div className="flex-1 bg-page/95 px-[2.2cqw] pt-[1.5cqw] pb-[1.6cqw]">
           <p className="text-[1.9cqw] leading-none font-semibold tracking-wider text-ink-3 uppercase">
-            {LABEL[cut.reason]} · {fixture}
+            {LABEL[goal ? "goal" : cut.reason]} · {fixture}
           </p>
           <p className="mt-[0.8cqw] text-[3.4cqw] leading-[1.05] font-bold text-balance">
             {why}

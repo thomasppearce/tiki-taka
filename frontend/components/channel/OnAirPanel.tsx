@@ -43,6 +43,12 @@ export function OnAirPanel({
 }) {
   // The package shows for a few seconds after each cut, and through the replay a cut opens
   // with. The page's first cut gets no stinger and no replay: it was already on air.
+  // A goal on the match already on air brings the package back, as a goal: it changed it.
+  const [goal, setGoal] = useState<{ cutId: string; eventId: string } | null>(
+    null,
+  );
+  const goalOnAir = goal?.cutId === cut.cut_id ? goal.eventId : null;
+  const bannerKey = goalOnAir ? `${cut.cut_id}:${goalOnAir}` : cut.cut_id;
   const [bannerDone, setBannerDone] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
   const [replayedFor, setReplayedFor] = useState<string | null>(null);
@@ -50,18 +56,22 @@ export function OnAirPanel({
   const onReplay = useCallback(
     (active: boolean) => {
       setReplaying(active);
-      if (active) setReplayedFor(cut.cut_id);
+      if (active) setReplayedFor(bannerKey);
     },
+    [bannerKey],
+  );
+  const onGoal = useCallback(
+    (eventId: string) => setGoal({ cutId: cut.cut_id, eventId }),
     [cut.cut_id],
   );
   useEffect(() => {
     if (replaying) return;
     const after =
-      replayedFor === cut.cut_id ? BANNER_AFTER_REPLAY_MS : BANNER_MS;
-    const timer = setTimeout(() => setBannerDone(cut.cut_id), after);
+      replayedFor === bannerKey ? BANNER_AFTER_REPLAY_MS : BANNER_MS;
+    const timer = setTimeout(() => setBannerDone(bannerKey), after);
     return () => clearTimeout(timer);
-  }, [cut.cut_id, replaying, replayedFor]);
-  const banner = bannerDone !== cut.cut_id;
+  }, [bannerKey, replaying, replayedFor]);
+  const banner = bannerDone !== bannerKey;
 
   const fixture = fixtureOf(cut.match_id);
   const ringed = useMemo(
@@ -94,6 +104,7 @@ export function OnAirPanel({
             graphics={!banner}
             replayEventId={cut.cut_id === firstCut ? null : cut.replay_event_id}
             onReplay={onReplay}
+            onGoal={onGoal}
             ringed={ringed}
           />
           {!banner && <Ticker key={cut.cut_id} items={ticker} />}
@@ -101,10 +112,11 @@ export function OnAirPanel({
           <AnimatePresence>
             {banner && (
               <CutBanner
-                key={cut.cut_id}
+                key={bannerKey}
                 cut={cut}
                 fixture={fixture}
                 forWhom={forWhom}
+                goal={goalOnAir !== null}
               />
             )}
           </AnimatePresence>

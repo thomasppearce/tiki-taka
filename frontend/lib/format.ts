@@ -11,3 +11,13 @@ export function formatCountdown(ms: number): string {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }
+
+/** The scorebug's clock: "FT" once playback reaches a finished match's final whistle. */
+export function scorebugClock(
+  clockMs: number,
+  card: { status: string; clock_ms: number } | null,
+): string {
+  return card?.status === "full_time" && clockMs >= card.clock_ms
+    ? "FT"
+    : formatClock(clockMs);
+}

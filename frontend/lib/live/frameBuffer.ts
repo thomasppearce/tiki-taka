@@ -128,9 +128,14 @@ export class FrameBuffer {
  */
 export class PlaybackClock {
   private offset: number | null = null;
+  private newest: number | null = null;
 
   /** Note a frame's clock as it arrives. Returns true if the match clock jumped (a cut). */
   observe(clockMs: number, arrivedAt: number = performance.now()): boolean {
+    // After the final whistle the server's clock holds, so every frame repeats it: hold with
+    // it, rather than run on and take the gap for a cut (which replayed the last seconds).
+    if (clockMs === this.newest) return false;
+    this.newest = clockMs;
     const offset = clockMs - arrivedAt;
     if (this.offset === null) {
       this.offset = offset;
@@ -144,9 +149,11 @@ export class PlaybackClock {
     return false;
   }
 
-  /** The match clock being drawn now, or null before the first frame. */
+  /** The match clock being drawn now, or null before the first frame: never past the newest
+   * frame, so a finished match holds its last picture. */
   now(at: number = performance.now()): number | null {
-    return this.offset === null ? null : at + this.offset - PLAYOUT_DELAY_MS;
+    if (this.offset === null || this.newest === null) return null;
+    return Math.min(at + this.offset - PLAYOUT_DELAY_MS, this.newest);
   }
 }
 

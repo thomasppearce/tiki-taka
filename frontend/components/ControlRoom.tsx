@@ -30,7 +30,7 @@ import {
   scoreAt,
   timelineMarkers,
 } from "@/lib/controlRoom";
-import { formatClock } from "@/lib/format";
+import { formatClock, scorebugClock } from "@/lib/format";
 import { useEvidence } from "@/lib/live/useEvidence";
 import { usePlaybackClock } from "@/lib/live/usePlaybackClock";
 import { type LiveMatch, useLiveMatch } from "@/lib/live/useLiveMatch";
@@ -202,7 +202,7 @@ function Room({
           <div className="contents lg:grid lg:min-w-0 lg:gap-3 xl:min-h-0 xl:grid-rows-[auto_auto_minmax(0,1fr)]">
             <div className="contents xl:grid xl:min-w-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:gap-3">
               <ProgramMonitor
-                clock={clock}
+                clock={scorebugClock(clockMs, live.card)}
                 source={live.source}
                 score={score}
                 view={FEEDS[feed]}

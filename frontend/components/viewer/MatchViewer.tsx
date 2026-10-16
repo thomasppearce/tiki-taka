@@ -16,7 +16,7 @@ import { SignUpNudge } from "@/components/viewer/SignUpNudge";
 import { StatsPanel } from "@/components/viewer/StatsPanel";
 import type { MatchDetail } from "@/lib/contracts.generated";
 import { onAirGraphic, scoreAt, timelineMarkers } from "@/lib/controlRoom";
-import { formatClock } from "@/lib/format";
+import { formatClock, scorebugClock } from "@/lib/format";
 import { useEvidence } from "@/lib/live/useEvidence";
 import { usePlaybackClock } from "@/lib/live/usePlaybackClock";
 import { type LiveMatch, useLiveMatch } from "@/lib/live/useLiveMatch";
@@ -138,7 +138,7 @@ function Viewer({
               <MatchRecapCard recap={recap} />
             )}
             <ProgramMonitor
-              clock={formatClock(clockMs)}
+              clock={scorebugClock(clockMs, live.card)}
               source={live.source}
               score={score}
               view={view}

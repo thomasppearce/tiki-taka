@@ -118,3 +118,19 @@ def test_a_rivals_goal_tells_the_fan_what_it_did_to_them(service: MatchdayServic
     assert line == "That goal: Corrin Bay drop into the relegation zone."
     before = fan.for_you("m_l1_1", winner.match_clock_ms - 120_000)
     assert before is None or before.startswith("A goal for")
+
+
+def test_a_fans_own_last_second_winner_moves_them_at_once(service: MatchdayService) -> None:
+    """Desai's winner is the last kick at Northgate (full time comes with it): a Westmere fan's
+    line says what it did as it goes in, not the table from before it."""
+    from app.live.lens import ClubLens
+
+    winner = next(
+        e
+        for e in service.by_id["m_l1_1"].result.events
+        if e.type == "goal" and e.match_clock_ms // 60_000 + 1 == 93
+    )
+    fan = ClubLens(service, "t_wma")
+    assert fan.for_you("m_l1_1", winner.match_clock_ms + 300) == (
+        "That goal: Westmere Athletic climb out of the relegation zone."
+    )

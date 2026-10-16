@@ -139,6 +139,10 @@ class ClubLens:
         return 0.5 if before.position != after.position else 0.0
 
     def for_you(self, match_id: str, t: int) -> str | None:
+        m = self.service.by_id[match_id]
+        moved = self._moved_by_goal(m, t)  # a goal that just moved them, here or elsewhere
+        if moved:
+            return f"That goal: {moved}."
         here = self._place(self._now(t)[1])
         if match_id == self.match_id:
             where = _ordinal(here.position)
@@ -160,18 +164,14 @@ class ClubLens:
                 if left and left.from_zone and not left.to_zone:
                     where += f", {OUT_OF[left.from_zone]}"
             return f"{self.name}'s match. As it stands, {self.name} are {where}."
-        m = self.service.by_id[match_id]
-        moved = self._moved_by_goal(m, t)
-        if moved:
-            return f"That goal: {moved}."
         table = self.service._table(t // 1000)
         options = [(*self.stake(m, side.club_id, t, table), side.name) for side in (m.home, m.away)]
         weight, sentence, scorer = max(options, key=lambda o: o[0])
         return f"A goal for {scorer}: {sentence}." if sentence else None
 
     def _moved_by_goal(self, m: ScheduledMatch, t: int) -> str | None:
-        """What a goal in another match, in the last minute, did to the fan's club: the line a
-        rival's winner deserves ("Corrin Bay drop into the relegation zone"), or None."""
+        """What a goal in the last minute, in their match or another, did to the fan's club: the
+        line a winner deserves ("Corrin Bay drop into the relegation zone"), or None."""
         goal = next(
             (
                 e
@@ -195,8 +195,9 @@ class ClubLens:
         return LensInfo(kind="club", club_id=self.club_id)
 
     def _now(self, t: int) -> tuple[Scores, list[Placed]]:
-        """Today's scores and the table as it stands, worked out once per match second."""
-        second = t // 1000
+        """Today's scores and the table as it stands, worked out once per match second (rounded
+        up, so a goal earlier in this second counts: a last-second winner moves the table)."""
+        second = -(-t // 1000)
         if self._memo is None or self._memo[0] != second:
             scores = self.service._scores(second * 1000)
             self._memo = (second, scores, standings(self.service.season, scores))

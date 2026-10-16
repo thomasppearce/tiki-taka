@@ -12,7 +12,7 @@ import { cameraAim } from "@/components/control-room/ProgramMonitor";
 import { getJson } from "@/lib/api";
 import type { Replay } from "@/lib/contracts.generated";
 import { onAirGraphic, scoreAt } from "@/lib/controlRoom";
-import { formatClock } from "@/lib/format";
+import { scorebugClock } from "@/lib/format";
 import { type Audience, type Lang, forFeed } from "@/lib/i18n";
 import { usePlaybackClock } from "@/lib/live/usePlaybackClock";
 import { type LiveMatch, useLiveMatch } from "@/lib/live/useLiveMatch";
@@ -38,6 +38,7 @@ export function MatchFeed({
   graphics,
   replayEventId,
   onReplay,
+  onGoal,
   ringed,
 }: {
   matchId: string;
@@ -51,6 +52,8 @@ export function MatchFeed({
   replayEventId: string | null;
   /** Told when a replay starts and ends, so the cut banner can stay up through it. */
   onReplay: (active: boolean) => void;
+  /** Told when a goal goes in on air (as playback reaches it), so the banner can say so. */
+  onGoal?: (eventId: string) => void;
 }) {
   const live = useLiveMatch(matchId);
   if (!live.info || !live.baseline) return <Placeholder fixture={fixture} />;
@@ -65,6 +68,7 @@ export function MatchFeed({
         graphics={graphics}
         replayEventId={replayEventId}
         onReplay={onReplay}
+        onGoal={onGoal}
         ringed={ringed}
       />
     </MatchContext>
@@ -80,6 +84,7 @@ function Picture({
   graphics,
   replayEventId,
   onReplay,
+  onGoal,
   ringed,
 }: {
   live: LiveMatch;
@@ -90,6 +95,7 @@ function Picture({
   graphics: boolean;
   replayEventId: string | null;
   onReplay: (active: boolean) => void;
+  onGoal?: (eventId: string) => void;
   ringed?: ReadonlySet<string>;
 }) {
   const frame = useMatchFrame(live.source);
@@ -101,6 +107,7 @@ function Picture({
     live,
     clockMs,
     onReplay,
+    onGoal,
   );
   const replay = replays.current;
   const onAir =
@@ -118,7 +125,7 @@ function Picture({
       {replay ? (
         <ReplayPlayer
           replay={replay.data}
-          showLabel={!replay.fromCut}
+          showLabel={!replay.fromCut && graphics}
           onDone={replays.end}
         />
       ) : frame && !replays.waiting ? (
@@ -133,7 +140,7 @@ function Picture({
         <Placeholder fixture={fixture} />
       )}
       {replays.ended && <Stinger cutId={replays.ended} />}
-      <Scorebug score={score} clock={formatClock(clockMs)} />
+      <Scorebug score={score} clock={scorebugClock(clockMs, live.card)} />
       <AnimatePresence>
         {onAir?.template === "lower_third" && (
           <LowerThird
@@ -160,11 +167,13 @@ function useReplays(
   live: LiveMatch,
   clockMs: number,
   onReplay: (active: boolean) => void,
+  onGoal?: (eventId: string) => void,
 ) {
   const [current, setCurrent] = useState<Playing | null>(null);
   const [waiting, setWaiting] = useState(cutReplayId !== null);
   const [ended, setEnded] = useState<string | null>(null);
   const played = useRef(new Set<string>());
+  const announced = useRef(new Set<string>());
   const mountedAt = useRef<number | null>(null);
 
   const play = useCallback(
@@ -187,7 +196,8 @@ function useReplays(
       play(cutReplayId, true);
   }, [cutReplayId, play]);
 
-  // Goals on air: replay each one a few seconds after it goes in.
+  // Goals on air: replay each one a few seconds after it goes in. On a timer, not the match
+  // clock: a last-kick winner stops the clock at full time.
   useEffect(() => {
     mountedAt.current ??= clockMs;
     if (current || waiting) return;
@@ -196,10 +206,20 @@ function useReplays(
         e.type === "goal" &&
         e.match_clock_ms > (mountedAt.current ?? 0) &&
         !played.current.has(e.event_id) &&
-        clockMs >= e.match_clock_ms + ON_AIR_REPLAY_DELAY_MS,
+        clockMs >= e.match_clock_ms,
     );
-    if (goal) play(goal.event_id, false);
-  }, [live.events, clockMs, current, waiting, play]);
+    if (!goal) return;
+    if (!announced.current.has(goal.event_id)) {
+      announced.current.add(goal.event_id);
+      onGoal?.(goal.event_id);
+    }
+    const wait = goal.match_clock_ms + ON_AIR_REPLAY_DELAY_MS - clockMs;
+    const timer = setTimeout(
+      () => play(goal.event_id, false),
+      Math.max(0, wait),
+    );
+    return () => clearTimeout(timer);
+  }, [live.events, clockMs, current, waiting, play, onGoal]);
 
   const end = useCallback(() => {
     setCurrent((playing) => {
