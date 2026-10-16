@@ -69,23 +69,29 @@ export function CrewLog({
             return (
               <li
                 key={`${entry.clock_ms}-${i}`}
-                className="border-b border-line py-2 last:border-b-0"
+                className="border-b border-line py-2 last:border-b-0 md:grid md:grid-cols-[2.25rem_6rem_minmax(0,13rem)_minmax(0,1fr)] md:items-baseline md:gap-x-3"
               >
-                <p className="flex items-center gap-2 text-xs leading-5">
-                  <span className="w-7 shrink-0 font-mono text-ink-3 tabular-nums">
+                {/* Stacked when narrow; a row of minute, agent, match, and what it did when wide. */}
+                <p className="flex items-center gap-2 text-xs leading-5 md:contents">
+                  <span className="w-7 shrink-0 font-mono text-ink-3 tabular-nums md:w-auto">
                     {`${Math.floor(entry.clock_ms / 60_000) + 1}'`}
                   </span>
-                  <span className="flex shrink-0 items-center gap-1.5 text-ink">
+                  {/* The checker only speaks up to send an answer back: let it stand out. */}
+                  <span
+                    className={`flex shrink-0 items-center gap-1.5 ${
+                      entry.agent === "checker" ? "text-serious" : "text-ink"
+                    }`}
+                  >
                     <Glyph size={14} />
                     {label}
                   </span>
-                  {entry.match_id && (
-                    <span className="truncate text-ink-3">
-                      {fixtureOf(entry.match_id)}
-                    </span>
-                  )}
+                  <span className="truncate text-ink-3">
+                    {entry.match_id ? fixtureOf(entry.match_id) : ""}
+                  </span>
                 </p>
-                <p className="mt-0.5 pl-9 text-sm text-ink-2">{entry.detail}</p>
+                <p className="mt-0.5 pl-9 text-sm text-ink-2 md:mt-0 md:max-w-[75ch] md:pl-0">
+                  {entry.detail}
+                </p>
               </li>
             );
           })}

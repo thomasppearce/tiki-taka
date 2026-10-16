@@ -22,6 +22,7 @@ what matters to their club or their fantasy XI. It shares the channel's Watcher 
 the channel (and so the Watchers) running while the fan watches, and calls no agents itself.
 """
 
+import re
 import threading
 from bisect import bisect_left, bisect_right
 from collections.abc import Iterable, Sequence
@@ -686,7 +687,15 @@ class ChannelDirector:
         """The checker's first look, when it sent a draft back and the redraft passed."""
         if problems:
             more = f" (and {len(problems) - 1} more)" if len(problems) > 1 else ""
-            self._log("checker", match_id, f"Sent the {what} back: {problems[0]}{more}")
+            self._log(
+                "checker", match_id, f"Sent the {what} back: {self._readable(problems[0])}{more}"
+            )
+
+    def _readable(self, problem: str) -> str:
+        """A checker's note as the crew log shows it: what was wrong, without the instruction
+        to the model after it (which names fields like at_stake), and fixtures, not match ids."""
+        diagnosis = problem.split("; ")[0].rstrip(".")
+        return MATCH_ID.sub(lambda m: self._fixture(m.group(0)), diagnosis) + "."
 
     def _log(self, agent: LogAgent, match_id: str | None, detail: str) -> None:
         t = self.state.clock_ms if self.state else 0
@@ -913,6 +922,7 @@ def _minute(clock_ms: int) -> str:
     return f"{clock_ms // 60_000 + 1}'"
 
 
+MATCH_ID = re.compile(r"\bm_l\d+_\d+\b")
 RACES = {"champions": "the title", "continental": "the top four", "relegation": "the drop"}
 
 

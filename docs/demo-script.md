@@ -14,7 +14,12 @@ showing the agents at work, not by describing them.
   controls jumps the one shared clock: type a minute and press *Jump*. Everyone watching moves
   with it, so record when nobody else is using the site.
 - Moments worth having on tape (matchday 38, seed fixed, the same every time):
-  - **79'** Ambrose scores at Brackenford: Halvern Town go top on goal difference.
+  - **75:10** The checker sends the Director's answer back ("Nothing in the table is at stake in
+    this match… but the cut talks about it"); the corrected cut follows. Jump to 74.9 and scroll
+    to *The crew* about 15 seconds later.
+  - **78:15–79'** The Director's countdown (78:15), the cut to Brackenford v Halvern (78:20),
+    and Ambrose's goal (78:42): Halvern Town go top on goal difference. The Goal lower third
+    follows at about 78:46 and the replay at about 78:51.
   - **92'** Ashby completes Ironvale's comeback: Porthallow into the top four, Tidewick out.
   - **93'** Desai's winner at Northgate: Westmere climb out of the drop, Corrin Bay go down, and
     Desai takes the Golden Boot lead.
@@ -25,10 +30,10 @@ showing the agents at work, not by describing them.
 
 | Time | Scene | On screen (setup) | Words (caption or voice) |
 |---|---|---|---|
-| 0:00–0:08 | **Cold open** | The channel at 91' (Guest; *Jump* to 91 first as producer): the multiview, ten live scores, the table | "The last day of the season. Ten matches at once. Where do you look?" |
+| 0:00–0:08 | **Cold open** | The channel at 91' (Guest; *Jump* to 91 first as producer), browser zoom 90% so the ten live scores are in shot: the multiview, the table | "The last day of the season. Ten matches at once. Where do you look?" |
 | 0:08–0:15 | **Title** | Title card over the channel: *Tiki-Taka* · "A whip-around for every matchday, directed by AI agents on **Microsoft Foundry**, built with **Microsoft Agent Framework**" | (the card says it) |
-| 0:15–0:32 | **A cut that explains itself** | Producer view, *Jump* to 78. The Director proposes a cut with a 5-second countdown; it takes it; Ambrose scores; the stinger, *Why we're here*, *At stake*, the table rows move | "A Watcher agent follows every match. A Director agent decides where to cut, weighing who's pushing against what a goal would change, and says why." |
-| 0:32–0:42 | **Under the hood** | Scroll to *The crew*: Watcher stories, the Director's choices, the checker sending a draft back | "Every sentence cites the events behind it. Code checks it before it airs; anything it can't verify goes back." |
+| 0:15–0:32 | **A cut that explains itself** | Producer view, *Jump* to 78 (countdown 15 s later). The Director proposes a cut with a 5-second countdown; it takes it; Ambrose scores; the stinger, *Why we're here*, *At stake*, the table rows move | "A Watcher agent follows every match. A Director agent decides where to cut, weighing who's pushing against what a goal would change, and says why." |
+| 0:32–0:42 | **Under the hood** | A separate take: *Jump* to 74.9; at about 75:12 scroll to *The crew* (under the ten matches): Signals propose a cut, the **Checker** sends the Director's answer back, the corrected cut goes on air | "Every sentence cites the events behind it. Code checks it before it airs; anything it can't verify goes back." |
 | 0:42–0:58 | **Your channel** | `/split` at 92' (*Jump* to 92 first): a Westmere fan and a Corrin Bay fan side by side as Desai scores at 93' | "Sign in, pick your club or your fantasy XI, and the channel becomes yours. Same goal. One fan stays up. One goes down." |
 | 0:58–1:15 | **The graphics desk** | Producer, featured match's control room (*Back to 55'* first, or any minute): a proposal card, select it, its receipts light up on the pitch and timeline; press **A**; the lower third animates in; switch the feed to Casual ES | "On the featured match, a team of agents drafts the graphics: an Interpreter, an Explainer with a Foundry IQ knowledge base, a fact-checker. A human producer approves every one." |
 | 1:15–1:28 | **When an agent fails** | Control room: *Failure drill* → Explainer → *Take it down*; cut to the next moment (about two minutes later): Explainer **Down**, the others **Skipped**, the scripted graphic still queued on time | "Every model call gets a retry. When an agent is down, the system falls back on time, and says so." |

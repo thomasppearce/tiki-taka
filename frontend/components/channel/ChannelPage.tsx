@@ -191,6 +191,7 @@ export function ChannelPage() {
               onCut={(id) => void live.controls.take(id)}
               onPin={(id) => void live.controls.pin(id)}
             />
+            {producer && <CrewLog channel={channel} fixtureOf={fixtureOf} />}
             <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start">
               <TableMoves swings={table?.swings ?? []} />
               <EarlierCuts history={channel.history} fixtureOf={fixtureOf} />
@@ -208,7 +209,7 @@ export function ChannelPage() {
               </p>
             )}
           </div>
-          {/* The rail: why we're here, then the fan's XI, the table, and the crew. */}
+          {/* The rail: why we're here, then the fan's XI, the table, and the Golden Boot. */}
           <aside className="grid min-w-0 gap-3">
             <StoryCard
               channel={channel}
@@ -238,7 +239,6 @@ export function ChannelPage() {
                 onAirClubIds={onAirClubs(byId.get(channel.on_air.match_id))}
               />
             )}
-            {producer && <CrewLog channel={channel} fixtureOf={fixtureOf} />}
           </aside>
         </main>
         {picker}

@@ -155,3 +155,17 @@ def test_joining_a_day_under_way_says_what_is_on_the_line(service: MatchdayServi
     if stake.startswith("If "):
         club = stake.removeprefix("If ").split(" score, ")[0]
         assert stake.count(club) == 1, stake
+
+
+def test_the_crew_log_shows_what_the_checker_found_not_its_instruction(
+    service: MatchdayService,
+) -> None:
+    director = ChannelDirector(service)
+    assert (
+        director._readable("m_l1_1 is not a candidate; choose one of m_l1_3, m_l1_6.")
+        == "Northgate Rovers v Westmere Athletic is not a candidate."
+    )
+    assert director._readable(
+        'Nothing in the table is at stake in this match, but the cut talks about it ("table");'
+        " say why on the pitch, and leave at_stake null."
+    ) == ('Nothing in the table is at stake in this match, but the cut talks about it ("table").')
