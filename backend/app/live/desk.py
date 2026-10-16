@@ -44,7 +44,7 @@ STAGES: tuple[tuple[AgentName, int], ...] = (
 RETRY_MS = 1_800  # a failed localizer run costs this much extra
 MIN_IMPORTANCE = 0.5
 MAX_PENDING = 5
-ON_AIR_MS = 7_000
+ON_AIR_MS = 10_000  # a lower third stays up long enough to read twice, or to switch the feed
 AUTOPILOT_IMPORTANCE = 0.85
 SPRINT_TAG_KMH = 32.0
 SPRINT_IMPORTANCE = 0.65
@@ -240,14 +240,15 @@ class ProposalDesk:
     def reset(self) -> None:
         """Forget every decision; the next sync replays from its clock (minus the warm start)."""
         with self._lock:
-            self.state = _State()
+            # The version keeps counting, so a page holding the old desk takes the new one.
+            self.state = _State(version=self.state.version + 1)
 
     def sync(self, clock_ms: int) -> None:
         """Replay everything due by `clock_ms` in order: handoffs, new proposals, expiries."""
         with self._lock:
             s = self.state
             if clock_ms < s.clock_ms:
-                self.state = s = _State()  # the matchday loop kicked off again
+                self.state = s = _State(version=s.version + 1)  # the matchday loop kicked off again
             s.now_ms = clock_ms
             if not s.started:
                 s.started = True

@@ -29,6 +29,8 @@ BACK_IN_FRONT = re.compile(
     re.IGNORECASE,
 )
 EQUALISER = re.compile(r"\bequali[sz]\w*", re.IGNORECASE)
+# A rivalry is a fact like any other: "the Coast derby" with nothing behind it is made up.
+RIVALRY = re.compile(r"\b(?:derby|derbies|rival\w*|grudge)\b", re.IGNORECASE)
 
 
 def check_story(update: StoryUpdate, brief: MatchBrief) -> list[str]:
@@ -129,7 +131,13 @@ def _check(brief: MatchBrief, claims: list[DraftClaim], text: dict[str, str]) ->
     allowed = brief.numbers
     involved = brief.involved
     history = " ".join(brief.goals)
+    grounded_rivalry = RIVALRY.search(brief.text()) is not None
     for field, value in text.items():
+        rivalry = RIVALRY.search(value)
+        if rivalry and not grounded_rivalry:
+            problems.append(
+                f'The {field} calls this a "{rivalry.group(0)}", which nothing in the brief says.'
+            )
         again = BACK_IN_FRONT.search(value)
         if again and "back in front" not in history:
             problems.append(

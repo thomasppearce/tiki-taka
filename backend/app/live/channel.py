@@ -176,7 +176,11 @@ class ChannelDirector:
         self.agents: ChannelAgents | None = None
         self.stories: dict[str, _Story] = {}  # each match's latest Watcher story
         self.story_asked: dict[str, int] = {}
+        self.story_keys: dict[str, str] = {}  # each match's latest request: older answers are stale
         self.log: list[ChannelLog] = []
+        # Versions keep counting through a reset, so a page holding the old channel knows the
+        # new one is newer even when the clock jumped forward.
+        self.last_version = -1
 
     # --- Driving the channel -----------------------------------------------------------------
 
@@ -186,7 +190,7 @@ class ChannelDirector:
         with self.lock:
             s = self.state
             if s is not None and clock_ms < s.clock_ms:  # the matchday started over
-                self.stories, self.story_asked, self.log = {}, {}, []
+                self.stories, self.story_asked, self.story_keys, self.log = {}, {}, {}, []
             if s is None or clock_ms < s.clock_ms or clock_ms - s.clock_ms > RESET_GAP_MS:
                 # From the top of the minute: anyone joining in the same minute gets the same
                 # channel (and the agents' cached answers for it), since every cut follows.
@@ -278,7 +282,7 @@ class ChannelDirector:
         best = max(self.signals(clock_ms), key=lambda x: x.score, default=None)
         featured = next(m.match_id for m in self.service.matches if m.featured)
         match_id = best.match_id if best and best.score >= MIN_SCORE else featured
-        version = self.state.version + 1 if self.state else 0
+        version = (self.state.version if self.state else self.last_version) + 1
         package = self._package(match_id, "kickoff", clock_ms)
         cut = self._cut(clock_ms, match_id, "kickoff", "code", package)
         self.state = _State(clock_ms=clock_ms, on_air=cut, version=version)
@@ -533,6 +537,7 @@ class ChannelDirector:
         if not self.agents:
             return
         self.story_asked[match_id] = t
+        self.story_keys[match_id] = key
         self.agents.request_story(self, match_id, key, self._brief(match_id, t))
 
     def _follow_stories(self) -> None:
@@ -572,7 +577,8 @@ class ChannelDirector:
         """A Watcher's checked story: it becomes the match's story so far, on air too."""
         with self.lock:
             s = self.state
-            if s is None:
+            # Asked before the clock jumped (or overtaken by a newer request): out of date.
+            if s is None or self.story_keys.get(match_id) != key:
                 return
             old = self.stories.get(match_id)
             story = _Story(update.story, _claims(update.claims), s.clock_ms)
@@ -591,8 +597,10 @@ class ChannelDirector:
     def reset(self) -> None:
         """Start afresh at the next sync: the clock jumped (the producer's demo control)."""
         with self.lock:
+            if self.state:
+                self.last_version = self.state.version
             self.state = None
-            self.stories, self.story_asked, self.log = {}, {}, []
+            self.stories, self.story_asked, self.story_keys, self.log = {}, {}, {}, []
 
     def agent_note(self, agent: str, match_id: str | None, detail: str) -> None:
         """A Watcher's or the Director's own report, such as a model call it had to retry."""
@@ -858,7 +866,10 @@ class ChannelDirector:
                 else None
             )
             # Joining a day under way reads like a pressure cut when someone is pushing.
-            joining = reason == "kickoff" and at >= 60_000 and side and side.pressure >= 0.2
+            over = t >= m.result.full_time_ms
+            joining = (
+                reason == "kickoff" and at >= 60_000 and not over and side and side.pressure >= 0.2
+            )
             if (reason == "pressure" or joining) and side:
                 club = service.club(side.club_id).name
                 shots = [
@@ -886,10 +897,14 @@ class ChannelDirector:
                     else f"Matchday {self.service.matchday_number}"
                 )
                 why = f"{day} kicks off, and we start at {fixture}."
+            elif over:  # nothing left on the line
+                why = f"Full time: {m.home.name} {home}-{away} {m.away.name}."
             else:  # a check-in, the producer's call, or joining a day under way
                 races = _races(x for x in table.stakes if x.match_id == match_id)
                 why = f"{races} on the line here: {scoreline}" if races else scoreline
-            if side:  # what's at stake in the whole table; the lens says what it means for you
+            if (
+                side and not over
+            ):  # what's at stake in the table; the lens says what it means to you
                 general = {x.scorer_club_id: x for x in table.stakes if x.match_id == match_id}
                 staked = general.get(side.club_id) or max(
                     general.values(), key=lambda x: x.weight, default=None

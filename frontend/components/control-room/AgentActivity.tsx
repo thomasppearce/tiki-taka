@@ -134,6 +134,7 @@ function AgentStep({ state }: { state: AgentState }) {
   const status = STATUS_META[state.status];
   return (
     <li
+      title={state.detail}
       className={`flex min-w-0 flex-1 flex-col gap-1 rounded-md border px-2.5 py-2 ${
         state.status === "down"
           ? "border-critical/50"
@@ -168,7 +169,11 @@ function AgentStep({ state }: { state: AgentState }) {
           )}
         </span>
       </span>
-      <SwapText text={state.detail} className="block text-xs text-ink-3" />
+      {/* Four lines keep the cards inside the panel on a laptop screen; the rest is a hover away. */}
+      <SwapText
+        text={state.detail}
+        className="line-clamp-4 text-xs text-ink-3"
+      />
     </li>
   );
 }

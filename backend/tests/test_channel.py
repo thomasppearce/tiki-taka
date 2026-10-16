@@ -169,3 +169,23 @@ def test_the_crew_log_shows_what_the_checker_found_not_its_instruction(
         'Nothing in the table is at stake in this match, but the cut talks about it ("table");'
         " say why on the pitch, and leave at_stake null."
     ) == ('Nothing in the table is at stake in this match, but the cut talks about it ("table").')
+
+
+def test_after_the_final_whistle_nothing_is_on_the_line(service: MatchdayService) -> None:
+    director = ChannelDirector(service)
+    director.sync(96 * 60_000)
+    assert director.state
+    package = director.state.on_air.package
+    assert package.why.startswith("Full time: ") and package.at_stake is None
+
+
+def test_a_jump_forward_still_reads_as_newer(service: MatchdayService) -> None:
+    """Pages keep the newer snapshot by version: after the producer skips ahead, the fresh
+    channel must not look older than the one they hold."""
+    director = ChannelDirector(service)
+    director.sync(60 * 60_000)
+    assert director.state
+    before = director.state.version
+    director.reset()
+    director.sync(96 * 60_000)
+    assert director.state and director.state.version > before

@@ -105,10 +105,10 @@ def test_watchers_tell_the_story_on_air(service: MatchdayService) -> None:
     asked = {match_id for match_id, _, _ in agents.stories}
     assert len(asked) == len(service.matches)  # every Watcher, as the channel starts
     on_air = director.state.on_air.match_id
-    brief = next(b for m, _, b in agents.stories if m == on_air)
+    key, brief = next((k, b) for m, k, b in agents.stories if m == on_air)
     update = StoryUpdate(story="A tense start.", claims=claim_from(brief))
     sent_back = ["The story doesn't give the score as it is now: 0-0."]
-    director.story_ready(on_air, "k", update, 1.5, 900, cached=False, sent_back=sent_back)
+    director.story_ready(on_air, key, update, 1.5, 900, cached=False, sent_back=sent_back)
     package = director.state.on_air.package
     assert package.story == "A tense start." and package.written_by[0] == "watcher"
     watcher, checker = director.log[:2]  # newest first: the checker sent it back, then it passed
@@ -230,3 +230,33 @@ def test_a_cut_with_nothing_at_stake_must_not_talk_about_the_table(
     assert any("Nothing in the table is at stake" in p for p in check_decision(made_up, [quiet]))
     on_the_pitch = made_up.model_copy(update={"why": "They are pushing hard for a winner."})
     assert not any("Nothing in the table" in p for p in check_decision(on_the_pitch, [quiet]))
+
+
+def test_a_story_asked_before_the_clock_jumped_is_dropped(service: MatchdayService) -> None:
+    """The producer skips ahead while Watchers are still writing: their answers describe a
+    moment that is gone, so they never reach the screen."""
+    director, agents = director_with_agents(service)
+    director.sync(60 * 60_000)
+    on_air = director.state.on_air.match_id if director.state else ""
+    key, brief = next((k, b) for m, k, b in agents.stories if m == on_air)
+    director.reset()
+    director.sync(70 * 60_000)
+    stale = StoryUpdate(story="Still 0-0 at 61'.", claims=claim_from(brief))
+    director.story_ready(on_air, key, stale, 1.5, 900, cached=True)
+    assert director.state and director.state.on_air.package.story != "Still 0-0 at 61'."
+    assert all(
+        entry.detail != "Still 0-0 at 61'. (1.5 s, 900 tokens, cached)" for entry in director.log
+    )
+
+
+def test_a_rivalry_must_come_from_the_brief(service: MatchdayService) -> None:
+    """Mistral Bay v Lanterne Port FC is the Coast derby (its brief says so); Northgate v
+    Westmere is no derby, so calling it one is made up."""
+    northgate = match_brief(service, "m_l1_1", 30 * 60_000, None)
+    home, away = northgate.scores[-1]
+    story = StoryUpdate(story=f"{home}-{away} in a tense derby.", claims=[])
+    assert any('"derby"' in p for p in check_story(story, northgate))
+    coast = match_brief(service, "m_l1_8", 30 * 60_000, None)
+    home, away = coast.scores[-1]
+    story = StoryUpdate(story=f"{home}-{away} in the Coast derby.", claims=[])
+    assert not any("derby" in p for p in check_story(story, coast))
