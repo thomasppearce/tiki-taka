@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CutBanner, Stinger } from "@/components/channel/CutBanner";
@@ -10,6 +10,7 @@ import { Ticker, type TickerItem } from "@/components/channel/Ticker";
 import { Panel } from "@/components/ui/Panel";
 import type { Cut, Lens, PendingCut } from "@/lib/contracts.generated";
 import { useCountdown } from "@/lib/live/useCountdown";
+import { DURATION, EASE } from "@/lib/motion";
 
 const BANNER_MS = 9_000;
 const BANNER_AFTER_REPLAY_MS = 5_000;
@@ -82,6 +83,7 @@ export function OnAirPanel({
     [lens],
   );
   const ticker = tickerItems(cut, forWhom);
+  const split = cut.also_match_id ?? null;
   return (
     <Panel
       title={title}
@@ -95,18 +97,52 @@ export function OnAirPanel({
       }
     >
       <div className="p-3">
-        <div className="@container relative isolate aspect-video overflow-hidden rounded-md bg-page [--lower-third-bottom:8cqw]">
-          <MatchFeed
-            key={cut.match_id}
-            matchId={cut.match_id}
-            fixture={fixture}
-            view={view}
-            graphics={!banner}
-            replayEventId={cut.cut_id === firstCut ? null : cut.replay_event_id}
-            onReplay={onReplay}
-            onGoal={onGoal}
-            ringed={ringed}
-          />
+        <div
+          className={`@container relative isolate aspect-video overflow-hidden rounded-md bg-page ${
+            // In a split the banner drops below the boxes, clear of the second box's caption.
+            split
+              ? "[--lower-third-bottom:2cqw]"
+              : "[--lower-third-bottom:8cqw]"
+          }`}
+        >
+          {/* The match on air fills the picture; in a split it moves into the left box, so
+              its feed (and any replay) carries on without a restart. */}
+          <motion.div
+            layout
+            transition={{ duration: DURATION.verySlow, ease: EASE.smoothOut }}
+            className={
+              split
+                ? `@container absolute ${BOX} left-[1.75cqw] overflow-hidden rounded-[0.5cqw]`
+                : "@container absolute inset-0 overflow-hidden"
+            }
+          >
+            <MatchFeed
+              key={cut.match_id}
+              matchId={cut.match_id}
+              fixture={fixture}
+              view={view}
+              graphics={!banner}
+              replayEventId={
+                cut.cut_id === firstCut ? null : cut.replay_event_id
+              }
+              onReplay={onReplay}
+              onGoal={onGoal}
+              ringed={ringed}
+            />
+          </motion.div>
+          <AnimatePresence>
+            {split && (
+              <SplitBox
+                key={split}
+                matchId={split}
+                fixture={fixture}
+                alsoFixture={fixtureOf(split)}
+                why={cut.also_why ?? null}
+                view={view}
+                ringed={ringed}
+              />
+            )}
+          </AnimatePresence>
           {!banner && <Ticker key={cut.cut_id} items={ticker} />}
           {cut.cut_id !== firstCut && <Stinger cutId={cut.cut_id} />}
           <AnimatePresence>
@@ -131,6 +167,71 @@ export function OnAirPanel({
         </div>
       </div>
     </Panel>
+  );
+}
+
+/** Each box of a split: half the picture's width, 16:9, below the labels. */
+const BOX = "top-[5.5cqw] aspect-video w-[47.5cqw]";
+const noReplay = () => undefined;
+
+/**
+ * The double box: the match the goal cut left stays live beside it while it still
+ * matters, with a label over each box and why the second one is still on screen.
+ */
+function SplitBox({
+  matchId,
+  fixture,
+  alsoFixture,
+  why,
+  view,
+  ringed,
+}: {
+  matchId: string;
+  fixture: string;
+  alsoFixture: string;
+  why: string | null;
+  view: FeedView;
+  ringed?: ReadonlySet<string>;
+}) {
+  const label =
+    "absolute top-[1.6cqw] w-[47.5cqw] truncate font-broadcast text-[1.7cqw] leading-none font-semibold tracking-wider uppercase";
+  return (
+    <motion.div
+      className="absolute inset-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: DURATION.slow, ease: EASE.smoothOut }}
+    >
+      <p className={`${label} left-[1.75cqw] text-ink`}>{fixture}</p>
+      <p className={`${label} right-[1.75cqw] text-ink-2`}>
+        <span className="mr-[0.8cqw] bg-raised px-[0.6cqw] py-[0.2cqw] text-ink">
+          Still on
+        </span>
+        {alsoFixture}
+      </p>
+      <motion.div
+        className={`@container absolute ${BOX} right-[1.75cqw] overflow-hidden rounded-[0.5cqw]`}
+        initial={{ x: "12%" }}
+        animate={{ x: 0 }}
+        transition={{ duration: DURATION.verySlow, ease: EASE.smoothOut }}
+      >
+        <MatchFeed
+          matchId={matchId}
+          fixture={alsoFixture}
+          view={view}
+          graphics={false}
+          replayEventId={null}
+          onReplay={noReplay}
+          ringed={ringed}
+        />
+        {why && (
+          <p className="absolute inset-x-0 bottom-0 bg-page/90 px-[2.4cqw] py-[1.6cqw] font-broadcast text-[3.2cqw] leading-tight font-semibold text-ink">
+            {why}
+          </p>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 

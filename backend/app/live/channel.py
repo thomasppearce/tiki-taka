@@ -294,6 +294,11 @@ class ChannelDirector:
         s = self.state
         assert s
         s.clock_ms = t
+        if s.on_air.also_until_ms is not None and t >= s.on_air.also_until_ms:
+            s.on_air = s.on_air.model_copy(
+                update={"also_match_id": None, "also_why": None, "also_until_ms": None}
+            )
+            s.version += 1
         if s.held_since is not None and t - s.held_since >= HOLD_LIMIT_MS:
             s.held_since = None
             s.version += 1
@@ -441,8 +446,20 @@ class ChannelDirector:
     ) -> None:
         s = self.state
         assert s
+        left = s.on_air.match_id
         s.history = [s.on_air, *s.history][:HISTORY]
         s.on_air = self._cut(s.clock_ms, match_id, reason, decided_by, package, replay_event_id)
+        if reason in ("goal", "penalty") and left != match_id:
+            why = self._still_on(left, s.clock_ms)
+            if why:
+                ends = self.service.by_id[left].result.full_time_ms + 15_000
+                s.on_air = s.on_air.model_copy(
+                    update={
+                        "also_match_id": left,
+                        "also_why": why,
+                        "also_until_ms": min(s.clock_ms + SPLIT_MS, ends),
+                    }
+                )
         s.aired_decision = s.decision if s.pending and s.pending.match_id == match_id else None
         if s.aired_decision:
             s.aired_decision.aired_ms = s.clock_ms
@@ -473,6 +490,35 @@ class ChannelDirector:
             package=package,
             replay_event_id=replay_event_id,
         )
+
+    def _still_on(self, match_id: str, t: int) -> str | None:
+        """Why the match a goal cut leaves should stay on screen beside it, or None: it has just
+        had a goal, it is late with a race on the line, or a side is pushing hard."""
+        m = self.service.by_id[match_id]
+        if t >= m.result.full_time_ms:
+            return None
+        clocks = self.clocks[match_id]
+        recent = [
+            e
+            for e in m.result.events[
+                bisect_left(clocks, t - SPLIT_JUST_SCORED_MS) : bisect_right(clocks, t)
+            ]
+            if e.type == "goal"
+        ]
+        if recent:
+            goal = recent[-1]
+            club = self.service.club(goal.team_id).name
+            return f"{self.service.surname(goal.player_id)} has just scored for {club} there."
+        if t >= SPLIT_LATE_MS:
+            races = _races(x for x in self._table(t).stakes if x.match_id == match_id)
+            if races:
+                return f"{races} still on the line there."
+        signal = next((x for x in self.signals(t) if x.match_id == match_id), None)
+        if signal:
+            side = max((signal.home, signal.away), key=lambda x: x.pressure)
+            if side.pressure >= SPLIT_PRESSURE:
+                return f"{self.service.club(side.club_id).name} are pushing hard there."
+        return None
 
     def _chance(self, match_id: str, t: int) -> str | None:
         """The best chance in this match in the last 90 s, worth replaying as we cut in."""
@@ -936,6 +982,13 @@ class ChannelDirector:
 def _minute(clock_ms: int) -> str:
     return f"{clock_ms // 60_000 + 1}'"
 
+
+# A split screen (a broadcast double box): a goal cut away from a match that still matters keeps
+# it on screen beside the goal for a minute; late with a race on the line, or just after a goal.
+SPLIT_MS = 60_000
+SPLIT_LATE_MS = 80 * 60_000
+SPLIT_JUST_SCORED_MS = 60_000
+SPLIT_PRESSURE = 0.5
 
 MATCH_ID = re.compile(r"\bm_l\d+_\d+\b")
 RACES = {"champions": "the title", "continental": "the top four", "relegation": "the drop"}

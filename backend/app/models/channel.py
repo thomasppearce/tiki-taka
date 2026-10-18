@@ -53,6 +53,14 @@ class Cut(Contract):
     replay_event_id: str | None = Field(
         default=None, description="Open with a replay of this goal or chance."
     )
+    also_match_id: str | None = Field(
+        default=None,
+        description="A split screen: the match the cut left, kept beside it while it matters.",
+    )
+    also_why: str | None = Field(
+        default=None, description="Why that match stays on screen (code-written)."
+    )
+    also_until_ms: int | None = Field(default=None, ge=0, description="When the split ends.")
 
 
 class PendingCut(Contract):

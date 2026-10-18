@@ -14,7 +14,7 @@ The demo is set on the season's last matchday, when the title, the top four, the
 
 Every visit starts at 55' of matchday 38. Then:
 
-1. **Watch the channel.** The Director cuts between the ten matches; each cut says why we're here, what's at stake in the table, and the story so far. The table moves with every goal.
+1. **Watch the channel.** The Director cuts between the ten matches; each cut says why we're here, what's at stake in the table, and the story so far. The table moves with every goal, and when a goal comes while another match still hangs in the balance, the screen splits to keep both live.
 2. **Switch to Fan** (top right) and pick a club or a fantasy XI: the channel becomes yours, cut by what matters to you. On a match page, choose how its graphics read: casual or analyst, English or Spanish. Or open **[two fans side by side](https://polite-pebble-04e918210.5.azurestaticapps.net/split/)**: the same goal, cut to and told for each.
 3. **Switch to Producer.** Take, hold, or pin cuts; run a **failure drill** (take an agent down and watch the system fall back); open the featured match's **control room**, where the graphics team's proposals wait for approval (A approve, E edit, R reject), each with its receipts.
 4. **Skip to the end.** As the producer, *Skip to the final whistle*; or open **[/recap](https://polite-pebble-04e918210.5.azurestaticapps.net/recap/)** for how the matchday ends, written by the agents (it gives the results away).

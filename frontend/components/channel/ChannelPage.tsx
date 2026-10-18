@@ -183,6 +183,7 @@ export function ChannelPage() {
               signals={live.signals}
               table={table}
               onAirMatchId={channel.on_air.match_id}
+              besideMatchId={channel.on_air.also_match_id ?? null}
               pendingMatchId={channel.pending?.match_id ?? null}
               pinnedMatchId={channel.pinned_match_id}
               canCut={producer || own}

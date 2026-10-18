@@ -122,6 +122,18 @@ export interface Cut {
    * Open with a replay of this goal or chance.
    */
   replay_event_id: string | null;
+  /**
+   * A split screen: the match the cut left, kept beside it while it matters.
+   */
+  also_match_id: string | null;
+  /**
+   * Why that match stays on screen (code-written).
+   */
+  also_why: string | null;
+  /**
+   * When the split ends.
+   */
+  also_until_ms: number | null;
 }
 /**
  * What the viewer is told when the feed cuts to a match.

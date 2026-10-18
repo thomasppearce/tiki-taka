@@ -441,6 +441,43 @@
           ],
           "default": null,
           "description": "Open with a replay of this goal or chance."
+        },
+        "also_match_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A split screen: the match the cut left, kept beside it while it matters."
+        },
+        "also_why": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why that match stays on screen (code-written)."
+        },
+        "also_until_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the split ends."
         }
       },
       "required": [
@@ -450,7 +487,10 @@
         "reason",
         "decided_by",
         "package",
-        "replay_event_id"
+        "replay_event_id",
+        "also_match_id",
+        "also_why",
+        "also_until_ms"
       ],
       "title": "Cut",
       "type": "object"

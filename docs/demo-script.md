@@ -21,6 +21,10 @@ showing the agents at work, not by describing them.
     and Ambrose's goal (78:42): Halvern Town go top on goal difference. The package comes back
     as a *Goal* banner as it goes in, and the replay follows about ten seconds later.
   - **92'** Ashby completes Ironvale's comeback: Porthallow into the top four, Tidewick out.
+  - **91:26** The split screen: Ashby's winner takes the channel to Tidewick v Ironvale, and
+    Northgate v Westmere stays live beside it ("Still on": the title and the drop). Desai
+    scores in the right-hand box at 92:08 and the channel cuts to it. Jump to 91.15 for the
+    run-up; this is the strongest cold open.
   - **92:08 (the 93rd minute)** Desai's winner at Northgate, the last kick of the match:
     Westmere climb out of the drop, Corrin Bay go down, and Desai takes the Golden Boot lead.
     Jump to 91.7 for about 20 seconds of build-up.
@@ -31,7 +35,7 @@ showing the agents at work, not by describing them.
 
 | Time | Scene | On screen (setup) | Words (caption or voice) |
 |---|---|---|---|
-| 0:00–0:08 | **Cold open** | The channel at 91' (Guest; *Jump* to 91 first as producer), browser zoom 90% so the ten live scores are in shot: the multiview, the table | "The last day of the season. Ten matches at once. Where do you look?" |
+| 0:00–0:08 | **Cold open** | The channel as Guest (*Jump* to 91.15 first as producer), browser zoom 90% so the ten live scores are in shot: at 91:26 the screen splits, Tidewick v Ironvale's winner beside Northgate v Westmere, still live | "The last day of the season. Ten matches at once. Where do you look?" |
 | 0:08–0:15 | **Title** | Title card over the channel: *Tiki-Taka* · "A whip-around for every matchday, directed by AI agents on **Microsoft Foundry**, built with **Microsoft Agent Framework**" | (the card says it) |
 | 0:15–0:32 | **A cut that explains itself** | Producer view, *Jump* to 78 (countdown 15 s later). The Director proposes a cut with a 5-second countdown; it takes it (the stinger, *Why we're here*, *At stake*); Ambrose scores: the *Goal* banner, the table rows move, the replay | "A Watcher agent follows every match. A Director agent decides where to cut, weighing who's pushing against what a goal would change, and says why." |
 | 0:32–0:42 | **Under the hood** | A separate take: *Jump* to 74.9; at about 75:12 scroll to *The crew* (under the ten matches): Signals propose a cut, the **Checker** sends the Director's answer back, the corrected cut goes on air | "Every sentence cites the events behind it. Code checks it before it airs; anything it can't verify goes back." |

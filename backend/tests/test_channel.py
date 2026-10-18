@@ -189,3 +189,18 @@ def test_a_jump_forward_still_reads_as_newer(service: MatchdayService) -> None:
     director.reset()
     director.sync(96 * 60_000)
     assert director.state and director.state.version > before
+
+
+def test_a_goal_cut_keeps_the_title_decider_on_screen_beside_it(service: MatchdayService) -> None:
+    """The double box: Ashby's 92nd-minute winner takes the channel to Tidewick v Ironvale,
+    but Northgate v Westmere (the title and the drop) stays live beside it, until Desai scores
+    there and it has the screen to itself."""
+    from app.live.channel import SPLIT_MS
+
+    cuts = watch(ChannelDirector(service), 55, 93)
+    ashby = next(c for c in cuts if c.match_id == "m_l1_4" and c.clock_ms > 91 * 60_000)
+    assert ashby.reason == "goal" and ashby.also_match_id == "m_l1_1"
+    assert ashby.also_why == "The title and the drop are still on the line there."
+    assert ashby.also_until_ms is not None and ashby.also_until_ms <= ashby.clock_ms + SPLIT_MS
+    desai = next(c for c in cuts if c.match_id == "m_l1_1" and c.clock_ms > ashby.clock_ms)
+    assert desai.reason == "goal" and desai.also_match_id is None  # Ironvale's match is over

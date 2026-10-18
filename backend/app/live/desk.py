@@ -292,6 +292,22 @@ class ProposalDesk:
         if s.on_air and s.clock_ms >= s.on_air.start_clock_ms + s.on_air.duration_ms:
             s.on_air = None
             s.version += 1
+        if s.on_air is None:
+            self._autopilot_next()
+
+    def _autopilot_bar(self) -> float | None:
+        """The priority autopilot airs at, or None while the producer decides."""
+        if self.autopilot:
+            return AUTOPILOT_IMPORTANCE
+        return UNATTENDED_IMPORTANCE if self.unattended else None
+
+    def _autopilot_next(self) -> None:
+        """The screen is free: autopilot airs the strongest graphic still waiting, so one that
+        landed while another was on air gets its turn."""
+        bar = self._autopilot_bar()
+        waiting = [p for p in self.state.pending if bar is not None and p.priority >= bar]
+        if waiting:
+            self._air(max(waiting, key=lambda p: p.priority), "autopilot", "system")
 
     def _apply(self, action: _Action) -> None:
         c = action.candidate
@@ -359,12 +375,16 @@ class ProposalDesk:
         s.types[proposal.proposal_id] = copy.type
         self._log("created", "producer", "agent", proposal.proposal_id, c.label)
         # Autopilot never cuts a graphic short for one that matters no more (two often land at
-        # once: the 60' stats and the hardest runner).
-        free = s.on_air is None or priority > s.on_air.proposal.priority
-        if self.autopilot and priority >= AUTOPILOT_IMPORTANCE and free:
+        # once: the 60' stats and the hardest runner); the other waits its turn.
+        on = s.on_air
+        free = (
+            on is None
+            or s.clock_ms >= on.start_clock_ms + on.duration_ms
+            or priority > on.proposal.priority
+        )
+        bar = self._autopilot_bar()
+        if bar is not None and priority >= bar and free:
             self._air(proposal, "autopilot", "system")
-        elif not self.autopilot and self.unattended and priority >= UNATTENDED_IMPORTANCE and free:
-            self._air(proposal, "autopilot", "system")  # nobody in the control room
 
     # --- The agent team's answers (from the runner, on the event loop) ------------------------
 

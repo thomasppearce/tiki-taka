@@ -97,6 +97,14 @@ export function StoryCard({
             <p className="mt-0.5 text-sm text-ink-2">{atStake}</p>
           </div>
         )}
+        {cut.also_match_id && (
+          <div>
+            <h3 className="text-xs text-ink-3">
+              Beside it: {fixtureOf(cut.also_match_id)}
+            </h3>
+            <p className="mt-0.5 text-sm text-ink-2">{cut.also_why}</p>
+          </div>
+        )}
         <div className="border-t border-line pt-3">
           <h3 className="text-xs text-ink-3">Story so far</h3>
           <p className="mt-1 text-sm text-ink-2">

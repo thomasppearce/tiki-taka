@@ -23,7 +23,7 @@ from app.agents.schemas import (
     StatementCheck,
 )
 from app.agents.team import AgentTeam, Outcome, Run, agent_id
-from app.live.desk import AGENT_DEADLINE_MS, ProposalDesk
+from app.live.desk import AGENT_DEADLINE_MS, ON_AIR_MS, ProposalDesk
 from app.live.service import MatchdayService
 from app.state.aggregator import key_moments
 
@@ -222,6 +222,30 @@ def test_with_nobody_in_the_control_room_the_desk_airs_the_top_graphics(
     assert desk.state.on_air.approved_by == "autopilot"
     desk.attend()
     assert not desk.unattended
+
+
+def test_a_graphic_that_lands_while_another_is_on_air_waits_its_turn(
+    service: MatchdayService, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two graphics often land together (the 60' stats and the hardest runner): autopilot airs
+    the first in full, then the second, rather than cutting the first short."""
+    monkeypatch.setattr("app.live.desk.UNATTENDED_AFTER_S", 20.0)
+    desk = run_first_moment(service, FakeTeam(), tmp_path)
+    first = desk.state.on_air
+    assert first
+    second = first.proposal.model_copy(
+        update={
+            "proposal_id": "prop_9999",
+            "priority": 0.8,
+            "status": "pending",
+            "expires_at_clock_ms": first.start_clock_ms + 60_000,
+        }
+    )
+    desk.state.pending.append(second)
+    desk.sync(first.start_clock_ms + 1_000)
+    assert desk.state.on_air and desk.state.on_air.proposal.proposal_id != "prop_9999"
+    desk.sync(first.start_clock_ms + ON_AIR_MS)
+    assert desk.state.on_air and desk.state.on_air.proposal.proposal_id == "prop_9999"
 
 
 def test_later_loops_replay_from_the_cache(service: MatchdayService, tmp_path: Path) -> None:

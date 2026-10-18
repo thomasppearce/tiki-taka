@@ -31,6 +31,7 @@ export function Multiview({
   signals,
   table,
   onAirMatchId,
+  besideMatchId = null,
   pendingMatchId,
   pinnedMatchId,
   canCut,
@@ -43,6 +44,8 @@ export function Multiview({
   signals: MatchSignal[];
   table: LeagueTable | null;
   onAirMatchId: string;
+  /** The second box of a split screen. */
+  besideMatchId?: string | null;
   pendingMatchId: string | null;
   pinnedMatchId: string | null;
   canCut: boolean;
@@ -70,6 +73,7 @@ export function Multiview({
             signal={bySignal.get(card.match_id)}
             stakes={stakesOf(table, card.match_id)}
             onAir={card.match_id === onAirMatchId}
+            beside={card.match_id === besideMatchId}
             next={card.match_id === pendingMatchId}
             pinned={card.match_id === pinnedMatchId}
             canCut={canCut}
@@ -89,6 +93,7 @@ function Tile({
   signal,
   stakes,
   onAir,
+  beside,
   next,
   pinned,
   canCut,
@@ -101,6 +106,7 @@ function Tile({
   signal: MatchSignal | undefined;
   stakes: Zone[];
   onAir: boolean;
+  beside: boolean;
   next: boolean;
   pinned: boolean;
   canCut: boolean;
@@ -122,6 +128,10 @@ function Tile({
         {onAir ? (
           <span className="rounded-sm bg-air px-1.5 py-0.5 font-medium text-ink-on-fill">
             On air
+          </span>
+        ) : beside ? (
+          <span className="rounded-sm bg-raised px-1.5 py-0.5 font-medium text-ink">
+            Beside
           </span>
         ) : next ? (
           <span className="rounded-sm border border-air px-1.5 py-px font-medium text-ink">
