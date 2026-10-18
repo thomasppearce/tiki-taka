@@ -7,6 +7,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
+
 from app.agents.brief import MomentBrief, build_brief, is_close, numbers_in
 from app.agents.checker import check_draft
 from app.agents.register import AGENTS
@@ -206,6 +208,20 @@ def test_the_agent_team_writes_the_proposal(service: MatchdayService, tmp_path: 
         "localizer",
     ]
     assert team.calls == 1
+
+
+def test_with_nobody_in_the_control_room_the_desk_airs_the_top_graphics(
+    service: MatchdayService, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unattended, the featured desk airs a strong graphic itself (priority 0.9), as the other
+    matches do; a producer opening the control room takes the decisions back."""
+    monkeypatch.setattr("app.live.desk.UNATTENDED_AFTER_S", 20.0)
+    desk = run_first_moment(service, FakeTeam(), tmp_path)
+    assert desk.unattended
+    assert not desk.state.pending and desk.state.on_air
+    assert desk.state.on_air.approved_by == "autopilot"
+    desk.attend()
+    assert not desk.unattended
 
 
 def test_later_loops_replay_from_the_cache(service: MatchdayService, tmp_path: Path) -> None:

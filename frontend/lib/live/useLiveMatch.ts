@@ -53,7 +53,11 @@ const DETAIL_REFRESH_MS = 15_000;
  * into a buffer the views sample on every animation frame; everything else is React state. If the
  * match clock jumps (the matchday looped, or the server restarted), it starts over cleanly.
  */
-export function useLiveMatch(matchId: string): LiveMatch {
+export function useLiveMatch(
+  matchId: string,
+  /** The control room: while it's open, the producer decides the graphics (no autopilot). */
+  { producer = false }: { producer?: boolean } = {},
+): LiveMatch {
   const buffer = useRef(new FrameBuffer());
   const clock = useRef(new PlaybackClock());
   const fallbackClock = useRef(0);
@@ -114,7 +118,9 @@ export function useLiveMatch(matchId: string): LiveMatch {
   }, []);
 
   useEffect(() => {
-    const source = new EventSource(`${API_URL}/api/matches/${matchId}/stream`);
+    const source = new EventSource(
+      `${API_URL}/api/matches/${matchId}/stream${producer ? "?producer=true" : ""}`,
+    );
     let opened = false;
     source.onopen = () => {
       if (opened) setReloads((n) => n + 1); // catch up on what was missed while away
@@ -147,7 +153,7 @@ export function useLiveMatch(matchId: string): LiveMatch {
       setDesk(JSON.parse((e as MessageEvent<string>).data) as Desk);
     });
     return () => source.close();
-  }, [matchId, setDesk]);
+  }, [matchId, producer, setDesk]);
 
   // Stable for the life of the page, so the animation loops never restart.
   const frameSource = useMemo<FrameSource>(

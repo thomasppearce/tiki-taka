@@ -52,6 +52,10 @@ export function FanPreferences({
             ]}
           />
         </Field>
+        <p className="text-xs text-ink-3">
+          The match&rsquo;s on-air graphics: the Localizer agent writes each one
+          four ways, plain or in depth, in English or Spanish. These pick yours.
+        </p>
         <label className="flex items-center justify-between gap-3 text-sm text-ink-2">
           Follow a player
           <select

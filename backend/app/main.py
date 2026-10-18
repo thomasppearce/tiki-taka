@@ -372,6 +372,7 @@ async def match_stream(
     match_id: str,
     request: Request,
     frames: int | None = Query(default=None, ge=1, description="Stop after this many frames."),
+    producer: bool = Query(default=False, description="The control room: a producer is in."),
 ) -> AsyncIterable[ServerSentEvent]:
     """Live play for one match: `frame` (positions, 4 Hz), `match_event` (each event with its
     impact, as it happens), `card` (score, momentum, top moment, every 2 s), and `desk` (the
@@ -401,6 +402,8 @@ async def match_stream(
         yield ServerSentEvent(data=match.result.frames.frame_at(now), event="frame")
         if tick % CARD_EVERY_FRAMES == 0:
             yield ServerSentEvent(data=service.card(match_id), event="card")
+        if producer:
+            desk.attend()
         desk.sync(now)
         if desk.state.version != desk_version:
             snapshot = desk.snapshot(now)

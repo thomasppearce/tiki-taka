@@ -13,6 +13,7 @@ come from the human producer in real time.
 import hashlib
 import itertools
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Literal, NamedTuple, Protocol
@@ -46,6 +47,10 @@ MIN_IMPORTANCE = 0.5
 MAX_PENDING = 5
 ON_AIR_MS = 10_000  # a lower third stays up long enough to read twice, or to switch the feed
 AUTOPILOT_IMPORTANCE = 0.85
+# The featured match's graphics wait for the producer, while one is in the control room. With
+# nobody there this long, the desk airs the agents' strongest ones itself, and logs it.
+UNATTENDED_AFTER_S = 20.0
+UNATTENDED_IMPORTANCE = 0.75
 SPRINT_TAG_KMH = 32.0
 SPRINT_IMPORTANCE = 0.65
 SPRINT_TAG_GAP_MS = 20 * 60_000  # one speed tag per player per 20 minutes
@@ -164,6 +169,7 @@ class ProposalDesk:
         self.ctx = ctx
         self.autopilot = autopilot
         self.agents = agents
+        self._attended_at = float("-inf")  # when a producer last had the control room open
         self._lock = threading.Lock()
         self.candidates = self._candidates(moments, ctx)
         timeline = _brief if agents else _actions
@@ -171,6 +177,14 @@ class ProposalDesk:
             (a for c in self.candidates for a in timeline(c)), key=lambda a: a.at_ms
         )
         self.state = _State()
+
+    def attend(self) -> None:
+        """A producer has the control room open (its stream calls this as it plays)."""
+        self._attended_at = time.monotonic()
+
+    @property
+    def unattended(self) -> bool:
+        return time.monotonic() - self._attended_at > UNATTENDED_AFTER_S
 
     def _candidates(self, moments: list[KeyMoment], ctx: CopyContext) -> list[_Candidate]:
         raw: list[_Raw] = []
@@ -344,8 +358,13 @@ class ProposalDesk:
         s.pending.sort(key=lambda p: -p.priority)
         s.types[proposal.proposal_id] = copy.type
         self._log("created", "producer", "agent", proposal.proposal_id, c.label)
-        if self.autopilot and priority >= AUTOPILOT_IMPORTANCE:
+        # Autopilot never cuts a graphic short for one that matters no more (two often land at
+        # once: the 60' stats and the hardest runner).
+        free = s.on_air is None or priority > s.on_air.proposal.priority
+        if self.autopilot and priority >= AUTOPILOT_IMPORTANCE and free:
             self._air(proposal, "autopilot", "system")
+        elif not self.autopilot and self.unattended and priority >= UNATTENDED_IMPORTANCE and free:
+            self._air(proposal, "autopilot", "system")  # nobody in the control room
 
     # --- The agent team's answers (from the runner, on the event loop) ------------------------
 
@@ -409,6 +428,7 @@ class ProposalDesk:
         """Put a pending proposal on air, optionally with edited copy for one feed profile.
 
         Raises KeyError if the proposal is not pending (decided, expired, or unknown)."""
+        self.attend()
         self.sync(clock_ms)
         with self._lock:
             proposal = self._pending(proposal_id)
@@ -428,6 +448,7 @@ class ProposalDesk:
 
     def reject(self, proposal_id: str, clock_ms: int) -> None:
         """Raises KeyError if the proposal is not pending."""
+        self.attend()
         self.sync(clock_ms)
         with self._lock:
             self._decide(self._pending(proposal_id), "rejected", YOU, "human")

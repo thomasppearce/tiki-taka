@@ -2,7 +2,7 @@
 
 **Every match of the matchday on one channel, directed by a team of AI agents on Microsoft Foundry. Every cut says why.**
 
-Ten matches kick off at once. A Watcher agent follows each one; a Director agent decides where the channel cuts, weighing how hard a side is pushing against what a goal would change in the live table, and says why we're there and what's at stake. A signed-in fan gets their own channel, cut by what matters to their club or to their fantasy XI. Every sentence on screen cites the events behind it and passes a code checker before it airs; a human producer can take, hold, or pin any cut, and approves the graphics on the featured match.
+Ten matches kick off at once. A Watcher agent follows each one; a Director agent decides where the channel cuts, weighing how hard a side is pushing against what a goal would change in the live table, and says why we're there and what's at stake. A signed-in fan gets their own channel, cut by what matters to their club or to their fantasy XI. Every sentence on screen cites the events behind it and passes a code checker before it airs; a human producer can take, hold, or pin any cut, and approves the graphics on the featured match (with nobody in the control room, the desk airs only the agents' strongest, and logs it).
 
 The demo is set on the season's last matchday, when the title, the top four, the drop, and the Golden Boot are all decided at once. The same channel covers any matchday.
 
@@ -15,7 +15,7 @@ The demo is set on the season's last matchday, when the title, the top four, the
 Every visit starts at 55' of matchday 38. Then:
 
 1. **Watch the channel.** The Director cuts between the ten matches; each cut says why we're here, what's at stake in the table, and the story so far. The table moves with every goal.
-2. **Switch to Fan** (top right) and pick a club or a fantasy XI: the channel becomes yours, cut by what matters to you. Or open **[two fans side by side](https://polite-pebble-04e918210.5.azurestaticapps.net/split/)**: the same goal, cut to and told for each.
+2. **Switch to Fan** (top right) and pick a club or a fantasy XI: the channel becomes yours, cut by what matters to you. On a match page, choose how its graphics read: casual or analyst, English or Spanish. Or open **[two fans side by side](https://polite-pebble-04e918210.5.azurestaticapps.net/split/)**: the same goal, cut to and told for each.
 3. **Switch to Producer.** Take, hold, or pin cuts; run a **failure drill** (take an agent down and watch the system fall back); open the featured match's **control room**, where the graphics team's proposals wait for approval (A approve, E edit, R reject), each with its receipts.
 4. **Skip to the end.** As the producer, *Skip to the final whistle*; or open **[/recap](https://polite-pebble-04e918210.5.azurestaticapps.net/recap/)** for how the matchday ends, written by the agents (it gives the results away).
 
@@ -97,7 +97,7 @@ flowchart LR
 ## Built to be trusted
 
 - **Receipts.** Every claim cites the events behind it; the control room highlights them on the pitch and the timeline.
-- **A human in the loop.** The producer approves every graphic, can take, hold, or pin any cut, and sees an audit log of every agent step, retry, and decision.
+- **A human in the loop.** In the control room the producer approves every graphic (unattended, the desk airs only the agents' strongest, marked as autopilot), can take, hold, or pin any cut, and sees an audit log of every agent step, retry, and decision.
 - **Failure recovery.** Every model call gets one retry; when an agent is down, the system falls back on time (the scripted graphic, the last story, the code's pick). The producer's failure drill shows it live.
 - **Reproducible.** The matchday is deterministic from its seed on any machine, so each agent's answers are cached per matchday and replayed, and the evals rerun on the same moments.
 - **Observable.** Every agent run, live or cached, is traced to Application Insights, connected to the Foundry project; failures, and what aired instead, are marked.

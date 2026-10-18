@@ -15,6 +15,13 @@ from app.live.service import MatchdayService  # noqa: E402
 from app.main import app  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def producer_in_the_control_room(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests drive the featured desk as its producer would (always in the control room);
+    test_agents covers the desk with nobody there."""
+    monkeypatch.setattr("app.live.desk.UNATTENDED_AFTER_S", float("inf"))
+
+
 @pytest.fixture(scope="session")
 def client() -> Iterator[TestClient]:
     with TestClient(app) as c:

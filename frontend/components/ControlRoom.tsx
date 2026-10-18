@@ -57,7 +57,7 @@ const GRAPHICS_TEAM: DrillTarget[] = [
 ];
 
 export function ControlRoom({ matchId }: { matchId: string }) {
-  const live = useLiveMatch(matchId);
+  const live = useLiveMatch(matchId, { producer: true });
   if (!live.info || !live.baseline)
     return (
       <div className="flex min-h-dvh flex-col bg-page">

@@ -49,25 +49,11 @@ export function WhipControls({
         options={MODES}
       />
       {whip.mode === "club" && (
-        <label className="flex items-center gap-2 text-sm text-ink-2">
-          <span className="sr-only">Your club</span>
-          <select
-            value={whip.clubId ?? ""}
-            onChange={(e) =>
-              setWhip({ ...whip, clubId: e.target.value || null })
-            }
-            className="h-7 rounded-md border border-line bg-page px-2 text-label text-ink transition-[border-color] duration-(--duration-quick) hover:border-line-strong focus-visible:border-air focus-visible:outline-none"
-          >
-            <option value="">Pick your club</option>
-            {[...clubs.values()]
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((c) => (
-                <option key={c.club_id} value={c.club_id}>
-                  {c.name}
-                </option>
-              ))}
-          </select>
-        </label>
+        <ClubSelect
+          clubs={clubs}
+          value={whip.clubId}
+          onChange={(clubId) => setWhip({ ...whip, clubId })}
+        />
       )}
       {whip.mode === "fantasy" &&
         (hasXi ? (
@@ -79,18 +65,65 @@ export function WhipControls({
             <UsersThree size={14} /> Pick your XI
           </Button>
         ))}
-      <p className="text-sm text-ink-3 sm:ml-auto">
-        {whip.mode === "channel"
-          ? "The Director cuts for the whole table."
-          : whip.mode === "club"
+      {whip.mode === "channel" ? (
+        // Just signed in: the two ways to make the channel yours, in plain sight.
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          <span className="text-sm text-ink-2">Make it yours:</span>
+          <ClubSelect
+            clubs={clubs}
+            value={null}
+            onChange={(clubId) =>
+              clubId && setWhip({ ...whip, mode: "club", clubId })
+            }
+          />
+          <span className="text-sm text-ink-3">or</span>
+          <Button onClick={() => choose("fantasy")}>
+            <UsersThree size={14} /> {hasXi ? "Your XI" : "Pick your XI"}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-ink-3 sm:ml-auto">
+          {whip.mode === "club"
             ? club
               ? `Cutting for ${club.name}: their match, and every goal that moves them.`
               : "Pick your club, and the feed cuts to what matters to it."
             : hasXi && lens?.kind === "fantasy"
               ? `Cutting for your XI: ${lens.points} pts so far. Click a match to cut.`
               : "Pick eleven players, and the feed follows their big moments."}
-      </p>
+        </p>
+      )}
     </section>
+  );
+}
+
+/** The twenty clubs, A to Z: choosing one makes the whip-around theirs. */
+function ClubSelect({
+  clubs,
+  value,
+  onChange,
+}: {
+  clubs: Map<string, ClubRef>;
+  value: string | null;
+  onChange: (clubId: string | null) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-sm text-ink-2">
+      <span className="sr-only">Your club</span>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className="h-7 rounded-md border border-line bg-page px-2 text-label text-ink transition-[border-color] duration-(--duration-quick) hover:border-line-strong focus-visible:border-air focus-visible:outline-none"
+      >
+        <option value="">Pick your club</option>
+        {[...clubs.values()]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((c) => (
+            <option key={c.club_id} value={c.club_id}>
+              {c.name}
+            </option>
+          ))}
+      </select>
+    </label>
   );
 }
 
