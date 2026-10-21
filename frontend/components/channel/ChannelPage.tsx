@@ -8,6 +8,7 @@ import { matchdayLabel } from "@/components/centre/MatchCentre";
 import { CrewLog } from "@/components/channel/CrewLog";
 import { MatchdayRecap } from "@/components/channel/MatchdayRecap";
 import { CutControls } from "@/components/channel/CutControls";
+import { DemoBar } from "@/components/channel/DemoBar";
 import { FantasyXi } from "@/components/channel/FantasyXi";
 import { GoldenBoot } from "@/components/channel/GoldenBoot";
 import { LeagueTable } from "@/components/channel/LeagueTable";
@@ -146,6 +147,7 @@ export function ChannelPage() {
                 yours={yours}
               />
             )}
+            {producer && <DemoBar />}
             {producer && (
               <CutControls
                 channel={channel}

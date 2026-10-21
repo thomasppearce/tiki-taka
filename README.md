@@ -12,12 +12,12 @@ The demo is set on the season's last matchday, when the title, the top four, the
 
 **[Open the channel](https://polite-pebble-04e918210.5.azurestaticapps.net/)** (no sign-in; the backend may take half a minute to wake on a first visit)
 
-Every visit starts at 55' of matchday 38. Then:
+Every visit starts at 55' of matchday 38, live. To explore the 40 minutes that follow without waiting, the producer view has **demo controls** (marked as such) that jump the matchday clock to any minute: a real producer couldn't, and everyone watching moves with it. Everything the agents say is their own: each run was written by the agents on Foundry, checked, and traced, and because the matchday is the same on every visit, the site replays those runs (the crew log marks them *cached*). Then:
 
 1. **Watch the channel.** The Director cuts between the ten matches; each cut says why we're here, what's at stake in the table, and the story so far. The table moves with every goal, and when a goal comes while another match still hangs in the balance, the screen splits to keep both live.
 2. **Switch to Fan** (top right) and pick a club or a fantasy XI: the channel becomes yours, cut by what matters to you. On a match page, choose how its graphics read: casual or analyst, English or Spanish. Or open **[two fans side by side](https://polite-pebble-04e918210.5.azurestaticapps.net/split/)**: the same goal, cut to and told for each.
 3. **Switch to Producer.** Take, hold, or pin cuts; run a **failure drill** (take an agent down and watch the system fall back); open the featured match's **control room**, where the graphics team's proposals wait for approval (A approve, E edit, R reject), each with its receipts.
-4. **Skip to the end.** As the producer, *Skip to the final whistle*; or open **[/recap](https://polite-pebble-04e918210.5.azurestaticapps.net/recap/)** for how the matchday ends, written by the agents (it gives the results away).
+4. **Skip to the end.** As the producer, *Skip to the final whistle* in the demo controls; a signed-in fan also gets their own day (what it did to their club, or how their XI scored). Or open **[/recap](https://polite-pebble-04e918210.5.azurestaticapps.net/recap/)** for how the matchday ends, written by the agents (it gives the results away).
 
 ## The agents
 
