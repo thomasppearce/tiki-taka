@@ -23,6 +23,7 @@ from app.generator.matchday import ScheduledMatch
 from app.live.channel import ChannelDirector
 from app.live.recap import RecapDesk
 from app.live.service import MatchdayService
+from app.live.yours import your_day
 from app.models import MatchEvent, OverlayCommand
 from app.models.channel import (
     Channel,
@@ -36,7 +37,7 @@ from app.models.desk import ApproveRequest, Desk
 from app.models.drill import DrillRequest, DrillState
 from app.models.live import LiveEvent
 from app.models.matchday import Matchday, MatchDetail
-from app.models.recap import MatchRecap, Recap
+from app.models.recap import MatchRecap, Recap, YourDay
 from app.models.replay import Replay
 from app.models.table import LeagueTable
 
@@ -235,6 +236,17 @@ def recap(request: Request, ended: bool = False) -> Recap:
     by code, and the story, written by the recap writer and checked (app/live/recap.py).
     `ended`: the finished day whatever the clock says (the /recap page)."""
     return request.app.state.recap.snapshot(_service(request).clock.clock_ms(), ended)
+
+
+@app.get("/api/recap/yours")
+def your_day_recap(request: Request, lens: str | None = None, ended: bool = False) -> YourDay:
+    """A fan's own matchday beside the recap, by code: their club's day ("club:<id>") or their
+    fantasy XI's ("xi:<11 ids>"). The main channel has none."""
+    service = _service(request)
+    try:
+        return your_day(service, lens, ended, service.clock.clock_ms())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @app.get("/api/recaps")

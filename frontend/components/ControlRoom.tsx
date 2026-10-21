@@ -13,6 +13,7 @@ import { ProgramMonitor } from "@/components/control-room/ProgramMonitor";
 import type { CardActions } from "@/components/control-room/ProposalCard";
 import { ProposalQueue } from "@/components/control-room/ProposalQueue";
 import { TacticalPitch } from "@/components/control-room/TacticalPitch";
+import { StillPlaying } from "@/components/control-room/MatchSwitcher";
 import { TopBar } from "@/components/control-room/TopBar";
 import { FeedState } from "@/components/match/FeedState";
 import { getJson, postJson } from "@/lib/api";
@@ -92,7 +93,9 @@ function Room({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [inFlight, setInFlight] = useState<Decisions>({});
   const clockMs = usePlaybackClock(live.source.getClockMs);
-  const engine = useEngine();
+  // The agent team writes the featured match's graphics; every other match's are scripted.
+  const featured = live.card?.featured ?? true;
+  const engine = useEngine(featured);
   const { desk, setDesk, refreshDesk } = live;
 
   const queue = useMemo(() => pendingQueue(desk, inFlight), [desk, inFlight]);
@@ -191,6 +194,7 @@ function Room({
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col bg-page xl:h-dvh xl:min-h-[760px]">
         <TopBar
+          matchId={info.matchId}
           clock={clock}
           period={period}
           score={score}
@@ -226,7 +230,9 @@ function Room({
               agents={agentStates(desk, FEEDS[feed].label)}
               log={auditLines(desk)}
               engine={engine}
-              drill={<FailureDrill targets={GRAPHICS_TEAM} />}
+              drill={
+                featured ? <FailureDrill targets={GRAPHICS_TEAM} /> : undefined
+              }
               className="order-5 lg:order-none"
             />
           </div>
@@ -239,6 +245,11 @@ function Room({
             decisions={decisions}
             counts={countsFrom(desk)}
             actions={actions}
+            over={
+              live.card?.status === "full_time" ? (
+                <StillPlaying matchId={info.matchId} />
+              ) : null
+            }
             className="order-2 lg:sticky lg:top-3 lg:order-none lg:max-h-[calc(100dvh-1.5rem)] xl:static xl:max-h-none"
           />
         </main>
@@ -247,8 +258,9 @@ function Room({
   );
 }
 
-/** Who writes the featured match's proposals: the agent team on Foundry, or the script. */
-function useEngine(): string | null {
+/** Who writes this match's proposals: the agent team on Foundry (the featured match, when
+ * the agents are on), or the script. */
+function useEngine(featured: boolean): string | null {
   const [engine, setEngine] = useState<string | null>(null);
   useEffect(() => {
     getJson<{ agents?: string; model?: string }>("/api/health")
@@ -261,6 +273,7 @@ function useEngine(): string | null {
       )
       .catch(() => setEngine(null));
   }, []);
+  if (!featured) return "Scripted · the agents work the featured match";
   return engine;
 }
 

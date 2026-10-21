@@ -32,7 +32,7 @@ import type {
 import { useChannel } from "@/lib/live/useChannel";
 import { useMatchday } from "@/lib/live/useMatchday";
 import { useSquads } from "@/lib/live/useSquads";
-import { useMatchRecaps, useRecap } from "@/lib/live/useRecap";
+import { useMatchRecaps, useRecap, useYourDay } from "@/lib/live/useRecap";
 import { GUEST_PREFS, useFanPrefs, useRole } from "@/lib/role";
 import { lensOf, useWhip } from "@/lib/whip";
 
@@ -53,6 +53,7 @@ export function ChannelPage() {
   const { matchday } = useMatchday();
   const squads = useSquads();
   const recap = useRecap();
+  const yours = useYourDay(lens);
   const matchRecaps = useMatchRecaps();
   const recapHeadlines = useMemo(
     () =>
@@ -139,7 +140,11 @@ export function ChannelPage() {
         <main className="mx-auto grid w-full max-w-[1680px] flex-1 grid-cols-1 gap-3 p-3 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
           <div className="grid min-w-0 gap-3">
             {recap && recap.status !== "pending" && (
-              <MatchdayRecap recap={recap} fixtureOf={fixtureOf} />
+              <MatchdayRecap
+                recap={recap}
+                fixtureOf={fixtureOf}
+                yours={yours}
+              />
             )}
             {producer && (
               <CutControls

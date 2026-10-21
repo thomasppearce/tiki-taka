@@ -1,6 +1,6 @@
 "use client";
 
-import { PushPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, PushPin } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { Crest } from "@/components/Crest";
@@ -182,6 +182,17 @@ function Tile({
       ) : (
         <Link href={`/match/${card.match_id}`} className={frame}>
           {body}
+        </Link>
+      )}
+      {canCut && (
+        // Clicking the card cuts to it; this opens the match itself (its control room).
+        <Link
+          href={`/match/${card.match_id}/`}
+          aria-label={`Open ${card.home.name} v ${card.away.name}`}
+          title="Open the match"
+          className="absolute right-8 bottom-1.5 rounded-sm p-1 text-ink-3 transition-colors duration-(--duration-quick) hover:text-ink focus-visible:outline-2 focus-visible:outline-air"
+        >
+          <ArrowSquareOut size={14} />
         </Link>
       )}
       {canCut && (

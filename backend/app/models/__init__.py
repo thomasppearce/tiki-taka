@@ -18,7 +18,7 @@ from app.models.matchday import Matchday, MatchDetail
 from app.models.moments import Moment
 from app.models.overlays import OverlayCommand
 from app.models.proposals import AudienceBody, Claim, LocalizedText, Proposal
-from app.models.recap import MatchRecap, Recap
+from app.models.recap import MatchRecap, Recap, YourDay
 from app.models.replay import Replay
 from app.models.table import LeagueTable
 from app.models.tracking import PlayerPosition, TrackingFrame
@@ -52,6 +52,7 @@ CONTRACTS = (
     ClockRequest,
     Recap,
     MatchRecap,
+    YourDay,
 )
 """Top-level contracts exported to JSON Schema and TypeScript."""
 
@@ -66,6 +67,7 @@ __all__ = [
     "DrillState",
     "MatchRecap",
     "Recap",
+    "YourDay",
     "HoldRequest",
     "PinRequest",
     "TakeRequest",

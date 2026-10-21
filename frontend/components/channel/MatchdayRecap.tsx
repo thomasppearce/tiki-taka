@@ -5,7 +5,12 @@ import { motion } from "motion/react";
 import { useId } from "react";
 
 import { Crest } from "@/components/Crest";
-import type { ClubRef, Recap, RecapFact } from "@/lib/contracts.generated";
+import type {
+  ClubRef,
+  Recap,
+  RecapFact,
+  YourDay,
+} from "@/lib/contracts.generated";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
@@ -17,9 +22,12 @@ import { DURATION, EASE } from "@/lib/motion";
 export function MatchdayRecap({
   recap,
   fixtureOf,
+  yours = null,
 }: {
   recap: Recap;
   fixtureOf: (matchId: string) => string;
+  /** A signed-in fan's own day (their club's, or their XI's): it leads. */
+  yours?: YourDay | null;
 }) {
   const titleId = useId();
   if (recap.status === "writing") {
@@ -50,6 +58,9 @@ export function MatchdayRecap({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: DURATION.slow, ease: EASE.smoothOut }}
       >
+        {yours?.status === "ready" && yours.headline && (
+          <YourDayCard day={yours} fixtureOf={fixtureOf} />
+        )}
         <header className="max-w-[70ch]">
           <p className="text-xs text-ink-3">
             Full time &middot; How{" "}
@@ -204,4 +215,55 @@ function Clubs({ clubs }: { clubs: ClubRef[] }) {
  * (the beat says that). */
 function receipt(fact: RecapFact): string {
   return fact.text.split(". ")[0].replace(/^\d+' /, "");
+}
+
+/** The fan's own day, before everyone's: what it did to their club, or how their XI scored,
+ * each line with the result or goal behind it (written by code). */
+function YourDayCard({
+  day,
+  fixtureOf,
+}: {
+  day: YourDay;
+  fixtureOf: (matchId: string) => string;
+}) {
+  return (
+    <section className="rounded-md border border-line border-l-2 border-l-air bg-raised p-4">
+      <p className="flex items-center gap-2 text-xs text-ink-3">
+        {day.club && <Crest club={day.club} size={16} />}
+        Your day &middot;{" "}
+        {day.kind === "fantasy" ? "your fantasy XI" : day.club?.name}
+      </p>
+      <h3 className="mt-1 text-xl leading-tight font-semibold text-balance text-ink">
+        {day.headline}
+      </h3>
+      <ol className="mt-3 grid gap-2">
+        {day.lines.map((line) => (
+          <li
+            key={line.fact_id}
+            className={`grid gap-x-3 text-sm ${
+              day.kind === "club"
+                ? "grid-cols-[3rem_minmax(0,1fr)]"
+                : "grid-cols-[0_minmax(0,1fr)] gap-x-0"
+            }`}
+          >
+            <span className="font-mono text-ink-3 tabular-nums">
+              {line.minute
+                ? `${line.minute}'`
+                : line.fact_id.startsWith("ft:") && day.kind === "club"
+                  ? "FT"
+                  : ""}
+            </span>
+            <span>
+              {line.match_id && day.kind === "club" && (
+                <span className="block text-xs text-ink-3">
+                  {fixtureOf(line.match_id)}
+                </span>
+              )}
+              <span className="block leading-snug text-ink">{line.text}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
 }

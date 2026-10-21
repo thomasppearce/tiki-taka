@@ -75,3 +75,18 @@ class MatchRecap(Contract):
     story: str | None = None
     claims: list[Claim] = Field(default_factory=list)
     checks: list[str] = Field(default_factory=list)
+
+
+class YourDay(Contract):
+    """A fan's own matchday beside the recap, written by code from the same facts: what the day
+    did to their club (its result, where it finished, the goals that moved it), or how their
+    fantasy XI scored. A guest gets the recap alone."""
+
+    status: RecapStatus = Field(description="pending until the day's last match ends.")
+    kind: Literal["club", "fantasy"] | None = None
+    club: ClubRef | None = None
+    headline: str | None = None
+    lines: list[RecapFact] = Field(
+        default_factory=list, description="Each with the goal or result behind it."
+    )
+    points: int | None = Field(default=None, description="The fantasy XI's total.")

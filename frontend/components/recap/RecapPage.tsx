@@ -10,7 +10,9 @@ import { FeedState } from "@/components/match/FeedState";
 import { MatchRecapCard } from "@/components/recap/MatchRecapCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { MatchRecap } from "@/lib/contracts.generated";
-import { useMatchRecaps, useRecap } from "@/lib/live/useRecap";
+import { useMatchRecaps, useRecap, useYourDay } from "@/lib/live/useRecap";
+import { useRole } from "@/lib/role";
+import { lensOf, useWhip } from "@/lib/whip";
 
 /**
  * How the matchday ends, on demand: the day's recap and every match's, whatever the live clock
@@ -19,6 +21,9 @@ import { useMatchRecaps, useRecap } from "@/lib/live/useRecap";
  */
 export function RecapPage() {
   const recap = useRecap(true);
+  const [role] = useRole();
+  const [whip] = useWhip();
+  const yours = useYourDay(role === "fan" ? lensOf(whip) : null, true);
   const matches = useMatchRecaps(true);
   const fixtureOf = useCallback(
     (matchId: string) => {
@@ -58,7 +63,7 @@ export function RecapPage() {
             .
           </p>
           {recap.status !== "pending" && (
-            <MatchdayRecap recap={recap} fixtureOf={fixtureOf} />
+            <MatchdayRecap recap={recap} fixtureOf={fixtureOf} yours={yours} />
           )}
           <h2 className="mt-3 text-sm font-medium text-ink">Every match</h2>
           <ul className="grid gap-3 md:grid-cols-2">

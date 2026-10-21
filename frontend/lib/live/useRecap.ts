@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getJson } from "@/lib/api";
-import type { MatchRecap, Recap } from "@/lib/contracts.generated";
+import type { MatchRecap, Recap, YourDay } from "@/lib/contracts.generated";
 
 type Status = Recap["status"];
 
@@ -14,15 +14,21 @@ const EVERY_MS: Record<Status, number> = {
   ready: 15_000,
 };
 
-/** Fetch `path` now and every so often, faster while `status` of the latest answer says so. */
-function usePolled<T>(path: string, status: (value: T) => Status): T | null {
-  const [value, setValue] = useState<T | null>(null);
+/** Fetch `path` now and every so often, faster while `status` of the latest answer says so.
+ * No path: nothing to fetch (null). */
+function usePolled<T>(
+  path: string | null,
+  status: (value: T) => Status,
+): T | null {
+  const [held, setHeld] = useState<{ path: string; value: T } | null>(null);
+  const value = held && held.path === path ? held.value : null;
   const current = value ? status(value) : "pending";
   useEffect(() => {
+    if (!path) return;
     let cancelled = false;
     const load = () =>
       getJson<T>(path)
-        .then((v) => !cancelled && setValue(v))
+        .then((v) => !cancelled && setHeld({ path, value: v }))
         .catch(() => undefined); // the backend is waking up or away: try again next time
     void load();
     const timer = setInterval(load, EVERY_MS[current]);
@@ -62,4 +68,13 @@ export function useMatchRecaps(ended = false): MatchRecap[] | null {
         ? "ready"
         : "pending",
   );
+}
+
+/** A signed-in fan's own matchday, beside the recap (`lens` from lib/whip.ts); none for the
+ * main channel. */
+export function useYourDay(lens: string | null, ended = false): YourDay | null {
+  const path = lens
+    ? `/api/recap/yours?lens=${encodeURIComponent(lens)}${ended ? "&ended=true" : ""}`
+    : null;
+  return usePolled<YourDay>(path, (d) => d.status);
 }

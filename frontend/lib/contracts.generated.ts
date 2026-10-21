@@ -1028,3 +1028,28 @@ export interface ViewerProfile {
   spotlight_metric:
     ("pass_accuracy" | "pass_difficulty" | "distance_covered" | "top_speed" | "shot_speed" | "pressures") | null;
 }
+/**
+ * A fan's own matchday beside the recap, written by code from the same facts: what the day
+ * did to their club (its result, where it finished, the goals that moved it), or how their
+ * fantasy XI scored. A guest gets the recap alone.
+ *
+ * This interface was referenced by `TikiTakaContracts`'s JSON-Schema
+ * via the `definition` "YourDay".
+ */
+export interface YourDay {
+  /**
+   * pending until the day's last match ends.
+   */
+  status: "pending" | "writing" | "ready";
+  kind: ("club" | "fantasy") | null;
+  club: ClubRef | null;
+  headline: string | null;
+  /**
+   * Each with the goal or result behind it.
+   */
+  lines: RecapFact[];
+  /**
+   * The fantasy XI's total.
+   */
+  points: number | null;
+}

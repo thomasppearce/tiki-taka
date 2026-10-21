@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { AnimatePresence, motion } from "motion/react";
 
 import {
@@ -41,6 +43,7 @@ export function ProposalQueue({
   decisions,
   counts,
   actions,
+  over = null,
   className,
 }: {
   proposals: Proposal[];
@@ -51,6 +54,8 @@ export function ProposalQueue({
   decisions: Decisions;
   counts: Counts;
   actions: CardActions;
+  /** At full time, what an empty queue says instead (where to go next). */
+  over?: ReactNode;
   className?: string;
 }) {
   return (
@@ -115,7 +120,8 @@ export function ProposalQueue({
         </AnimatePresence>
         {proposals.length === 0 && (
           <li className="flex flex-1 items-center justify-center p-6 text-center text-sm text-ink-3">
-            Queue clear. The agents will propose the next moment as it happens.
+            {over ??
+              "Queue clear. The agents will propose the next moment as it happens."}
           </li>
         )}
       </ol>

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ClubCrest } from "@/components/ClubCrest";
 import { FeedTabs } from "@/components/control-room/FeedTabs";
+import { MatchSwitcher } from "@/components/control-room/MatchSwitcher";
 import { RoleSwitch } from "@/components/RoleSwitch";
 import type { FeedId } from "@/lib/controlRoom";
 import type { LiveStatus } from "@/lib/live/useLiveMatch";
@@ -20,6 +21,7 @@ const STATUS: Record<LiveStatus, { label: string; dot: string }> = {
  * full club names and the league appear only when there's room.
  */
 export function TopBar({
+  matchId,
   clock,
   period,
   score,
@@ -27,6 +29,7 @@ export function TopBar({
   feed,
   onFeedChange,
 }: {
+  matchId: string;
   clock: string;
   period: string;
   score: Record<Side, number>;
@@ -60,6 +63,8 @@ export function TopBar({
         <span className="ml-2 font-mono text-ink tabular-nums">{clock}</span>
         <span className="hidden text-xs text-ink-3 md:inline">{period}</span>
       </div>
+
+      <MatchSwitcher matchId={matchId} />
 
       <span className="hidden text-xs whitespace-nowrap text-ink-3 2xl:inline">
         {leagueName}

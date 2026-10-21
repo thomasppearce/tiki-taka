@@ -3037,6 +3037,87 @@
       "title": "ViewerProfile",
       "type": "object"
     },
+    "YourDay": {
+      "additionalProperties": false,
+      "description": "A fan's own matchday beside the recap, written by code from the same facts: what the day\ndid to their club (its result, where it finished, the goals that moved it), or how their\nfantasy XI scored. A guest gets the recap alone.",
+      "properties": {
+        "status": {
+          "description": "pending until the day's last match ends.",
+          "enum": [
+            "pending",
+            "writing",
+            "ready"
+          ],
+          "type": "string"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "club",
+                "fantasy"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "club": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClubRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headline": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "lines": {
+          "description": "Each with the goal or result behind it.",
+          "items": {
+            "$ref": "#/$defs/RecapFact"
+          },
+          "type": "array"
+        },
+        "points": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The fantasy XI's total."
+        }
+      },
+      "required": [
+        "status",
+        "kind",
+        "club",
+        "headline",
+        "lines",
+        "points"
+      ],
+      "title": "YourDay",
+      "type": "object"
+    },
     "ZoneChange": {
       "additionalProperties": false,
       "description": "One club moving into or out of a zone.",
