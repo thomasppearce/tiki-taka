@@ -2,6 +2,8 @@
 
 **Every match of the matchday on one channel, directed by a team of AI agents on Microsoft Foundry. Every cut says why.**
 
+**[Watch the 90-second demo](https://youtu.be/bqDeNLo4fFc)** · **[Open the channel](https://polite-pebble-04e918210.5.azurestaticapps.net/)**
+
 Ten matches kick off at once. A Watcher agent follows each one; a Director agent decides where the channel cuts, weighing how hard a side is pushing against what a goal would change in the live table, and says why we're there and what's at stake. A signed-in fan gets their own channel, cut by what matters to their club or to their fantasy XI. Every sentence on screen cites the events behind it and passes a code checker before it airs; a human producer can take, hold, or pin any cut, and approves the graphics on the featured match (with nobody in the control room, the desk airs only the agents' strongest, and logs it).
 
 The demo is set on the season's last matchday, when the title, the top four, the drop, and the Golden Boot are all decided at once. The same channel covers any matchday.
